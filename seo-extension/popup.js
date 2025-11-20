@@ -113,31 +113,64 @@ function renderData(data) {
         });
 
         Object.keys(groups).forEach(tag => {
-            groups[tag].forEach(text => {
-                const div = document.createElement('div');
-                div.className = 'data-group';
-                div.innerHTML = `
-                    <div class="label-row">
-                        <label>${tag.toUpperCase()}</label>
-                        <button class="copy-icon-btn" title="Copy">
-                            <svg viewBox="0 0 24 24" width="14" height="14"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                        </button>
-                    </div>
-                    <div class="data-value">${text}</div>
+            const headings = groups[tag];
+            if (headings.length === 0) return;
+
+            const div = document.createElement('div');
+            div.className = 'data-group';
+
+            // Group Header with Copy All
+            div.innerHTML = `
+                <div class="label-row">
+                    <label>${tag.toUpperCase()} (${headings.length})</label>
+                    <button class="copy-icon-btn group-copy" title="Copy All">
+                        <svg viewBox="0 0 24 24" width="14" height="14"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+                <div class="headings-list-group"></div>
+            `;
+
+            const listContainer = div.querySelector('.headings-list-group');
+            headings.forEach(text => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'heading-item';
+                itemDiv.style.display = 'flex';
+                itemDiv.style.justifyContent = 'space-between';
+                itemDiv.style.alignItems = 'center';
+                itemDiv.style.marginBottom = '8px';
+
+                itemDiv.innerHTML = `
+                    <span style="flex: 1; margin-right: 8px;">${text}</span>
+                    <button class="copy-icon-btn individual-copy" title="Copy">
+                        <svg viewBox="0 0 24 24" width="12" height="12"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
                 `;
 
-                // Add click listener
-                const btn = div.querySelector('.copy-icon-btn');
-                btn.addEventListener('click', () => {
+                // Individual Copy
+                const copyBtn = itemDiv.querySelector('.individual-copy');
+                copyBtn.addEventListener('click', () => {
                     navigator.clipboard.writeText(text).then(() => {
-                        const originalColor = btn.style.color;
-                        btn.style.color = 'var(--success-color)';
-                        setTimeout(() => btn.style.color = originalColor || '', 1000);
+                        const originalColor = copyBtn.style.color;
+                        copyBtn.style.color = 'var(--success-color)';
+                        setTimeout(() => copyBtn.style.color = originalColor || '', 1000);
                     });
                 });
 
-                hContainer.appendChild(div);
+                listContainer.appendChild(itemDiv);
             });
+
+            // Group Copy
+            const groupCopyBtn = div.querySelector('.group-copy');
+            groupCopyBtn.addEventListener('click', () => {
+                const allText = headings.join('\n');
+                navigator.clipboard.writeText(allText).then(() => {
+                    const originalColor = groupCopyBtn.style.color;
+                    groupCopyBtn.style.color = 'var(--success-color)';
+                    setTimeout(() => groupCopyBtn.style.color = originalColor || '', 1000);
+                });
+            });
+
+            hContainer.appendChild(div);
         });
     }
 
