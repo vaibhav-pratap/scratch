@@ -379,24 +379,6 @@ body {
     color: white;
 }
 
-.action-btn.primary:hover {
-    gap: 8px;
-}
-
-.link-item {
-    padding: 8px;
-    background: var(--bg-color);
-    border-radius: 4px;
-    box-shadow: var(--shadow-sm);
-    font-size: 12px;
-    word-break: break-all;
-}
-
-.link-item a {
-    color: var(--primary-color);
-    text-decoration: none;
-}
-
 .link-item a:hover {
     text-decoration: underline;
 }

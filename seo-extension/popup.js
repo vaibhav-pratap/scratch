@@ -45,6 +45,17 @@ async function init() {
             return;
         }
 
+        // Try to load persisted data first
+        const cacheKey = `seo_data_${tab.url}`;
+        const savedData = localStorage.getItem(cacheKey);
+        if (savedData) {
+            try {
+                renderData(JSON.parse(savedData));
+            } catch (e) {
+                console.log('Failed to load saved data', e);
+            }
+        }
+
         // Inject script if not already there (for robustness)
         try {
             await chrome.scripting.executeScript({
@@ -58,7 +69,12 @@ async function init() {
         // Request Data
         chrome.tabs.sendMessage(tab.id, { action: "getSEOData" }, (response) => {
             if (chrome.runtime.lastError) {
-                showError("Please refresh the page and try again.");
+                // If we have saved data, we might not want to show an error immediately, 
+                // but for now let's show it if we couldn't get fresh data and have no saved data?
+                // Or just show it.
+                if (!savedData) {
+                    showError("Please refresh the page and try again.");
+                }
                 return;
             }
             if (response) {
@@ -72,13 +88,28 @@ async function init() {
 }
 
 function showError(msg) {
-    document.querySelector('.content-area').innerHTML = `<div class="suggestion-item error">${msg}</div>`;
+    const container = document.querySelector('.content-area');
+    if (container) {
+        container.innerHTML = `<div class="suggestion-item error">${msg}</div>`;
+    }
 }
 
 let currentData = null;
 
 function renderData(data) {
     currentData = data;
+
+    // Save data for persistence
+    try {
+        chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+            if (tab && tab.url) {
+                const cacheKey = `seo_data_${tab.url}`;
+                localStorage.setItem(cacheKey, JSON.stringify(data));
+            }
+        });
+    } catch (e) {
+        console.log('Failed to save data', e);
+    }
 
     // Meta
     setText('meta-title', data.title);
@@ -178,57 +209,76 @@ function renderData(data) {
     const missingAlt = data.images.filter(img => !img.alt).length;
 
     const missingEl = document.getElementById('img-missing-alt');
-    missingEl.textContent = missingAlt;
-    if (missingAlt > 0) missingEl.parentElement.classList.add('warning-text');
+    if (missingEl) {
+        missingEl.textContent = missingAlt;
+        if (missingAlt > 0) missingEl.parentElement.classList.add('warning-text');
+    }
 
     const imgGrid = document.getElementById('images-list');
-    imgGrid.innerHTML = '';
-    data.images.slice(0, 20).forEach(img => { // Limit to 20 previews
-        const div = document.createElement('div');
-        div.className = `img-card ${!img.alt ? 'missing-alt' : ''}`;
-        div.innerHTML = `
-      <img src="${img.src}" class="img-preview" loading="lazy">
-      <div class="img-info">${img.alt || '<span class="warning-text">No Alt</span>'}</div>
-    `;
-        imgGrid.appendChild(div);
-    });
+    if (imgGrid) {
+        imgGrid.innerHTML = '';
+        data.images.forEach(img => {
+            const div = document.createElement('div');
+            div.className = `img-card ${!img.alt ? 'missing-alt' : ''}`;
+            div.innerHTML = `
+          <img src="${img.src}" class="img-preview" loading="lazy">
+          <div class="img-info">${img.alt || '<span class="warning-text">No Alt</span>'}</div>
+        `;
+            imgGrid.appendChild(div);
+        });
+    }
 
     // Links
     if (data.links) {
-        document.getElementById('link-internal-count').textContent = data.links.internal.length;
-        document.getElementById('link-external-count').textContent = data.links.external.length;
+        const intCount = document.getElementById('link-internal-count');
+        if (intCount) intCount.textContent = data.links.internal.length;
+
+        const extCount = document.getElementById('link-external-count');
+        if (extCount) extCount.textContent = data.links.external.length;
 
         const extList = document.getElementById('external-links-list');
-        extList.innerHTML = '';
-        data.links.external.slice(0, 50).forEach(l => {
-            extList.innerHTML += `<div class="link-item"><a href="${l.href}" target="_blank">${l.text || l.href}</a></div>`;
-        });
+        if (extList) {
+            extList.innerHTML = '';
+            data.links.external.slice(0, 50).forEach(l => {
+                extList.innerHTML += `<div class="link-item"><a href="${l.href}" target="_blank">${l.text || l.href}</a></div>`;
+            });
+        }
 
         const intList = document.getElementById('internal-links-list');
-        intList.innerHTML = '';
-        data.links.internal.slice(0, 50).forEach(l => {
-            intList.innerHTML += `<div class="link-item"><a href="${l.href}" target="_blank">${l.text || l.href}</a></div>`;
-        });
+        if (intList) {
+            intList.innerHTML = '';
+            data.links.internal.slice(0, 50).forEach(l => {
+                intList.innerHTML += `<div class="link-item"><a href="${l.href}" target="_blank">${l.text || l.href}</a></div>`;
+            });
+        }
     }
 
     // Analysis & Score
     analyzeData(data);
 
     // Buttons
-    document.getElementById('btn-copy').onclick = () => copyData(data);
-    document.getElementById('btn-download').onclick = () => downloadData(data, 'json');
-    document.getElementById('btn-download-csv').onclick = () => downloadData(data, 'csv');
+    const btnCopy = document.getElementById('btn-copy');
+    if (btnCopy) btnCopy.onclick = () => copyData(data);
+
+    const btnDownload = document.getElementById('btn-download');
+    if (btnDownload) btnDownload.onclick = () => downloadData(data, 'json');
+
+    const btnCsv = document.getElementById('btn-download-csv');
+    if (btnCsv) btnCsv.onclick = () => downloadData(data, 'csv');
 
     // Copy Icons
     document.querySelectorAll('.copy-icon-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const targetId = btn.dataset.copy;
-            const text = document.getElementById(targetId).innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                const originalColor = btn.style.color;
-                btn.style.color = 'var(--success-color)';
-                setTimeout(() => btn.style.color = originalColor, 1000);
-            });
+            const el = document.getElementById(targetId);
+            if (el) {
+                const text = el.innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    const originalColor = btn.style.color;
+                    btn.style.color = 'var(--success-color)';
+                    setTimeout(() => btn.style.color = originalColor, 1000);
+                });
+            }
         });
     });
 }
@@ -309,15 +359,60 @@ function analyzeData(data) {
 
     // Render Suggestions
     const sContainer = document.getElementById('suggestions-container');
-    sContainer.innerHTML = '';
-    suggestions.forEach(s => {
-        sContainer.innerHTML += `<div class="suggestion-item ${s.type}">${s.msg}</div>`;
-    });
+    if (sContainer) {
+        sContainer.innerHTML = '';
+        suggestions.forEach(s => {
+            sContainer.innerHTML += `<div class="suggestion-item ${s.type}">${s.msg}</div>`;
+        });
+    }
 
     // Render Score
     const scoreEl = document.getElementById('seo-score');
-    scoreEl.textContent = Math.max(0, score);
-    if (score >= 90) scoreEl.style.color = 'var(--success-color)';
-    else if (score >= 70) scoreEl.style.color = 'var(--warning-color)';
-    else scoreEl.style.color = 'var(--error-color)';
+    if (scoreEl) {
+        scoreEl.textContent = Math.max(0, score);
+        if (score >= 90) scoreEl.style.color = 'var(--success-color)';
+        else if (score >= 70) scoreEl.style.color = 'var(--warning-color)';
+        else scoreEl.style.color = 'var(--error-color)';
+    }
+}
+
+function copyData(data) {
+    const text = JSON.stringify(data, null, 2);
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('btn-copy');
+        if (btn) {
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = originalText, 1500);
+        }
+    });
+}
+
+function downloadData(data, format) {
+    let content, type, ext;
+    if (format === 'json') {
+        content = JSON.stringify(data, null, 2);
+        type = 'application/json';
+        ext = 'json';
+    } else {
+        // Simple CSV flattening
+        const rows = [['Type', 'Key', 'Value']];
+        rows.push(['Meta', 'Title', data.title]);
+        rows.push(['Meta', 'Description', data.description]);
+        data.headings.forEach(h => rows.push(['Heading', h.tag, h.text]));
+        data.images.forEach(i => rows.push(['Image', i.src, i.alt]));
+        content = rows.map(r => r.map(c => `"${(c || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
+        type = 'text/csv';
+        ext = 'csv';
+    }
+
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `seo-data-${new Date().toISOString().slice(0, 10)}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
