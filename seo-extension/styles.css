@@ -380,63 +380,6 @@ body {
 }
 
 .action-btn.primary:hover {
-    background-color: var(--primary-hover);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.action-btn.secondary {
-    background-color: transparent;
-    color: var(--primary-color);
-    border: 1px solid var(--border-color);
-}
-
-.action-btn.secondary:hover {
-    background-color: rgba(26, 115, 232, 0.04);
-}
-
-.action-btn svg {
-    fill: currentColor;
-}
-
-.warning-text {
-    color: var(--error-color);
-}
-
-/* Copy Icons */
-.label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-}
-
-.label-row label {
-    margin-bottom: 0;
-}
-
-.copy-icon-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 2px;
-    color: var(--text-secondary);
-    opacity: 0.6;
-    transition: opacity 0.2s;
-}
-
-.copy-icon-btn:hover {
-    opacity: 1;
-    color: var(--primary-color);
-}
-
-.copy-icon-btn svg {
-    fill: currentColor;
-}
-
-/* Links List */
-.links-list {
-    display: flex;
-    flex-direction: column;
     gap: 8px;
     margin-bottom: 16px;
 }
@@ -457,4 +400,40 @@ body {
 
 .link-item a:hover {
     text-decoration: underline;
+}
+
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.label-row label {
+    margin-bottom: 0;
+}
+
+/* Ensure consistent copy button styling */
+.copy-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    transition: all 0.2s;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.copy-icon-btn:hover {
+    opacity: 1;
+    color: var(--primary-color);
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.copy-icon-btn svg {
+    fill: currentColor;
 }

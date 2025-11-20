@@ -102,14 +102,48 @@ function renderData(data) {
 
     // Headings
     const hContainer = document.getElementById('headings-list');
-    hContainer.innerHTML = data.headings.length ? '' : '<div class="data-value">No headings found.</div>';
-    data.headings.forEach(h => {
-        hContainer.innerHTML += `<div class="heading-item ${h.tag}">${h.tag.toUpperCase()}: ${h.text}</div>`;
-    });
+    if (!data.headings.length) {
+        hContainer.innerHTML = '<div class="data-value">No headings found.</div>';
+    } else {
+        hContainer.innerHTML = '';
 
-    // Images
-    document.getElementById('img-total').textContent = data.images.length;
+        const groups = { h1: [], h2: [], h3: [], h4: [], h5: [], h6: [] };
+        data.headings.forEach(h => {
+            if (groups[h.tag]) groups[h.tag].push(h.text);
+        });
+
+        Object.keys(groups).forEach(tag => {
+            groups[tag].forEach(text => {
+                const div = document.createElement('div');
+                div.className = 'data-group';
+                div.innerHTML = `
+                    <div class="label-row">
+                        <label>${tag.toUpperCase()}</label>
+                        <button class="copy-icon-btn" title="Copy">
+                            <svg viewBox="0 0 24 24" width="14" height="14"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                        </button>
+                    </div>
+                    <div class="data-value">${text}</div>
+                `;
+
+                // Add click listener
+                const btn = div.querySelector('.copy-icon-btn');
+                btn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(text).then(() => {
+                        const originalColor = btn.style.color;
+                        btn.style.color = 'var(--success-color)';
+                        setTimeout(() => btn.style.color = originalColor || '', 1000);
+                    });
+                });
+
+                hContainer.appendChild(div);
+            });
+        });
+    }
+
+    // Calculate missing alt count early
     const missingAlt = data.images.filter(img => !img.alt).length;
+
     const missingEl = document.getElementById('img-missing-alt');
     missingEl.textContent = missingAlt;
     if (missingAlt > 0) missingEl.parentElement.classList.add('warning-text');
