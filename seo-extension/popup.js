@@ -425,21 +425,49 @@ function renderData(data) {
         };
     }
 
-    // Settings - Nofollow Toggle
-    const toggleNofollow = document.getElementById('toggle-nofollow');
-    if (toggleNofollow) {
-        // Remove existing listeners to prevent duplicates if renderData is called multiple times
-        const newToggle = toggleNofollow.cloneNode(true);
-        toggleNofollow.parentNode.replaceChild(newToggle, toggleNofollow);
+    // Settings - Link Highlighting Toggles
+    const linkTypes = ['nofollow', 'follow', 'external', 'internal', 'mailto', 'tel'];
 
-        newToggle.addEventListener('change', (e) => {
-            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                if (tabs[0]) {
-                    chrome.tabs.sendMessage(tabs[0].id, { action: "toggleNofollow" });
+    linkTypes.forEach(type => {
+        const toggle = document.getElementById(`toggle-${type}`);
+        if (toggle) {
+            // Load saved state from storage
+            chrome.storage.local.get([`highlight_${type}`], (result) => {
+                toggle.checked = result[`highlight_${type}`] || false;
+                // Apply saved state if checked
+                if (toggle.checked) {
+                    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                        if (tabs[0]) {
+                            chrome.tabs.sendMessage(tabs[0].id, {
+                                action: "toggleHighlight",
+                                linkType: type,
+                                enabled: true
+                            });
+                        }
+                    });
                 }
             });
-        });
-    }
+
+            // Add change listener
+            toggle.addEventListener('change', (e) => {
+                const enabled = e.target.checked;
+
+                // Save state
+                chrome.storage.local.set({ [`highlight_${type}`]: enabled });
+
+                // Send message to content script
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (tabs[0]) {
+                        chrome.tabs.sendMessage(tabs[0].id, {
+                            action: "toggleHighlight",
+                            linkType: type,
+                            enabled: enabled
+                        });
+                    }
+                });
+            });
+        }
+    });
 
 
 

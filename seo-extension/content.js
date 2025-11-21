@@ -534,16 +534,120 @@
         };
     }
 
+    // Inject CSS styles for link highlighting into the page
+    function injectHighlightStyles() {
+        if (document.getElementById('seo-analyzer-styles')) return; // Already injected
+
+        const style = document.createElement('style');
+        style.id = 'seo-analyzer-styles';
+        style.textContent = `
+            .seo-highlight-nofollow {
+                outline: 3px solid #ff4444 !important;
+                outline-offset: 2px !important;
+            }
+            .seo-highlight-follow {
+                outline: 3px solid #44ff44 !important;
+                outline-offset: 2px !important;
+            }
+            .seo-highlight-external {
+                outline: 3px solid #4444ff !important;
+                outline-offset: 2px !important;
+            }
+            .seo-highlight-internal {
+                outline: 3px solid #ffdd44 !important;
+                outline-offset: 2px !important;
+            }
+            .seo-highlight-mailto {
+                outline: 3px solid #ff44ff !important;
+                outline-offset: 2px !important;
+            }
+            .seo-highlight-tel {
+                outline: 3px solid #ff8844 !important;
+                outline-offset: 2px !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Get links by type
+    function getLinksByType(type) {
+        const currentHost = window.location.hostname;
+        const links = document.querySelectorAll('a[href]');
+        const filtered = [];
+
+        links.forEach(link => {
+            const href = link.href;
+
+            switch (type) {
+                case 'nofollow':
+                    if (link.rel && link.rel.includes('nofollow')) filtered.push(link);
+                    break;
+                case 'follow':
+                    if (!link.rel || !link.rel.includes('nofollow')) {
+                        // Exclude special links
+                        if (!href.startsWith('mailto:') && !href.startsWith('tel:') && !href.startsWith('javascript:')) {
+                            filtered.push(link);
+                        }
+                    }
+                    break;
+                case 'external':
+                    try {
+                        const url = new URL(href);
+                        if (url.hostname !== currentHost && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
+                            filtered.push(link);
+                        }
+                    } catch (e) { }
+                    break;
+                case 'internal':
+                    try {
+                        const url = new URL(href);
+                        if (url.hostname === currentHost) {
+                            filtered.push(link);
+                        }
+                    } catch (e) { }
+                    break;
+                case 'mailto':
+                    if (href.startsWith('mailto:')) filtered.push(link);
+                    break;
+                case 'tel':
+                    if (href.startsWith('tel:')) filtered.push(link);
+                    break;
+            }
+        });
+
+        return filtered;
+    }
+
+    // Toggle link highlighting
+    function toggleLinkHighlight(type, enabled) {
+        const className = `seo-highlight-${type}`;
+        const links = getLinksByType(type);
+
+        console.log(`[SEO Analyzer] ${enabled ? 'Enabling' : 'Disabling'} ${type} highlights (${links.length} links)`);
+
+        links.forEach(link => {
+            if (enabled) {
+                link.classList.add(className);
+            } else {
+                link.classList.remove(className);
+            }
+        });
+    }
+
+    // Inject styles on page load
+    injectHighlightStyles();
+
     // Listen for messages from popup
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === "getSEOData") {
             const data = extractSEOData();
             sendResponse(data);
         } else if (request.action === "toggleNofollow") {
-            const nofollowLinks = document.querySelectorAll('a[rel~="nofollow"]');
-            nofollowLinks.forEach(link => {
-                link.classList.toggle('seo-highlight-nofollow');
-            });
+            // Legacy support - convert to new format
+            toggleLinkHighlight('nofollow', request.enabled !== false);
+        } else if (request.action === "toggleHighlight") {
+            // New unified toggle action
+            toggleLinkHighlight(request.linkType, request.enabled);
         }
         return true; // Keep channel open
     });

@@ -178,13 +178,49 @@
 
             <!-- Settings Tab -->
             <div id="settings" class="tab-content">
+                <h3>Link Highlighting</h3>
+                <p class="help-text">Toggle highlighting for different link types on the webpage.</p>
+
                 <div class="data-group">
                     <div class="label-row">
-                        <label>Highlight Nofollow Links</label>
+                        <label><span style="color: #ff4444; font-size: 18px;">●</span> Nofollow Links</label>
                         <input type="checkbox" id="toggle-nofollow">
                     </div>
-                    <p class="help-text">Highlights all nofollow links on the page with a red outline.
-                    </p>
+                </div>
+
+                <div class="data-group">
+                    <div class="label-row">
+                        <label><span style="color: #44ff44; font-size: 18px;">●</span> Follow Links (Dofollow)</label>
+                        <input type="checkbox" id="toggle-follow">
+                    </div>
+                </div>
+
+                <div class="data-group">
+                    <div class="label-row">
+                        <label><span style="color: #4444ff; font-size: 18px;">●</span> External Links</label>
+                        <input type="checkbox" id="toggle-external">
+                    </div>
+                </div>
+
+                <div class="data-group">
+                    <div class="label-row">
+                        <label><span style="color: #ffdd44; font-size: 18px;">●</span> Internal Links</label>
+                        <input type="checkbox" id="toggle-internal">
+                    </div>
+                </div>
+
+                <div class="data-group">
+                    <div class="label-row">
+                        <label><span style="color: #ff44ff; font-size: 18px;">●</span> mailto Links</label>
+                        <input type="checkbox" id="toggle-mailto">
+                    </div>
+                </div>
+
+                <div class="data-group">
+                    <div class="label-row">
+                        <label><span style="color: #ff8844; font-size: 18px;">●</span> tel Links</label>
+                        <input type="checkbox" id="toggle-tel">
+                    </div>
                 </div>
             </div>
         </main>
