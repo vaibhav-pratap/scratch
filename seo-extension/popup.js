@@ -251,6 +251,60 @@ function renderData(data) {
                 intList.innerHTML += `<div class="link-item"><a href="${l.href}" target="_blank">${l.text || l.href}</a></div>`;
             });
         }
+        // Schema Tab
+        const hreflangContainer = document.getElementById('hreflang-list');
+        if (hreflangContainer) {
+            if (data.hreflang && data.hreflang.length) {
+                hreflangContainer.innerHTML = '';
+                data.hreflang.forEach(h => {
+                    hreflangContainer.innerHTML += `<div class="data-group" style="margin-bottom: 8px;"><div class="label-row"><label>${h.lang}</label></div><div class="data-value"><a href="${h.href}" target="_blank">${h.href}</a></div></div>`;
+                });
+            } else {
+                hreflangContainer.innerHTML = '<div class="data-value">No hreflang tags found.</div>';
+            }
+        }
+
+        const paaContainer = document.getElementById('paa-list');
+        if (paaContainer) {
+            if (data.paa && data.paa.length) {
+                paaContainer.innerHTML = '';
+                data.paa.forEach(q => {
+                    paaContainer.innerHTML += `<div class="suggestion-item">${q}</div>`;
+                });
+            } else {
+                paaContainer.innerHTML = '<div class="data-value">No PAA questions found (or not on Google SERP).</div>';
+            }
+        }
+
+        // Sitemap Button
+        const btnSitemap = document.getElementById('btn-sitemap');
+        if (btnSitemap) {
+            btnSitemap.onclick = () => {
+                try {
+                    const url = new URL(data.url);
+                    const sitemapUrl = `${url.origin}/sitemap.xml`;
+                    chrome.tabs.create({ url: sitemapUrl });
+                } catch (e) {
+                    console.error("Invalid URL", e);
+                }
+            };
+        }
+
+        // Settings - Nofollow Toggle
+        const toggleNofollow = document.getElementById('toggle-nofollow');
+        if (toggleNofollow) {
+            // Remove existing listeners to prevent duplicates if renderData is called multiple times
+            const newToggle = toggleNofollow.cloneNode(true);
+            toggleNofollow.parentNode.replaceChild(newToggle, toggleNofollow);
+
+            newToggle.addEventListener('change', (e) => {
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (tabs[0]) {
+                        chrome.tabs.sendMessage(tabs[0].id, { action: "toggleNofollow" });
+                    }
+                });
+            });
+        }
     }
 
     // Analysis & Score
@@ -263,29 +317,8 @@ function renderData(data) {
     const btnDownload = document.getElementById('btn-download');
     if (btnDownload) btnDownload.onclick = () => downloadData(data, 'json');
 
-    const btnCsv = document.getElementById('btn-download-csv');
-    if (btnCsv) btnCsv.onclick = () => downloadData(data, 'csv');
-
-    // Copy Icons
-    document.querySelectorAll('.copy-icon-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const targetId = btn.dataset.copy;
-            const el = document.getElementById(targetId);
-            if (el) {
-                const text = el.innerText;
-                navigator.clipboard.writeText(text).then(() => {
-                    const originalColor = btn.style.color;
-                    btn.style.color = 'var(--success-color)';
-                    setTimeout(() => btn.style.color = originalColor, 1000);
-                });
-            }
-        });
-    });
-}
-
-function setText(id, text) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
+    const btnDownloadCsv = document.getElementById('btn-download-csv');
+    if (btnDownloadCsv) btnDownloadCsv.onclick = () => downloadData(data, 'csv');
 }
 
 function analyzeData(data) {
@@ -374,45 +407,4 @@ function analyzeData(data) {
         else if (score >= 70) scoreEl.style.color = 'var(--warning-color)';
         else scoreEl.style.color = 'var(--error-color)';
     }
-}
-
-function copyData(data) {
-    const text = JSON.stringify(data, null, 2);
-    navigator.clipboard.writeText(text).then(() => {
-        const btn = document.getElementById('btn-copy');
-        if (btn) {
-            const originalText = btn.textContent;
-            btn.textContent = 'Copied!';
-            setTimeout(() => btn.textContent = originalText, 1500);
-        }
-    });
-}
-
-function downloadData(data, format) {
-    let content, type, ext;
-    if (format === 'json') {
-        content = JSON.stringify(data, null, 2);
-        type = 'application/json';
-        ext = 'json';
-    } else {
-        // Simple CSV flattening
-        const rows = [['Type', 'Key', 'Value']];
-        rows.push(['Meta', 'Title', data.title]);
-        rows.push(['Meta', 'Description', data.description]);
-        data.headings.forEach(h => rows.push(['Heading', h.tag, h.text]));
-        data.images.forEach(i => rows.push(['Image', i.src, i.alt]));
-        content = rows.map(r => r.map(c => `"${(c || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
-        type = 'text/csv';
-        ext = 'csv';
-    }
-
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `seo-data-${new Date().toISOString().slice(0, 10)}.${ext}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
 }

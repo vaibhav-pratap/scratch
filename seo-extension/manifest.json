@@ -1,9 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "Advanced SEO Analyzer",
-  "version": "1.0",
+  "name": "SEO Analyzer Pro",
+  "version": "1.0.0",
   "description": "Advanced SEO tool with Google-inspired UI to view, copy, and download SEO data.",
-  "permissions": ["activeTab", "scripting"],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "contextMenus"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html"
   }

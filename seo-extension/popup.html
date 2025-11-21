@@ -13,32 +13,44 @@
 
 <body>
     <div class="app-container">
+        <!-- Header: Logo + Actions + Tabs -->
         <header class="app-header">
-            <div class="logo-area">
-                <span class="google-g">G</span>
-                <h1>SEO Analyzer</h1>
+            <div class="header-top">
+                <div class="logo-area">
+                    <span class="google-g">SEO Analyser Pro</span>
+                    <span class="version">v1.0.0</span>
+                </div>
+                <div class="actions">
+                    <button id="theme-toggle" class="icon-btn" title="Toggle Dark Mode">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path
+                                d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z" />
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <div class="actions">
-                <button id="theme-toggle" class="icon-btn" title="Toggle Dark Mode">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <path
-                            d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z" />
-                    </svg>
-                </button>
+            <div class="header-bottom">
+                <div class="content-area">
+                    <span class="author">by <a href="https://exiverlabs.co.in/" target="_blank"
+                            rel="noopener noreferrer">ExiverLabs</a></span>
+                </div>
             </div>
+            <nav class="tabs-container">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="overview">Overview</button>
+                    <button class="tab-btn" data-tab="meta">Meta</button>
+                    <button class="tab-btn" data-tab="headings">Headings</button>
+                    <button class="tab-btn" data-tab="images">Images</button>
+                    <button class="tab-btn" data-tab="links">Links</button>
+                    <button class="tab-btn" data-tab="schema">Schema</button>
+                    <button class="tab-btn" data-tab="settings">Settings</button>
+                </div>
+            </nav>
         </header>
 
-        <nav class="tabs">
-            <button class="tab-btn active" data-tab="overview">Overview</button>
-            <button class="tab-btn" data-tab="meta">Meta</button>
-            <button class="tab-btn" data-tab="social">Social</button>
-            <button class="tab-btn" data-tab="headings">Headings</button>
-            <button class="tab-btn" data-tab="images">Images</button>
-            <button class="tab-btn" data-tab="internal">Internal</button>
-            <button class="tab-btn" data-tab="external">External</button>
-        </nav>
-
+        <!-- Main Content Area -->
         <main class="content-area">
+            <!-- Overview Tab -->
             <div id="overview" class="tab-content active">
                 <div class="score-card">
                     <div class="score-circle">
@@ -56,69 +68,63 @@
                         </div>
                     </div>
                 </div>
-                <div class="suggestions-list" id="suggestions-container">
+                <div id="suggestions-container" class="suggestions-list">
                     <div class="loading-spinner">Analyzing page...</div>
                 </div>
             </div>
 
+            <!-- Meta Tab -->
             <div id="meta" class="tab-content">
                 <div class="data-group">
                     <div class="label-row">
                         <label>Title</label>
-                        <button class="copy-icon-btn" data-copy="meta-title" title="Copy">
+                        <button class="copy-icon-btn" onclick="copyText('meta-title')" title="Copy">
                             <svg viewBox="0 0 24 24" width="14" height="14">
                                 <path
                                     d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                             </svg>
                         </button>
                     </div>
-                    <div class="data-value" id="meta-title"></div>
+                    <div id="meta-title" class="data-value"></div>
                 </div>
                 <div class="data-group">
                     <div class="label-row">
                         <label>Description</label>
-                        <button class="copy-icon-btn" data-copy="meta-desc" title="Copy">
+                        <button class="copy-icon-btn" onclick="copyText('meta-desc')" title="Copy">
                             <svg viewBox="0 0 24 24" width="14" height="14">
                                 <path
                                     d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                             </svg>
                         </button>
                     </div>
-                    <div class="data-value" id="meta-desc"></div>
+                    <div id="meta-desc" class="data-value"></div>
                 </div>
                 <div class="data-group">
                     <div class="label-row">
                         <label>Keywords</label>
-                        <button class="copy-icon-btn" data-copy="meta-keywords" title="Copy">
+                        <button class="copy-icon-btn" onclick="copyText('meta-keywords')" title="Copy">
                             <svg viewBox="0 0 24 24" width="14" height="14">
                                 <path
                                     d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                             </svg>
                         </button>
                     </div>
-                    <div class="data-value" id="meta-keywords"></div>
+                    <div id="meta-keywords" class="data-value"></div>
                 </div>
                 <div class="data-group">
                     <label>Canonical URL</label>
-                    <div class="data-value" id="meta-canonical"></div>
+                    <div id="meta-canonical" class="data-value"></div>
                 </div>
-                <div class="data-group">
-                    <label>Robots</label>
-                    <div class="data-value" id="meta-robots"></div>
-                </div>
+                <div id="og-data"></div>
+                <div id="twitter-data"></div>
             </div>
 
-            <div id="social" class="tab-content">
-                <h3>Open Graph</h3>
-                <div id="og-data" class="key-value-list"></div>
-                <h3>Twitter Card</h3>
-                <div id="twitter-data" class="key-value-list"></div>
-            </div>
-
+            <!-- Headings Tab -->
             <div id="headings" class="tab-content">
                 <div id="headings-list" class="headings-tree"></div>
             </div>
 
+            <!-- Images Tab -->
             <div id="images" class="tab-content">
                 <div class="stats-row">
                     <span>Total: <b id="img-total">0</b></span>
@@ -127,21 +133,49 @@
                 <div id="images-list" class="images-grid"></div>
             </div>
 
-            <div id="internal" class="tab-content">
+            <!-- Links Tab -->
+            <div id="links" class="tab-content">
                 <div class="stats-row">
-                    <span>Total Internal: <b id="link-internal-count">0</b></span>
+                    <span>Internal: <b id="link-internal-count">0</b></span>
+                    <span>External: <b id="link-external-count">0</b></span>
                 </div>
+                <h3>External Links</h3>
+                <div id="external-links-list" class="links-list"></div>
+                <h3>Internal Links</h3>
                 <div id="internal-links-list" class="links-list"></div>
             </div>
 
-            <div id="external" class="tab-content">
-                <div class="stats-row">
-                    <span>Total External: <b id="link-external-count">0</b></span>
+            <!-- Schema Tab -->
+            <div id="schema" class="tab-content">
+                <div class="data-group">
+                    <div class="label-row">
+                        <label>Sitemap</label>
+                        <button id="btn-sitemap" class="action-btn secondary small">Open Sitemap.xml</button>
+                    </div>
                 </div>
-                <div id="external-links-list" class="links-list"></div>
+                <div class="data-group">
+                    <label>Hreflang Tags</label>
+                    <div id="hreflang-list"></div>
+                </div>
+                <div class="data-group">
+                    <label>People Also Asked (Google SERP)</label>
+                    <div id="paa-list" class="suggestions-list"></div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <div class="data-group">
+                    <div class="label-row">
+                        <label>Highlight Nofollow Links</label>
+                        <input type="checkbox" id="toggle-nofollow">
+                    </div>
+                    <p class="help-text">Highlights all nofollow links on the page with a red outline.</p>
+                </div>
             </div>
         </main>
 
+        <!-- Footer -->
         <footer class="app-footer">
             <button id="btn-copy" class="action-btn secondary">
                 <svg width="18" height="18" viewBox="0 0 24 24">

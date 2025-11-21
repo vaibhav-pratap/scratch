@@ -70,6 +70,25 @@
         return { internal, external };
     }
 
+    function getHreflangs() {
+        return Array.from(document.querySelectorAll('link[rel="alternate"][hreflang]')).map(el => ({
+            lang: el.getAttribute('hreflang'),
+            href: el.getAttribute('href')
+        }));
+    }
+
+    function getPAA() {
+        if (!window.location.hostname.includes('google')) return [];
+
+        const questions = [];
+        // Common selector for PAA questions in Google SERP
+        const elements = document.querySelectorAll('.related-question-pair .v7jaNc, .related-question-pair .CSkcDe, .related-question-pair .wQiwMc');
+        elements.forEach(el => {
+            if (el.innerText) questions.push(el.innerText);
+        });
+        return questions;
+    }
+
     function extractSEOData() {
         return {
             title: document.title,
@@ -82,6 +101,8 @@
             links: getLinks(),
             og: getOGTags(),
             twitter: getTwitterTags(),
+            hreflang: getHreflangs(),
+            paa: getPAA(),
             url: window.location.href,
             timestamp: new Date().toISOString()
         };
@@ -92,6 +113,11 @@
         if (request.action === "getSEOData") {
             const data = extractSEOData();
             sendResponse(data);
+        } else if (request.action === "toggleNofollow") {
+            const nofollowLinks = document.querySelectorAll('a[rel~="nofollow"]');
+            nofollowLinks.forEach(link => {
+                link.classList.toggle('seo-highlight-nofollow');
+            });
         }
         return true; // Keep channel open
     });

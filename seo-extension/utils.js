@@ -75,3 +75,8 @@ function convertToCSV(data) {
 
     return rows.map(row => row.join(',')).join('\n');
 }
+
+function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+}
