@@ -13,7 +13,7 @@
 
 <body>
     <div class="app-container">
-        <!-- Header: Logo + Actions + Tabs -->
+        <!-- Header -->
         <header class="app-header">
             <div class="header-top">
                 <div class="logo-area">
@@ -30,7 +30,7 @@
                 </div>
             </div>
             <div class="header-bottom">
-                <div class="content-area">
+                <div class="content-area-header">
                     <span class="author">by <a href="https://exiverlabs.co.in/" target="_blank"
                             rel="noopener noreferrer">ExiverLabs</a></span>
                 </div>
@@ -48,7 +48,7 @@
             </nav>
         </header>
 
-        <!-- Main Content Area -->
+        <!-- Main Content -->
         <main class="content-area">
             <!-- Overview Tab -->
             <div id="overview" class="tab-content active">
@@ -68,57 +68,78 @@
                         </div>
                     </div>
                 </div>
-                <div class="data-group" style="margin-top: 12px;">
-                    <label>Detected Technology / Plugins</label>
+
+                <div id="suggestions-container" class="suggestions-list"></div>
+
+                <div class="data-group" style="margin-top: 16px;">
+                    <label>Detected Technology</label>
                     <div id="tech-stack" class="data-value">--</div>
-                </div>
-                <div id="suggestions-container" class="suggestions-list">
-                    <div class="loading-spinner">Analyzing page...</div>
                 </div>
             </div>
 
             <!-- Meta Tab -->
             <div id="meta" class="tab-content">
                 <div class="data-group">
+                    <label>Title</label>
                     <div class="label-row">
-                        <label>Title</label>
-                        <button class="copy-icon-btn" onclick="copyText('meta-title')" title="Copy">
+                        <div id="meta-title" class="data-value"></div>
+                        <button id="btn-copy-title" class="copy-icon-btn" title="Copy">
                             <svg viewBox="0 0 24 24" width="14" height="14">
                                 <path
                                     d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                             </svg>
                         </button>
                     </div>
-                    <div id="meta-title" class="data-value"></div>
                 </div>
                 <div class="data-group">
+                    <label>Description</label>
                     <div class="label-row">
-                        <label>Description</label>
-                        <button class="copy-icon-btn" onclick="copyText('meta-desc')" title="Copy">
+                        <div id="meta-desc" class="data-value"></div>
+                        <button id="btn-copy-desc" class="copy-icon-btn" title="Copy">
                             <svg viewBox="0 0 24 24" width="14" height="14">
                                 <path
                                     d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                             </svg>
                         </button>
                     </div>
-                    <div id="meta-desc" class="data-value"></div>
                 </div>
                 <div class="data-group">
+                    <label>Keywords</label>
                     <div class="label-row">
-                        <label>Keywords</label>
-                        <button class="copy-icon-btn" onclick="copyText('meta-keywords')" title="Copy">
+                        <div id="meta-keywords" class="data-value"></div>
+                        <button id="btn-copy-keywords" class="copy-icon-btn" title="Copy">
                             <svg viewBox="0 0 24 24" width="14" height="14">
                                 <path
                                     d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                             </svg>
                         </button>
                     </div>
-                    <div id="meta-keywords" class="data-value"></div>
                 </div>
                 <div class="data-group">
                     <label>Canonical URL</label>
-                    <div id="meta-canonical" class="data-value"></div>
+                    <div class="label-row">
+                        <div id="meta-canonical" class="data-value"></div>
+                        <button id="btn-copy-canonical" class="copy-icon-btn" title="Copy">
+                            <svg viewBox="0 0 24 24" width="14" height="14">
+                                <path
+                                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
+                <div class="data-group">
+                    <label>Robots Tag</label>
+                    <div class="label-row">
+                        <div id="meta-robots" class="data-value"></div>
+                        <button id="btn-copy-robots" class="copy-icon-btn" title="Copy">
+                            <svg viewBox="0 0 24 24" width="14" height="14">
+                                <path
+                                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
                 <div id="og-data"></div>
                 <div id="twitter-data"></div>
             </div>
@@ -132,7 +153,7 @@
             <div id="images" class="tab-content">
                 <div class="stats-row">
                     <span>Total: <b id="img-total">0</b></span>
-                    <span>Missing Alt: <b id="img-missing-alt" class="warning-text">0</b></span>
+                    <span>Missing Alt: <b id="img-missing-alt">0</b></span>
                 </div>
                 <div id="images-list" class="images-grid"></div>
             </div>
@@ -143,14 +164,18 @@
                     <span>Internal: <b id="link-internal-count">0</b></span>
                     <span>External: <b id="link-external-count">0</b></span>
                 </div>
+
                 <h3>External Links</h3>
                 <div id="external-links-list" class="links-list"></div>
+
                 <h3>Internal Links</h3>
                 <div id="internal-links-list" class="links-list"></div>
+
                 <h3>Email Addresses</h3>
-                <div id="emails-list" class="data-group"></div>
+                <div id="emails-list" class="data-group-container"></div>
+
                 <h3>Phone Numbers</h3>
-                <div id="phones-list" class="data-group"></div>
+                <div id="phones-list" class="data-group-container"></div>
             </div>
 
             <!-- Schema Tab -->
@@ -158,18 +183,20 @@
                 <div class="data-group">
                     <div class="label-row">
                         <label>Sitemap</label>
-                        <button id="btn-sitemap" class="action-btn secondary small">Open
-                            Sitemap.xml</button>
+                        <button id="btn-sitemap" class="action-btn secondary small">Open Sitemap.xml</button>
                     </div>
                 </div>
+
                 <div class="data-group">
                     <label>Schema / Structured Data</label>
                     <div id="schema-list"></div>
                 </div>
+
                 <div class="data-group">
                     <label>Hreflang Tags</label>
                     <div id="hreflang-list"></div>
                 </div>
+
                 <div class="data-group">
                     <label>People Also Asked (Google SERP)</label>
                     <div id="paa-list" class="suggestions-list"></div>
@@ -183,7 +210,7 @@
 
                 <div class="data-group">
                     <div class="label-row">
-                        <label><span style="color: #ff4444; font-size: 18px;">●</span> Nofollow Links</label>
+                        <label>Nofollow Links</label>
                         <label class="switch">
                             <input type="checkbox" id="toggle-nofollow">
                             <span class="slider"></span>
@@ -193,7 +220,7 @@
 
                 <div class="data-group">
                     <div class="label-row">
-                        <label><span style="color: #44ff44; font-size: 18px;">●</span> Follow Links (Dofollow)</label>
+                        <label>Follow Links (Dofollow)</label>
                         <label class="switch">
                             <input type="checkbox" id="toggle-follow">
                             <span class="slider"></span>
@@ -203,7 +230,7 @@
 
                 <div class="data-group">
                     <div class="label-row">
-                        <label><span style="color: #4444ff; font-size: 18px;">●</span> External Links</label>
+                        <label>External Links</label>
                         <label class="switch">
                             <input type="checkbox" id="toggle-external">
                             <span class="slider"></span>
@@ -213,7 +240,7 @@
 
                 <div class="data-group">
                     <div class="label-row">
-                        <label><span style="color: #ffdd44; font-size: 18px;">●</span> Internal Links</label>
+                        <label>Internal Links</label>
                         <label class="switch">
                             <input type="checkbox" id="toggle-internal">
                             <span class="slider"></span>
@@ -223,7 +250,7 @@
 
                 <div class="data-group">
                     <div class="label-row">
-                        <label><span style="color: #ff44ff; font-size: 18px;">●</span> mailto Links</label>
+                        <label>mailto Links</label>
                         <label class="switch">
                             <input type="checkbox" id="toggle-mailto">
                             <span class="slider"></span>
@@ -233,7 +260,7 @@
 
                 <div class="data-group">
                     <div class="label-row">
-                        <label><span style="color: #ff8844; font-size: 18px;">●</span> tel Links</label>
+                        <label>tel Links</label>
                         <label class="switch">
                             <input type="checkbox" id="toggle-tel">
                             <span class="slider"></span>
