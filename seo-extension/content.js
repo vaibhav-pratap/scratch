@@ -211,20 +211,223 @@
         return questions;
     }
 
+    function getSchema() {
+        const schemas = [];
+
+        // Helper: Validate common schema types
+        const validateSchema = (type, data) => {
+            const issues = [];
+            if (!type) return { valid: false, issues: ['Missing @type'] };
+
+            // Normalize type to array if string
+            const types = Array.isArray(type) ? type : [type];
+
+            types.forEach(t => {
+                if (t === 'Product') {
+                    if (!data.name) issues.push('Missing "name"');
+                    if (!data.offers && !data.review && !data.aggregateRating) issues.push('Missing "offers", "review", or "aggregateRating"');
+                }
+                if (t === 'Article' || t === 'NewsArticle' || t === 'BlogPosting') {
+                    if (!data.headline && !data.name) issues.push('Missing "headline" or "name"');
+                    if (!data.author) issues.push('Missing "author"');
+                    if (!data.publisher) issues.push('Missing "publisher"');
+                    if (!data.datePublished) issues.push('Missing "datePublished"');
+                }
+                if (t === 'BreadcrumbList') {
+                    if (!data.itemListElement) issues.push('Missing "itemListElement"');
+                }
+                if (t === 'Organization' || t === 'LocalBusiness') {
+                    if (!data.name) issues.push('Missing "name"');
+                }
+            });
+
+            return {
+                valid: issues.length === 0,
+                issues: issues
+            };
+        };
+
+        // Helper: Process JSON-LD item
+        const processJsonLdItem = (item, context = '') => {
+            if (!item) return;
+
+            // Handle @graph (array of items)
+            if (item['@graph'] && Array.isArray(item['@graph'])) {
+                item['@graph'].forEach(subItem => processJsonLdItem(subItem, context));
+                return;
+            }
+
+            const type = item['@type'] || 'Unknown';
+            const validation = validateSchema(type, item);
+            const details = Array.isArray(type) ? type.join(', ') : type;
+
+            schemas.push({
+                type: `JSON-LD (${details})`,
+                valid: validation.valid,
+                details: validation.valid ? 'Valid Structure' : `Issues: ${validation.issues.join(', ')}`,
+                data: item
+            });
+        };
+
+        // 1. JSON-LD
+        const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+        jsonLdScripts.forEach(script => {
+            try {
+                const json = JSON.parse(script.innerText);
+                const context = json['@context'] || '';
+
+                if (Array.isArray(json)) {
+                    json.forEach(item => processJsonLdItem(item, context));
+                } else {
+                    processJsonLdItem(json, context);
+                }
+            } catch (e) {
+                schemas.push({
+                    type: 'JSON-LD (Error)',
+                    valid: false,
+                    details: 'Syntax Error: ' + e.message,
+                    data: { raw: script.innerText.substring(0, 500) }
+                });
+            }
+        });
+
+        // 2. Microdata (Recursive extraction)
+        const extractMicrodata = (element) => {
+            const item = {};
+            const type = element.getAttribute('itemtype');
+            if (type) item['@type'] = type;
+
+            // Get properties
+            const props = element.querySelectorAll('[itemprop]');
+            props.forEach(prop => {
+                // Only direct children or those not nested in another itemscope
+                if (prop.closest('[itemscope]') === element) {
+                    const name = prop.getAttribute('itemprop');
+                    let value;
+
+                    if (prop.hasAttribute('itemscope')) {
+                        value = extractMicrodata(prop); // Recurse
+                    } else if (prop.tagName === 'META') {
+                        value = prop.getAttribute('content');
+                    } else if (prop.tagName === 'IMG') {
+                        value = prop.getAttribute('src');
+                    } else if (prop.tagName === 'A') {
+                        value = prop.getAttribute('href');
+                    } else if (prop.tagName === 'TIME') {
+                        value = prop.getAttribute('datetime') || prop.innerText;
+                    } else {
+                        value = prop.innerText.trim();
+                    }
+
+                    if (item[name]) {
+                        if (!Array.isArray(item[name])) item[name] = [item[name]];
+                        item[name].push(value);
+                    } else {
+                        item[name] = value;
+                    }
+                }
+            });
+            return item;
+        };
+
+        const microdataItems = document.querySelectorAll('[itemscope]');
+        microdataItems.forEach(item => {
+            // Only top-level items
+            if (!item.parentElement.closest('[itemscope]')) {
+                const data = extractMicrodata(item);
+                const type = data['@type'] || 'Unknown Microdata';
+                schemas.push({
+                    type: `Microdata (${type.split('/').pop()})`, // Clean up URL types
+                    valid: true, // Basic validation only
+                    details: 'Extracted from Microdata attributes',
+                    data: data
+                });
+            }
+        });
+
+        // 3. RDFa (Basic detection)
+        const rdfaItems = document.querySelectorAll('[vocab], [typeof]');
+        rdfaItems.forEach(item => {
+            if (!item.parentElement.closest('[vocab], [typeof]')) {
+                const type = item.getAttribute('typeof') || item.getAttribute('vocab') || 'Unknown';
+                schemas.push({
+                    type: `RDFa (${type})`,
+                    valid: true,
+                    details: 'Detected RDFa container',
+                    data: {
+                        type: type,
+                        html: item.outerHTML.substring(0, 200) + '...'
+                    }
+                });
+            }
+        });
+
+        return schemas;
+    }
+
+    function getSEOPlugins() {
+        const plugins = [];
+        const html = document.documentElement.outerHTML;
+
+        // 1. Yoast SEO
+        if (html.includes('This site is optimized with the Yoast SEO plugin') || document.querySelector('script[type="application/ld+json"].yoast-schema-graph')) {
+            plugins.push('Yoast SEO');
+        }
+
+        // 2. RankMath
+        if (html.includes('Rank Math') || document.querySelector('meta[name="generator"][content*="Rank Math"]')) {
+            plugins.push('RankMath');
+        }
+
+        // 3. All in One SEO (AIOSEO)
+        if (html.includes('All in One SEO') || document.querySelector('meta[name="generator"][content*="All in One SEO"]')) {
+            plugins.push('All in One SEO');
+        }
+
+        // 4. SEOPress
+        if (html.includes('SEOPress') || document.querySelector('meta[name="generator"][content*="SEOPress"]')) {
+            plugins.push('SEOPress');
+        }
+
+        // 5. The SEO Framework
+        if (html.includes('The SEO Framework')) {
+            plugins.push('The SEO Framework');
+        }
+
+        // 6. CMS/Platform Detection
+        if (document.querySelector('meta[name="generator"][content*="WordPress"]')) plugins.push('WordPress');
+        if (html.includes('shopify.com')) plugins.push('Shopify');
+        if (html.includes('wix.com')) plugins.push('Wix');
+        if (html.includes('squarespace.com')) plugins.push('Squarespace');
+
+        return [...new Set(plugins)]; // Remove duplicates
+    }
+
+    function safeExtract(fn, fallback = null) {
+        try {
+            return fn();
+        } catch (e) {
+            console.error("Extraction Error:", e);
+            return fallback;
+        }
+    }
+
     function extractSEOData() {
         return {
             title: document.title,
-            description: getMetaContent('description'),
-            keywords: getMetaContent('keywords'),
-            canonical: document.querySelector('link[rel="canonical"]')?.href || null,
-            robots: getMetaContent('robots'),
-            headings: getHeadings(),
-            images: getImages(),
-            links: getLinks(),
-            og: getOGTags(),
-            twitter: getTwitterTags(),
-            hreflang: getHreflangs(),
-            paa: getPAA(),
+            description: safeExtract(() => getMetaContent('description')),
+            keywords: safeExtract(() => getMetaContent('keywords')),
+            canonical: safeExtract(() => document.querySelector('link[rel="canonical"]')?.href),
+            robots: safeExtract(() => getMetaContent('robots')),
+            headings: safeExtract(getHeadings, []),
+            images: safeExtract(getImages, []),
+            links: safeExtract(getLinks, { internal: [], external: [] }),
+            og: safeExtract(getOGTags, {}),
+            twitter: safeExtract(getTwitterTags, {}),
+            hreflang: safeExtract(getHreflangs, []),
+            paa: safeExtract(getPAA, []),
+            schema: safeExtract(getSchema, []),
+            plugins: safeExtract(getSEOPlugins, []),
             url: window.location.href,
             timestamp: new Date().toISOString()
         };

@@ -67,27 +67,34 @@ async function init() {
         }
 
         // Request Data
+        console.log("Requesting SEO Data...");
         chrome.tabs.sendMessage(tab.id, { action: "getSEOData" }, (response) => {
             if (chrome.runtime.lastError) {
+                console.warn("Runtime Error:", chrome.runtime.lastError.message);
                 // If we have saved data, we might not want to show an error immediately, 
                 // but for now let's show it if we couldn't get fresh data and have no saved data?
                 // Or just show it.
                 if (!savedData) {
-                    showError("Please refresh the page and try again.");
+                    showError("Please refresh the page and try again. (Error: " + chrome.runtime.lastError.message + ")");
                 }
                 return;
             }
+            console.log("Received Data:", response);
             if (response) {
                 renderData(response);
+            } else {
+                showError("Received empty response from content script.");
             }
         });
 
     } catch (error) {
+        console.error("Init Error:", error);
         showError("An error occurred: " + error.message);
     }
 }
 
 function showError(msg) {
+    console.error("Show Error:", msg);
     const container = document.querySelector('.content-area');
     if (container) {
         container.innerHTML = `<div class="suggestion-item error">${msg}</div>`;
@@ -117,6 +124,16 @@ function renderData(data) {
     setText('meta-keywords', data.keywords || 'Missing');
     setText('meta-canonical', data.canonical || 'Missing');
     setText('meta-robots', data.robots || 'Missing');
+
+    // Tech Stack
+    const techStackEl = document.getElementById('tech-stack');
+    if (techStackEl) {
+        if (data.plugins && data.plugins.length > 0) {
+            techStackEl.innerHTML = data.plugins.map(p => `<span class="tag">${p}</span>`).join(' ');
+        } else {
+            techStackEl.textContent = 'None detected';
+        }
+    }
 
     // Social
     const ogContainer = document.getElementById('og-data');
@@ -252,6 +269,48 @@ function renderData(data) {
             });
         }
         // Schema Tab
+        const schemaContainer = document.getElementById('schema-list');
+        if (schemaContainer) {
+            if (data.schema && data.schema.length) {
+                schemaContainer.innerHTML = '';
+                data.schema.forEach(s => {
+                    const statusClass = s.valid ? 'success-text' : 'error-text';
+                    const statusText = s.valid ? 'Valid' : 'Invalid';
+                    const div = document.createElement('div');
+                    div.className = 'data-group';
+                    div.style.marginBottom = '12px';
+                    div.style.borderLeft = s.valid ? '3px solid var(--success-color)' : '3px solid var(--error-color)';
+                    div.style.paddingLeft = '8px';
+
+                    div.innerHTML = `
+                        <div class="label-row">
+                            <label>${s.type}</label>
+                            <span class="${statusClass}" style="font-size: 12px; font-weight: 500;">${statusText}</span>
+                        </div>
+                        <div class="data-value" style="margin-bottom: 4px;">${s.details}</div>
+                        <div class="label-row" style="margin-top: 4px;">
+                             <button class="action-btn secondary small copy-schema-btn">Copy Data</button>
+                        </div>
+                    `;
+
+                    // Copy Button Logic
+                    const btn = div.querySelector('.copy-schema-btn');
+                    btn.onclick = () => {
+                        const textToCopy = typeof s.data === 'string' ? s.data : JSON.stringify(s.data, null, 2);
+                        navigator.clipboard.writeText(textToCopy).then(() => {
+                            const originalText = btn.textContent;
+                            btn.textContent = 'Copied!';
+                            setTimeout(() => btn.textContent = originalText, 1500);
+                        });
+                    };
+
+                    schemaContainer.appendChild(div);
+                });
+            } else {
+                schemaContainer.innerHTML = '<div class="data-value">No Schema or Structured Data found.</div>';
+            }
+        }
+
         const hreflangContainer = document.getElementById('hreflang-list');
         if (hreflangContainer) {
             if (data.hreflang && data.hreflang.length) {
@@ -306,6 +365,8 @@ function renderData(data) {
             });
         }
     }
+
+
 
     // Analysis & Score
     analyzeData(data);
@@ -407,4 +468,10 @@ function analyzeData(data) {
         else if (score >= 70) scoreEl.style.color = 'var(--warning-color)';
         else scoreEl.style.color = 'var(--error-color)';
     }
+}
+
+// Helper: Set Text
+function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
 }
