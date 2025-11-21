@@ -291,7 +291,8 @@ function renderData(data) {
 
                     const copyBtn = div.querySelector('.copy-email');
                     copyBtn.addEventListener('click', () => {
-                        navigator.clipboard.writeText(email).then(() => {
+                        const textToCopy = `mailto:${email}`;
+                        navigator.clipboard.writeText(textToCopy).then(() => {
                             const originalHTML = copyBtn.innerHTML;
                             copyBtn.innerHTML = '✓';
                             setTimeout(() => copyBtn.innerHTML = originalHTML, 1500);
@@ -327,7 +328,8 @@ function renderData(data) {
 
                     const copyBtn = div.querySelector('.copy-phone');
                     copyBtn.addEventListener('click', () => {
-                        navigator.clipboard.writeText(phone.number).then(() => {
+                        const textToCopy = `tel:${phone.number}`;
+                        navigator.clipboard.writeText(textToCopy).then(() => {
                             const originalHTML = copyBtn.innerHTML;
                             copyBtn.innerHTML = '✓';
                             setTimeout(() => copyBtn.innerHTML = originalHTML, 1500);
