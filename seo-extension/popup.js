@@ -268,102 +268,175 @@ function renderData(data) {
                 intList.innerHTML += `<div class="link-item"><a href="${l.href}" target="_blank">${l.text || l.href}</a></div>`;
             });
         }
-        // Schema Tab
-        const schemaContainer = document.getElementById('schema-list');
-        if (schemaContainer) {
-            if (data.schema && data.schema.length) {
-                schemaContainer.innerHTML = '';
-                data.schema.forEach(s => {
-                    const statusClass = s.valid ? 'success-text' : 'error-text';
-                    const statusText = s.valid ? 'Valid' : 'Invalid';
+
+        // Emails
+        const emailsList = document.getElementById('emails-list');
+        if (emailsList) {
+            if (data.emails && data.emails.length > 0) {
+                emailsList.innerHTML = '';
+                data.emails.forEach(email => {
                     const div = document.createElement('div');
                     div.className = 'data-group';
-                    div.style.marginBottom = '12px';
-                    div.style.borderLeft = s.valid ? '3px solid var(--success-color)' : '3px solid var(--error-color)';
-                    div.style.paddingLeft = '8px';
-
+                    div.style.marginBottom = '8px';
                     div.innerHTML = `
                         <div class="label-row">
-                            <label>${s.type}</label>
-                            <span class="${statusClass}" style="font-size: 12px; font-weight: 500;">${statusText}</span>
-                        </div>
-                        <div class="data-value" style="margin-bottom: 4px;">${s.details}</div>
-                        <div class="label-row" style="margin-top: 4px;">
-                             <button class="action-btn secondary small copy-schema-btn">Copy Data</button>
+                            <span style="flex: 1;">${email}</span>
+                            <button class="copy-icon-btn copy-email" data-email="${email}" title="Copy">
+                                <svg viewBox="0 0 24 24" width="14" height="14">
+                                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                                </svg>
+                            </button>
                         </div>
                     `;
 
-                    // Copy Button Logic
-                    const btn = div.querySelector('.copy-schema-btn');
-                    btn.onclick = () => {
-                        const textToCopy = typeof s.data === 'string' ? s.data : JSON.stringify(s.data, null, 2);
-                        navigator.clipboard.writeText(textToCopy).then(() => {
-                            const originalText = btn.textContent;
-                            btn.textContent = 'Copied!';
-                            setTimeout(() => btn.textContent = originalText, 1500);
+                    const copyBtn = div.querySelector('.copy-email');
+                    copyBtn.addEventListener('click', () => {
+                        navigator.clipboard.writeText(email).then(() => {
+                            const originalHTML = copyBtn.innerHTML;
+                            copyBtn.innerHTML = '✓';
+                            setTimeout(() => copyBtn.innerHTML = originalHTML, 1500);
                         });
-                    };
+                    });
 
-                    schemaContainer.appendChild(div);
+                    emailsList.appendChild(div);
                 });
             } else {
-                schemaContainer.innerHTML = '<div class="data-value">No Schema or Structured Data found.</div>';
+                emailsList.innerHTML = '<div class="data-value">No email addresses found.</div>';
             }
         }
 
-        const hreflangContainer = document.getElementById('hreflang-list');
-        if (hreflangContainer) {
-            if (data.hreflang && data.hreflang.length) {
-                hreflangContainer.innerHTML = '';
-                data.hreflang.forEach(h => {
-                    hreflangContainer.innerHTML += `<div class="data-group" style="margin-bottom: 8px;"><div class="label-row"><label>${h.lang}</label></div><div class="data-value"><a href="${h.href}" target="_blank">${h.href}</a></div></div>`;
+        // Phone Numbers
+        const phonesList = document.getElementById('phones-list');
+        if (phonesList) {
+            if (data.phones && data.phones.length > 0) {
+                phonesList.innerHTML = '';
+                data.phones.forEach(phone => {
+                    const div = document.createElement('div');
+                    div.className = 'data-group';
+                    div.style.marginBottom = '8px';
+                    div.innerHTML = `
+                        <div class="label-row">
+                            <span style="flex: 1;">${phone.display}</span>
+                            <button class="copy-icon-btn copy-phone" data-phone="${phone.number}" title="Copy">
+                                <svg viewBox="0 0 24 24" width="14" height="14">
+                                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+
+                    const copyBtn = div.querySelector('.copy-phone');
+                    copyBtn.addEventListener('click', () => {
+                        navigator.clipboard.writeText(phone.number).then(() => {
+                            const originalHTML = copyBtn.innerHTML;
+                            copyBtn.innerHTML = '✓';
+                            setTimeout(() => copyBtn.innerHTML = originalHTML, 1500);
+                        });
+                    });
+
+                    phonesList.appendChild(div);
                 });
             } else {
-                hreflangContainer.innerHTML = '<div class="data-value">No hreflang tags found.</div>';
+                phonesList.innerHTML = '<div class="data-value">No phone numbers found.</div>';
             }
         }
+    }
 
-        const paaContainer = document.getElementById('paa-list');
-        if (paaContainer) {
-            if (data.paa && data.paa.length) {
-                paaContainer.innerHTML = '';
-                data.paa.forEach(q => {
-                    paaContainer.innerHTML += `<div class="suggestion-item">${q}</div>`;
-                });
-            } else {
-                paaContainer.innerHTML = '<div class="data-value">No PAA questions found (or not on Google SERP).</div>';
-            }
-        }
+    // Schema Tab
+    const schemaContainer = document.getElementById('schema-list');
+    if (schemaContainer) {
+        if (data.schema && data.schema.length) {
+            schemaContainer.innerHTML = '';
+            data.schema.forEach(s => {
+                const statusClass = s.valid ? 'success-text' : 'error-text';
+                const statusText = s.valid ? 'Valid' : 'Invalid';
+                const div = document.createElement('div');
+                div.className = 'data-group';
+                div.style.marginBottom = '12px';
+                div.style.borderLeft = s.valid ? '3px solid var(--success-color)' : '3px solid var(--error-color)';
+                div.style.paddingLeft = '8px';
 
-        // Sitemap Button
-        const btnSitemap = document.getElementById('btn-sitemap');
-        if (btnSitemap) {
-            btnSitemap.onclick = () => {
-                try {
-                    const url = new URL(data.url);
-                    const sitemapUrl = `${url.origin}/sitemap.xml`;
-                    chrome.tabs.create({ url: sitemapUrl });
-                } catch (e) {
-                    console.error("Invalid URL", e);
-                }
-            };
-        }
+                div.innerHTML = `
+                    <div class="label-row">
+                        <label>${s.type}</label>
+                        <span class="${statusClass}" style="font-size: 12px; font-weight: 500;">${statusText}</span>
+                    </div>
+                    <div class="data-value" style="margin-bottom: 4px;">${s.details}</div>
+                    <div class="label-row" style="margin-top: 4px;">
+                         <button class="action-btn secondary small copy-schema-btn">Copy Data</button>
+                    </div>
+                `;
 
-        // Settings - Nofollow Toggle
-        const toggleNofollow = document.getElementById('toggle-nofollow');
-        if (toggleNofollow) {
-            // Remove existing listeners to prevent duplicates if renderData is called multiple times
-            const newToggle = toggleNofollow.cloneNode(true);
-            toggleNofollow.parentNode.replaceChild(newToggle, toggleNofollow);
+                // Copy Button Logic
+                const btn = div.querySelector('.copy-schema-btn');
+                btn.onclick = () => {
+                    const textToCopy = typeof s.data === 'string' ? s.data : JSON.stringify(s.data, null, 2);
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        const originalText = btn.textContent;
+                        btn.textContent = 'Copied!';
+                        setTimeout(() => btn.textContent = originalText, 1500);
+                    });
+                };
 
-            newToggle.addEventListener('change', (e) => {
-                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                    if (tabs[0]) {
-                        chrome.tabs.sendMessage(tabs[0].id, { action: "toggleNofollow" });
-                    }
-                });
+                schemaContainer.appendChild(div);
             });
+        } else {
+            schemaContainer.innerHTML = '<div class="data-value">No Schema or Structured Data found.</div>';
         }
+    }
+
+    const hreflangContainer = document.getElementById('hreflang-list');
+    if (hreflangContainer) {
+        if (data.hreflang && data.hreflang.length) {
+            hreflangContainer.innerHTML = '';
+            data.hreflang.forEach(h => {
+                hreflangContainer.innerHTML += `<div class="data-group" style="margin-bottom: 8px;"><div class="label-row"><label>${h.lang}</label></div><div class="data-value"><a href="${h.href}" target="_blank">${h.href}</a></div></div>`;
+            });
+        } else {
+            hreflangContainer.innerHTML = '<div class="data-value">No hreflang tags found.</div>';
+        }
+    }
+
+    const paaContainer = document.getElementById('paa-list');
+    if (paaContainer) {
+        if (data.paa && data.paa.length) {
+            paaContainer.innerHTML = '';
+            data.paa.forEach(q => {
+                paaContainer.innerHTML += `<div class="suggestion-item">${q}</div>`;
+            });
+        } else {
+            paaContainer.innerHTML = '<div class="data-value">No PAA questions found (or not on Google SERP).</div>';
+        }
+    }
+
+    // Sitemap Button
+    const btnSitemap = document.getElementById('btn-sitemap');
+    if (btnSitemap) {
+        btnSitemap.onclick = () => {
+            try {
+                const url = new URL(data.url);
+                const sitemapUrl = `${url.origin}/sitemap.xml`;
+                chrome.tabs.create({ url: sitemapUrl });
+            } catch (e) {
+                console.error("Invalid URL", e);
+            }
+        };
+    }
+
+    // Settings - Nofollow Toggle
+    const toggleNofollow = document.getElementById('toggle-nofollow');
+    if (toggleNofollow) {
+        // Remove existing listeners to prevent duplicates if renderData is called multiple times
+        const newToggle = toggleNofollow.cloneNode(true);
+        toggleNofollow.parentNode.replaceChild(newToggle, toggleNofollow);
+
+        newToggle.addEventListener('change', (e) => {
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0]) {
+                    chrome.tabs.sendMessage(tabs[0].id, { action: "toggleNofollow" });
+                }
+            });
+        });
     }
 
 

@@ -211,6 +211,81 @@
         return questions;
     }
 
+    function getEmails() {
+        const emails = new Set();
+
+        // 1. Extract from mailto: links
+        document.querySelectorAll('a[href^="mailto:"]').forEach(link => {
+            const email = link.href.replace('mailto:', '').split('?')[0]; // Remove query params
+            if (email) emails.add(email.toLowerCase());
+        });
+
+        // 2. Extract from page text using regex
+        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+        const pageText = document.body.innerText;
+        const matches = pageText.match(emailRegex);
+        if (matches) {
+            matches.forEach(email => emails.add(email.toLowerCase()));
+        }
+
+        // 3. Extract from meta tags
+        document.querySelectorAll('meta[content*="@"]').forEach(meta => {
+            const content = meta.getAttribute('content');
+            const matches = content.match(emailRegex);
+            if (matches) {
+                matches.forEach(email => emails.add(email.toLowerCase()));
+            }
+        });
+
+        return Array.from(emails).sort();
+    }
+
+    function getPhoneNumbers() {
+        const phones = new Set();
+
+        // 1. Extract from tel: links
+        document.querySelectorAll('a[href^="tel:"]').forEach(link => {
+            const phone = link.href.replace('tel:', '').trim();
+            const displayText = link.innerText.trim();
+            if (phone) {
+                phones.add(JSON.stringify({
+                    number: phone,
+                    display: displayText || phone
+                }));
+            }
+        });
+
+        // 2. Extract from page text using comprehensive regex
+        // Matches: +1-234-567-8900, (234) 567-8900, 234-567-8900, 234.567.8900, etc.
+        const phoneRegex = /(\+?\d{1,3}[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g;
+        const pageText = document.body.innerText;
+        const matches = pageText.match(phoneRegex);
+        if (matches) {
+            matches.forEach(phone => {
+                // Only add if it looks like a valid phone (has at least 10 digits)
+                const digitsOnly = phone.replace(/\D/g, '');
+                if (digitsOnly.length >= 10) {
+                    phones.add(JSON.stringify({
+                        number: phone.trim(),
+                        display: phone.trim()
+                    }));
+                }
+            });
+        }
+
+        // Convert back from JSON strings to objects and remove duplicates
+        const uniquePhones = Array.from(phones).map(p => JSON.parse(p));
+
+        // Remove duplicates based on digits only
+        const seen = new Set();
+        return uniquePhones.filter(phone => {
+            const digits = phone.number.replace(/\D/g, '');
+            if (seen.has(digits)) return false;
+            seen.add(digits);
+            return true;
+        });
+    }
+
     function getSchema() {
         const schemas = [];
 
@@ -422,6 +497,8 @@
             headings: safeExtract(getHeadings, []),
             images: safeExtract(getImages, []),
             links: safeExtract(getLinks, { internal: [], external: [] }),
+            emails: safeExtract(getEmails, []),
+            phones: safeExtract(getPhoneNumbers, []),
             og: safeExtract(getOGTags, {}),
             twitter: safeExtract(getTwitterTags, {}),
             hreflang: safeExtract(getHreflangs, []),
