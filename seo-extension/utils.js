@@ -14,9 +14,9 @@ function downloadData(data, format = 'json') {
     let content, type, filename;
 
     if (format === 'csv') {
-        content = convertToCSV(data);
-        type = 'text/csv';
-        filename = `seo-report-${new Date().getTime()}.csv`;
+        content = convertToExcelXML(data);
+        type = 'application/vnd.ms-excel';
+        filename = `seo-report-${new Date().getTime()}.xls`;
     } else {
         content = JSON.stringify(data, null, 2);
         type = 'application/json';
@@ -34,46 +34,90 @@ function downloadData(data, format = 'json') {
     URL.revokeObjectURL(url);
 }
 
-function convertToCSV(data) {
-    const rows = [];
+function convertToExcelXML(data) {
+    const escapeXML = (str) => {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+    };
 
-    // General Info
-    rows.push(['Type', 'Key', 'Value']);
-    rows.push(['Meta', 'Title', `"${(data.title || '').replace(/"/g, '""')}"`]);
-    rows.push(['Meta', 'Description', `"${(data.description || '').replace(/"/g, '""')}"`]);
-    rows.push(['Meta', 'Keywords', `"${(data.keywords || '').replace(/"/g, '""')}"`]);
-    rows.push(['Meta', 'Canonical', `"${(data.canonical || '').replace(/"/g, '""')}"`]);
-    rows.push(['Meta', 'Robots', `"${(data.robots || '').replace(/"/g, '""')}"`]);
+    let xml = '<?xml version="1.0"?>\n' +
+        '<?mso-application progid="Excel.Sheet"?>\n' +
+        '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n' +
+        ' xmlns:o="urn:schemas-microsoft-com:office:office"\n' +
+        ' xmlns:x="urn:schemas-microsoft-com:office:excel"\n' +
+        ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"\n' +
+        ' xmlns:html="http://www.w3.org/TR/REC-html40">\n';
 
-    // OG
-    for (const [key, val] of Object.entries(data.og)) {
-        rows.push(['Open Graph', key, `"${val.replace(/"/g, '""')}"`]);
+    // Helper to create a worksheet
+    const createSheet = (name, rows) => {
+        let sheet = `<Worksheet ss:Name="${name}"><Table>\n`;
+        // Header Row
+        if (rows.length > 0) {
+            sheet += '<Row>\n';
+            Object.keys(rows[0]).forEach(key => {
+                sheet += `<Cell><Data ss:Type="String">${escapeXML(key)}</Data></Cell>\n`;
+            });
+            sheet += '</Row>\n';
+        }
+        // Data Rows
+        rows.forEach(row => {
+            sheet += '<Row>\n';
+            Object.values(row).forEach(val => {
+                sheet += `<Cell><Data ss:Type="String">${escapeXML(val)}</Data></Cell>\n`;
+            });
+            sheet += '</Row>\n';
+        });
+        sheet += '</Table></Worksheet>\n';
+        return sheet;
+    };
+
+    // 1. Overview Sheet
+    const overviewData = [
+        { Key: 'Title', Value: data.title },
+        { Key: 'Description', Value: data.description },
+        { Key: 'Keywords', Value: data.keywords },
+        { Key: 'Canonical', Value: data.canonical },
+        { Key: 'Robots', Value: data.robots }
+    ];
+    // Add OG/Twitter to Overview or separate? Let's add to Overview for now
+    if (data.og) {
+        Object.entries(data.og).forEach(([k, v]) => overviewData.push({ Key: `OG:${k}`, Value: v }));
     }
+    if (data.twitter) {
+        Object.entries(data.twitter).forEach(([k, v]) => overviewData.push({ Key: `Twitter:${k}`, Value: v }));
+    }
+    xml += createSheet('Overview', overviewData);
 
-    // Headings
-    data.headings.forEach(h => {
-        rows.push(['Heading', h.tag, `"${h.text.replace(/"/g, '""')}"`]);
-    });
+    // 2. Headings Sheet
+    const headingsData = data.headings.map(h => ({ Tag: h.tag, Text: h.text }));
+    xml += createSheet('Headings', headingsData);
 
-    // Images
-    data.images.forEach(img => {
-        rows.push(['Image', 'Src', `"${img.src}"`]);
-        rows.push(['Image', 'Alt', `"${(img.alt || '').replace(/"/g, '""')}"`]);
-    });
+    // 3. Images Sheet
+    const imagesData = data.images.map(img => ({ Src: img.src, Alt: img.alt }));
+    xml += createSheet('Images', imagesData);
 
-    // Links
+    // 4. Links Sheet
+    const linksData = [];
     if (data.links) {
-        data.links.internal.forEach(l => {
-            rows.push(['Link (Internal)', 'Href', `"${l.href}"`]);
-            rows.push(['Link (Internal)', 'Text', `"${l.text.replace(/"/g, '""')}"`]);
-        });
-        data.links.external.forEach(l => {
-            rows.push(['Link (External)', 'Href', `"${l.href}"`]);
-            rows.push(['Link (External)', 'Text', `"${l.text.replace(/"/g, '""')}"`]);
-        });
+        data.links.internal.forEach(l => linksData.push({ Type: 'Internal', Text: l.text, Href: l.href }));
+        data.links.external.forEach(l => linksData.push({ Type: 'External', Text: l.text, Href: l.href }));
     }
+    xml += createSheet('Links', linksData);
 
-    return rows.map(row => row.join(',')).join('\n');
+    // 5. Schema/Hreflang Sheet
+    const schemaData = [];
+    if (data.hreflang) {
+        data.hreflang.forEach(h => schemaData.push({ Type: 'Hreflang', Lang: h.lang, Url: h.href }));
+    }
+    xml += createSheet('Schema', schemaData);
+
+    xml += '</Workbook>';
+    return xml;
 }
 
 function setText(id, text) {
