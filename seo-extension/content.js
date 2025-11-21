@@ -542,28 +542,28 @@
         style.id = 'seo-analyzer-styles';
         style.textContent = `
             .seo-highlight-nofollow {
-                outline: 3px solid #ff4444 !important;
-                outline-offset: 2px !important;
+                background-color: rgba(255, 68, 68, 0.2) !important;
+                outline: 1px solid rgba(255, 68, 68, 0.5) !important;
             }
             .seo-highlight-follow {
-                outline: 3px solid #44ff44 !important;
-                outline-offset: 2px !important;
+                background-color: rgba(68, 255, 68, 0.2) !important;
+                outline: 1px solid rgba(68, 255, 68, 0.5) !important;
             }
             .seo-highlight-external {
-                outline: 3px solid #4444ff !important;
-                outline-offset: 2px !important;
+                background-color: rgba(68, 68, 255, 0.2) !important;
+                outline: 1px solid rgba(68, 68, 255, 0.5) !important;
             }
             .seo-highlight-internal {
-                outline: 3px solid #ffdd44 !important;
-                outline-offset: 2px !important;
+                background-color: rgba(255, 221, 68, 0.2) !important;
+                outline: 1px solid rgba(255, 221, 68, 0.5) !important;
             }
             .seo-highlight-mailto {
-                outline: 3px solid #ff44ff !important;
-                outline-offset: 2px !important;
+                background-color: rgba(255, 68, 255, 0.2) !important;
+                outline: 1px solid rgba(255, 68, 255, 0.5) !important;
             }
             .seo-highlight-tel {
-                outline: 3px solid #ff8844 !important;
-                outline-offset: 2px !important;
+                background-color: rgba(255, 136, 68, 0.2) !important;
+                outline: 1px solid rgba(255, 136, 68, 0.5) !important;
             }
         `;
         document.head.appendChild(style);
@@ -642,6 +642,10 @@
         if (request.action === "getSEOData") {
             const data = extractSEOData();
             sendResponse(data);
+            // If extractSEOData were async, we would return true here. 
+            // Since it's synchronous, we don't strictly need to, but it doesn't hurt for this specific case if we sendResponse immediately.
+            // However, to be safe and consistent:
+            return false;
         } else if (request.action === "toggleNofollow") {
             // Legacy support - convert to new format
             toggleLinkHighlight('nofollow', request.enabled !== false);
@@ -649,6 +653,6 @@
             // New unified toggle action
             toggleLinkHighlight(request.linkType, request.enabled);
         }
-        return true; // Keep channel open
+        // return true; // REMOVED: This caused the "channel closed" error for sync actions that didn't sendResponse
     });
 })();
