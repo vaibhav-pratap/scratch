@@ -105,6 +105,7 @@ function showError(msg) {
 }
 
 function renderData(data) {
+
     if (!data) return;
 
     // --- Overview Tab ---
@@ -154,6 +155,10 @@ function renderData(data) {
             suggContainer.innerHTML += `<div class="suggestion-item ${s.type}">${s.msg}</div>`;
         });
     }
+
+    // Store score and suggestions in data object for Excel export
+    data.score = score;
+    data.suggestions = suggestions;
 
     // --- Meta Tab ---
     setText('meta-title', data.title || 'Missing');
@@ -228,10 +233,25 @@ function renderData(data) {
                 const div = document.createElement('div');
                 div.className = 'data-group';
                 div.style.borderLeftColor = s.valid ? 'var(--success-color)' : 'var(--error-color)';
-                div.innerHTML = `
-                    <label>${s.type}</label>
-                    <div class="data-value">${s.details}</div>
-                `;
+                // Create label and value with copy button
+                const label = document.createElement('label');
+                label.textContent = s.type;
+                const valueDiv = document.createElement('div');
+                valueDiv.className = 'data-value';
+                valueDiv.textContent = s.details;
+                // Copy button
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-icon-btn';
+                copyBtn.title = 'Copy';
+                copyBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+                copyBtn.onclick = () => copyToClipboard(JSON.stringify(s.data, null, 2), copyBtn);
+                // Assemble
+                const row = document.createElement('div');
+                row.className = 'label-row';
+                row.appendChild(valueDiv);
+                row.appendChild(copyBtn);
+                div.appendChild(label);
+                div.appendChild(row);
                 schemaList.appendChild(div);
             });
         } else {
@@ -269,7 +289,7 @@ function renderData(data) {
     // Footer Buttons
     document.getElementById('btn-copy').onclick = () => copyToClipboard(JSON.stringify(data, null, 2), document.getElementById('btn-copy'));
     document.getElementById('btn-download').onclick = () => downloadData(data, 'json');
-    document.getElementById('btn-download-csv').onclick = () => downloadData(data, 'csv');
+    document.getElementById('btn-download-csv').onclick = () => downloadData(data, 'excel');
 }
 
 // --- Helpers ---
@@ -434,10 +454,14 @@ function setupToggles() {
 }
 
 function updateToggleVisuals(toggle, type, isChecked) {
+    // Ensure toggle and its parent group exist before manipulating classes
+    if (!toggle) return;
     const group = toggle.closest('.data-group');
-    if (group) {
-        if (isChecked) group.classList.add('active-highlight', type);
-        else group.classList.remove('active-highlight', type);
+    if (!group) return;
+    if (isChecked) {
+        group.classList.add('active-highlight', type);
+    } else {
+        group.classList.remove('active-highlight', type);
     }
 }
 
@@ -454,13 +478,114 @@ function sendToggleMessage(type, enabled) {
 }
 
 function downloadData(data, format) {
-    // Simple download implementation
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `seo-data-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (format === 'excel') {
+        // Generate multi‑sheet Excel workbook using XLSX library
+        try {
+            const wb = XLSX.utils.book_new();
+            // Helper to add a sheet from an object or array
+            const addSheet = (name, content) => {
+                let ws;
+                if (Array.isArray(content)) {
+                    ws = XLSX.utils.json_to_sheet(content);
+                } else {
+                    // Convert object to key/value array
+                    const rows = Object.entries(content).map(([k, v]) => ({ key: k, value: v }));
+                    ws = XLSX.utils.json_to_sheet(rows);
+                }
+                XLSX.utils.book_append_sheet(wb, ws, name);
+            };
+            // Overview sheet (score & suggestions)
+            const overview = {
+                score: data.score || 0,
+                suggestions: (data.suggestions || []).map((s, i) => `${i + 1}. ${s.msg}`)
+            };
+            addSheet('Overview', overview);
+            // Meta sheet
+            const meta = {
+                title: data.title || '',
+                description: data.description || '',
+                keywords: data.keywords || '',
+                canonical: data.canonical || '',
+                robots: data.robots || ''
+            };
+            addSheet('Meta', meta);
+            // Open Graph & Twitter sheets
+            addSheet('Open Graph', data.og || {});
+            addSheet('Twitter Card', data.twitter || {});
+            // Headings sheet
+            addSheet('Headings', data.headings || []);
+            // Images sheet
+            addSheet('Images', data.images || []);
+            // Links sheet (internal & external combined)
+            const links = [];
+            (data.links?.internal || []).forEach(l => links.push({ type: 'internal', href: l.href, text: l.text }));
+            (data.links?.external || []).forEach(l => links.push({ type: 'external', href: l.href, text: l.text }));
+            addSheet('Links', links);
+            // Schema sheet
+            addSheet('Schema', data.schema || []);
+            // Hreflang sheet
+            addSheet('Hreflang', data.hreflang || []);
+            // PAA sheet
+            addSheet('PAA', (data.paa || []).map(q => ({ question: q })));
+            // Emails sheet
+            addSheet('Emails', (data.emails || []).map(e => ({ email: e })));
+            // Phones sheet
+            addSheet('Phones', (data.phones || []).map(p => ({ number: p.number, display: p.display })));
+            // Generate workbook binary
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `seo-data-${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } catch (e) {
+            console.error('Excel export failed', e);
+            // Fallback to JSON download
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `seo-data-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    } else if (format === 'csv') {
+        // Existing CSV fallback (kept for compatibility)
+        try {
+            const ws = XLSX.utils.json_to_sheet([data]);
+            const csv = XLSX.utils.sheet_to_csv(ws);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `seo-data-${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } catch (e) {
+            console.error('CSV export failed', e);
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `seo-data-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    } else {
+        // Default JSON download
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `seo-data-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
 }
