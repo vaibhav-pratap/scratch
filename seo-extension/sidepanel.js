@@ -287,6 +287,9 @@ function renderData(data) {
         }
     }
 
+    // --- Settings Tab (Toggles) ---
+    // setupToggles() and setupSidePanelToggle() are now called in DOMContentLoaded
+
     // Footer Buttons
     document.getElementById('btn-copy').onclick = () => copyToClipboard(JSON.stringify(data, null, 2), document.getElementById('btn-copy'));
     document.getElementById('btn-download').onclick = () => downloadData(data, 'json');
