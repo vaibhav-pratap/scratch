@@ -626,3 +626,47 @@ input:focus+.slider {
 input:checked+.slider:before {
     transform: translateX(16px);
 }
+
+/* New Sections */
+.cwv-section,
+.readability-section {
+    background-color: var(--bg-color);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 16px;
+}
+
+.cwv-section h3,
+.readability-section h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.chart-container {
+    position: relative;
+    height: 200px;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.score-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.score-item .value {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+#paa-chart-container {
+    margin-top: 16px;
+    height: 200px;
+}

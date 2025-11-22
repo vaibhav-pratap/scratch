@@ -9,6 +9,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500&display=swap"
         rel="stylesheet">
+    <script src="chart.js"></script>
+    <script src="jspdf.min.js"></script>
 </head>
 
 <body>
@@ -17,8 +19,8 @@
         <header class="app-header">
             <div class="header-top">
                 <div class="logo-area">
-                    <span class="google-g">SEO Analyser Pro</span>
-                    <span class="version">v1.3.0</span>
+                    <span class="google-g">SEO Analyzer Pro</span>
+                    <span class="version">v1.4.0</span>
                 </div>
                 <div class="actions">
                     <button id="theme-toggle" class="icon-btn" title="Toggle Dark Mode">
@@ -69,12 +71,20 @@
                     </div>
                 </div>
 
-                <div id="suggestions-container" class="suggestions-list"></div>
-
-                <div class="data-group" style="margin-top: 16px;">
-                    <label>Detected Technology</label>
-                    <div id="tech-stack" class="data-value">--</div>
+                <div class="cwv-section">
+                    <h3>Core Web Vitals</h3>
+                    <canvas id="cwv-chart"></canvas>
                 </div>
+
+                <div class="readability-section">
+                    <h3>Readability</h3>
+                    <div class="score-item">
+                        <span class="label">Flesch Score:</span>
+                        <span id="readability-score" class="value">--</span>
+                    </div>
+                </div>
+
+                <div id="suggestions-list" class="suggestions-list"></div>
             </div>
 
             <!-- Meta Tab -->
@@ -91,6 +101,7 @@
                         </button>
                     </div>
                 </div>
+
                 <div class="data-group">
                     <label>Description</label>
                     <div class="label-row">
@@ -103,6 +114,7 @@
                         </button>
                     </div>
                 </div>
+
                 <div class="data-group">
                     <label>Keywords</label>
                     <div class="label-row">
@@ -115,6 +127,7 @@
                         </button>
                     </div>
                 </div>
+
                 <div class="data-group">
                     <label>Canonical URL</label>
                     <div class="label-row">
@@ -127,6 +140,7 @@
                         </button>
                     </div>
                 </div>
+
                 <div class="data-group">
                     <label>Robots Tag</label>
                     <div class="label-row">
@@ -146,6 +160,9 @@
 
             <!-- Headings Tab -->
             <div id="headings" class="tab-content">
+                <div class="chart-container">
+                    <canvas id="headings-chart"></canvas>
+                </div>
                 <div id="headings-list" class="headings-tree"></div>
             </div>
 
@@ -163,6 +180,9 @@
                 <div class="stats-row">
                     <span>Internal: <b id="link-internal-count">0</b></span>
                     <span>External: <b id="link-external-count">0</b></span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="links-chart"></canvas>
                 </div>
 
                 <h3>External Links</h3>
@@ -195,11 +215,6 @@
                 <div class="data-group">
                     <label>Hreflang Tags</label>
                     <div id="hreflang-list"></div>
-                </div>
-
-                <div class="data-group">
-                    <label>People Also Asked (Google SERP)</label>
-                    <div id="paa-list" class="suggestions-list"></div>
                 </div>
             </div>
 
@@ -297,6 +312,13 @@
                 </svg>
                 Sheet
             </button>
+            <button id="btn-download-pdf" class="action-btn secondary">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path
+                        d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                </svg>
+                PDF
+            </button>
             <button id="btn-download" class="action-btn secondary">
                 <svg width="18" height="18" viewBox="0 0 24 24">
                     <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
@@ -306,6 +328,8 @@
         </footer>
     </div>
     <script src="xlsx.mini.min.js"></script>
+    <script src="chart.js"></script>
+    <script src="jspdf.min.js"></script>
     <script src="utils.js"></script>
     <script src="popup.js"></script>
 </body>

@@ -511,6 +511,166 @@
         }
     }
 
+    // --- Core Web Vitals (Advanced & Stable) ---
+    // Load cached CWV data if available
+    const cwvCacheKey = 'seo_cwv_cache_' + window.location.pathname;
+    let cachedCWV = {};
+    try {
+        cachedCWV = JSON.parse(sessionStorage.getItem(cwvCacheKey) || '{}');
+    } catch (e) { }
+
+    const cwv = {
+        lcp: cachedCWV.lcp || 0,
+        cls: cachedCWV.cls || 0,
+        inp: cachedCWV.inp || 0,
+        fcp: cachedCWV.fcp || 0,
+        ttfb: cachedCWV.ttfb || 0
+    };
+
+    // Debounce CWV updates to prevent UI flickering (recalculating effect)
+    let cwvUpdateTimeout;
+    function sendCWVUpdate() {
+        clearTimeout(cwvUpdateTimeout);
+        cwvUpdateTimeout = setTimeout(() => {
+            try {
+                sessionStorage.setItem(cwvCacheKey, JSON.stringify(cwv));
+                chrome.runtime.sendMessage({ action: "cwvUpdated", data: cwv }).catch(() => { });
+            } catch (e) { }
+        }, 500); // 500ms debounce
+    }
+
+    function initPerformanceObservers() {
+        try {
+            // 1. LCP (Largest Contentful Paint)
+            // Standard: Stop observing after user interaction
+            const lcpObserver = new PerformanceObserver((entryList) => {
+                const entries = entryList.getEntries();
+                const lastEntry = entries[entries.length - 1];
+                if (lastEntry.startTime > cwv.lcp) {
+                    cwv.lcp = lastEntry.startTime;
+                    sendCWVUpdate();
+                }
+            });
+            lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
+
+            // Stop LCP on interaction
+            ['click', 'keydown', 'scroll'].forEach(type => {
+                window.addEventListener(type, () => {
+                    lcpObserver.disconnect();
+                }, { once: true, capture: true });
+            });
+
+            // 2. CLS (Cumulative Layout Shift) - Session Window Algorithm
+            // Standard: 5s max window, 1s gap
+            let clsSessionValue = 0;
+            let clsSessionEntries = [];
+
+            new PerformanceObserver((entryList) => {
+                for (const entry of entryList.getEntries()) {
+                    // Only count layout shifts without recent user input
+                    if (!entry.hadRecentInput) {
+                        const firstEntry = clsSessionEntries[0];
+                        const lastEntry = clsSessionEntries[clsSessionEntries.length - 1];
+
+                        // If session window rules are broken, start new session
+                        if (clsSessionValue > 0 &&
+                            entry.startTime - lastEntry.startTime < 1000 &&
+                            entry.startTime - firstEntry.startTime < 5000) {
+                            clsSessionValue += entry.value;
+                            clsSessionEntries.push(entry);
+                        } else {
+                            clsSessionValue = entry.value;
+                            clsSessionEntries = [entry];
+                        }
+
+                        // Update max CLS if current session is larger
+                        if (clsSessionValue > cwv.cls) {
+                            cwv.cls = clsSessionValue;
+                            sendCWVUpdate();
+                        }
+                    }
+                }
+            }).observe({ type: 'layout-shift', buffered: true });
+
+            // 3. INP (Interaction to Next Paint)
+            // Standard: Max duration of any interaction
+            new PerformanceObserver((entryList) => {
+                const entries = entryList.getEntries();
+                entries.forEach(e => {
+                    if (e.interactionId || e.entryType === 'event') {
+                        // Filter out outliers if needed, but max is usually correct for single page view
+                        if (e.duration > cwv.inp) {
+                            cwv.inp = e.duration;
+                            sendCWVUpdate();
+                        }
+                    }
+                });
+            }).observe({ type: 'event', durationThreshold: 16, buffered: true });
+
+            // 4. FCP (First Contentful Paint)
+            new PerformanceObserver((entryList) => {
+                const entries = entryList.getEntriesByName('first-contentful-paint');
+                if (entries.length > 0) {
+                    cwv.fcp = entries[0].startTime;
+                    sendCWVUpdate();
+                }
+            }).observe({ type: 'paint', buffered: true });
+
+            // 5. TTFB (Time to First Byte)
+            new PerformanceObserver((entryList) => {
+                const entries = entryList.getEntries();
+                if (entries.length > 0) {
+                    cwv.ttfb = entries[0].responseStart;
+                    sendCWVUpdate();
+                }
+            }).observe({ type: 'navigation', buffered: true });
+
+        } catch (e) {
+            // console.warn("PerformanceObserver not supported or error:", e);
+        }
+    }
+
+    initPerformanceObservers();
+
+    // --- Readability ---
+    function countSyllables(word) {
+        word = word.toLowerCase();
+        if (word.length <= 3) return 1;
+        word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+        word = word.replace(/^y/, '');
+        const vowels = word.match(/[aeiouy]{1,2}/g);
+        return vowels ? vowels.length : 1;
+    }
+
+    function calculateReadability() {
+        const text = document.body.innerText;
+        // Simple sentence splitting
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length || 1;
+        const words = text.split(/\s+/).filter(w => w.trim().length > 0);
+        const wordCount = words.length || 1;
+
+        let syllableCount = 0;
+        words.forEach(w => {
+            syllableCount += countSyllables(w);
+        });
+
+        // Flesch Reading Ease
+        // 206.835 - 1.015 * (total words / total sentences) - 84.6 * (total syllables / total words)
+        const score = 206.835 - 1.015 * (wordCount / sentences) - 84.6 * (syllableCount / wordCount);
+        const finalScore = Math.max(0, Math.min(100, score));
+
+        let level = 'Unknown';
+        if (finalScore >= 90) level = 'Very Easy';
+        else if (finalScore >= 80) level = 'Easy';
+        else if (finalScore >= 70) level = 'Fairly Easy';
+        else if (finalScore >= 60) level = 'Standard';
+        else if (finalScore >= 50) level = 'Fairly Difficult';
+        else if (finalScore >= 30) level = 'Difficult';
+        else level = 'Very Difficult';
+
+        return { score: finalScore.toFixed(1), level: level };
+    }
+
     function extractSEOData() {
         return {
             title: document.title,
@@ -529,6 +689,8 @@
             paa: safeExtract(getPAA, []),
             schema: safeExtract(getSchema, []),
             plugins: safeExtract(getSEOPlugins, []),
+            cwv: cwv,
+            readability: safeExtract(calculateReadability, 0),
             url: window.location.href,
             timestamp: new Date().toISOString()
         };
@@ -642,17 +804,55 @@
         if (request.action === "getSEOData") {
             const data = extractSEOData();
             sendResponse(data);
-            // If extractSEOData were async, we would return true here. 
-            // Since it's synchronous, we don't strictly need to, but it doesn't hurt for this specific case if we sendResponse immediately.
-            // However, to be safe and consistent:
             return false;
         } else if (request.action === "toggleNofollow") {
-            // Legacy support - convert to new format
             toggleLinkHighlight('nofollow', request.enabled !== false);
         } else if (request.action === "toggleHighlight") {
-            // New unified toggle action
             toggleLinkHighlight(request.linkType, request.enabled);
         }
-        // return true; // REMOVED: This caused the "channel closed" error for sync actions that didn't sendResponse
     });
+
+    // --- Real-time Updates ---
+    function sendUpdate() {
+        try {
+            const data = extractSEOData();
+            chrome.runtime.sendMessage({ action: "seoDataUpdated", data: data }).catch(() => {
+                // Ignore errors if no receiver (popup/sidepanel closed)
+            });
+        } catch (e) {
+            // Ignore
+        }
+    }
+
+    // Debounce helper
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Observer for DOM changes (SPA navigation, dynamic content)
+    const observer = new MutationObserver(debounce(() => {
+        sendUpdate();
+    }, 1000)); // 1 second debounce to avoid spam
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['href', 'src', 'content'] // Only relevant attributes
+    });
+
+    // Initial send on load
+    if (document.readyState === 'complete') {
+        sendUpdate();
+    } else {
+        window.addEventListener('load', sendUpdate);
+    }
 })();

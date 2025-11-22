@@ -44,6 +44,43 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. Setup Toggles
     setupToggles();
     setupSidePanelToggle();
+
+    // 6. Real-time Updates Listeners
+    // Listen for data updates from content script
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === "seoDataUpdated") {
+            // Only update if it comes from the active tab
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0] && sender.tab && tabs[0].id === sender.tab.id) {
+                    renderData(request.data);
+                }
+            });
+        } else if (request.action === "cwvUpdated") {
+            // Lightweight update for CWV only
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0] && sender.tab && tabs[0].id === sender.tab.id) {
+                    renderCWVChart(request.data);
+                }
+            });
+        }
+    });
+
+    // Listen for tab switching
+    chrome.tabs.onActivated.addListener(activeInfo => {
+        // Re-run init to fetch data for the new tab
+        init();
+    });
+
+    // Listen for tab updates (e.g. URL change) - fallback if content script message misses
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        if (changeInfo.status === 'complete') {
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0] && tabs[0].id === tabId) {
+                    init();
+                }
+            });
+        }
+    });
 });
 
 async function init() {
@@ -164,6 +201,14 @@ function renderData(data) {
     data.score = score;
     data.suggestions = suggestions;
 
+    // --- CWV & Readability ---
+    if (data.cwv) {
+        renderCWVChart(data.cwv);
+    }
+    if (data.readability) {
+        setText('readability-score', `${data.readability.score} (${data.readability.level})`);
+    }
+
     // --- Meta Tab ---
     setText('meta-title', data.title || 'Missing');
     setText('meta-desc', data.description || 'Missing');
@@ -196,6 +241,11 @@ function renderData(data) {
         }
     }
 
+    // Headings Chart
+    if (data.headings) {
+        renderHeadingsChart(data.headings);
+    }
+
     // --- Images Tab ---
     setText('img-total', data.images.length);
     setText('img-missing-alt', missingAlt);
@@ -222,6 +272,9 @@ function renderData(data) {
 
         renderLinkList('external-links-list', data.links.external);
         renderLinkList('internal-links-list', data.links.internal);
+
+        // Links Chart
+        renderLinksChart(data.links);
     }
 
     // Emails & Phones
@@ -294,6 +347,17 @@ function renderData(data) {
     document.getElementById('btn-copy').onclick = () => copyToClipboard(JSON.stringify(data, null, 2), document.getElementById('btn-copy'));
     document.getElementById('btn-download').onclick = () => downloadData(data, 'json');
     document.getElementById('btn-download-csv').onclick = () => downloadData(data, 'excel');
+    document.getElementById('btn-download-pdf').onclick = () => downloadPDF(data);
+
+    // PAA Buttons
+    const btnPaaChart = document.getElementById('btn-paa-chart');
+    if (btnPaaChart) {
+        btnPaaChart.onclick = () => togglePAAChart(data.paa);
+    }
+    const btnPaaPdf = document.getElementById('btn-paa-pdf');
+    if (btnPaaPdf) {
+        btnPaaPdf.onclick = () => downloadPAAPDF(data.paa);
+    }
 }
 
 // --- Helpers ---
@@ -612,4 +676,316 @@ function downloadData(data, format) {
         a.click();
         document.body.removeChild(a);
     }
+}
+
+// --- Chart Functions ---
+
+let cwvChartInstance = null;
+let linksChartInstance = null;
+let headingsChartInstance = null;
+let paaChartInstance = null;
+
+function renderCWVChart(cwv) {
+    const ctx = document.getElementById('cwv-chart');
+    if (!ctx) return;
+
+    if (cwvChartInstance) {
+        cwvChartInstance.destroy();
+    }
+
+    const labels = ['LCP', 'CLS', 'INP', 'FCP', 'TTFB'];
+    const values = [
+        cwv.lcp || 0,
+        cwv.cls || 0,
+        cwv.inp || 0,
+        cwv.fcp || 0,
+        cwv.ttfb || 0
+    ];
+
+    cwvChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Metric Value',
+                data: values.map((v, i) => i === 1 ? v * 1000 : v), // Scale CLS * 1000
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            let value = context.raw;
+                            if (context.dataIndex === 1) { // CLS
+                                value = value / 1000;
+                                label += value.toFixed(3);
+                            } else {
+                                label += Math.round(value) + ' ms';
+                            }
+                            return label;
+                        }
+                    }
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Value (ms) / CLS (*1000)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderLinksChart(links) {
+    const ctx = document.getElementById('links-chart');
+    if (!ctx) return;
+
+    if (linksChartInstance) {
+        linksChartInstance.destroy();
+    }
+
+    linksChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Internal', 'External'],
+            datasets: [{
+                data: [links.internal.length, links.external.length],
+                backgroundColor: ['#36A2EB', '#FF6384'],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function renderHeadingsChart(headings) {
+    const ctx = document.getElementById('headings-chart');
+    if (!ctx) return;
+
+    if (headingsChartInstance) {
+        headingsChartInstance.destroy();
+    }
+
+    const counts = { h1: 0, h2: 0, h3: 0, h4: 0, h5: 0, h6: 0 };
+    headings.forEach(h => {
+        const tag = h.tag.toLowerCase();
+        if (counts[tag] !== undefined) counts[tag]++;
+    });
+
+    headingsChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(counts).map(k => k.toUpperCase()),
+            datasets: [{
+                label: 'Count',
+                data: Object.values(counts),
+                backgroundColor: '#4BC0C0'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+}
+
+function togglePAAChart(paaData) {
+    const container = document.getElementById('paa-chart-container');
+    const list = document.getElementById('paa-list');
+    const btn = document.getElementById('btn-paa-chart');
+
+    if (!container || !list) return;
+
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        list.style.display = 'none';
+        btn.textContent = 'View List';
+        renderPAAChart(paaData);
+    } else {
+        container.style.display = 'none';
+        list.style.display = 'block';
+        btn.textContent = 'View Chart';
+    }
+}
+
+function renderPAAChart(paaData) {
+    const ctx = document.getElementById('paa-chart');
+    if (!ctx || !paaData) return;
+
+    if (paaChartInstance) {
+        paaChartInstance.destroy();
+    }
+
+    // PAA data is just a list of strings. A chart isn't very meaningful unless we have metrics.
+    // But for the sake of the requirement "View Chart", let's maybe visualize word count of questions?
+    // Or just a placeholder chart if no metrics are available.
+    // Let's do word count distribution.
+
+    const wordCounts = paaData.map(q => q.split(' ').length);
+
+    paaChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: paaData.map((_, i) => `Q${i + 1}`),
+            datasets: [{
+                label: 'Word Count',
+                data: wordCounts,
+                borderColor: '#FF9F40',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: (context) => {
+                            const index = context[0].dataIndex;
+                            return paaData[index];
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Word Count' } }
+            }
+        }
+    });
+}
+
+function downloadPDF(data) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(20);
+    doc.text("SEO Analysis Report", 10, 10);
+
+    doc.setFontSize(12);
+    doc.text(`URL: ${data.url || 'Current Page'}`, 10, 20);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 10, 26);
+    doc.text(`Score: ${data.score || 0}/100`, 10, 32);
+
+    let y = 40;
+
+    // Meta
+    doc.setFontSize(14);
+    doc.text("Meta Information", 10, y);
+    y += 6;
+    doc.setFontSize(10);
+    doc.text(`Title: ${data.title || 'Missing'}`, 10, y); y += 6;
+    doc.text(`Description: ${data.description || 'Missing'}`, 10, y); y += 6;
+
+    y += 4;
+
+    // CWV
+    if (data.cwv) {
+        doc.setFontSize(14);
+        doc.text("Core Web Vitals", 10, y);
+        y += 6;
+        doc.setFontSize(10);
+        doc.text(`LCP: ${Math.round(data.cwv.lcp?.value || 0)} ms`, 10, y); y += 6;
+        doc.text(`CLS: ${(data.cwv.cls?.value || 0).toFixed(3)}`, 10, y); y += 6;
+        doc.text(`INP: ${Math.round(data.cwv.inp?.value || 0)} ms`, 10, y); y += 6;
+        y += 4;
+    }
+
+    // Readability
+    if (data.readability) {
+        doc.setFontSize(14);
+        doc.text("Readability", 10, y);
+        y += 6;
+        doc.setFontSize(10);
+        doc.text(`Score: ${data.readability.score}`, 10, y); y += 6;
+        doc.text(`Level: ${data.readability.level}`, 10, y); y += 6;
+        y += 4;
+    }
+
+    // Headings
+    doc.setFontSize(14);
+    doc.text("Headings Structure", 10, y);
+    y += 6;
+    doc.setFontSize(10);
+    const hCounts = { h1: 0, h2: 0, h3: 0, h4: 0, h5: 0, h6: 0 };
+    (data.headings || []).forEach(h => {
+        const tag = h.tag.toLowerCase();
+        if (hCounts[tag] !== undefined) hCounts[tag]++;
+    });
+    doc.text(`H1: ${hCounts.h1}, H2: ${hCounts.h2}, H3: ${hCounts.h3}`, 10, y);
+    y += 10;
+
+    // Links
+    doc.setFontSize(14);
+    doc.text("Links", 10, y);
+    y += 6;
+    doc.setFontSize(10);
+    doc.text(`Internal: ${data.links?.internal?.length || 0}`, 10, y); y += 6;
+    doc.text(`External: ${data.links?.external?.length || 0}`, 10, y); y += 6;
+
+    doc.save("seo-report.pdf");
+}
+
+function downloadPAAPDF(paaData) {
+    if (!paaData || !paaData.length) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(20);
+    doc.text("People Also Asked", 10, 10);
+
+    doc.setFontSize(12);
+    let y = 20;
+    paaData.forEach((q, i) => {
+        doc.text(`${i + 1}. ${q}`, 10, y);
+        y += 8;
+        if (y > 280) {
+            doc.addPage();
+            y = 10;
+        }
+    });
+
+    doc.save("paa-questions.pdf");
 }
