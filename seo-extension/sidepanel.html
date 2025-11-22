@@ -9,8 +9,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500&display=swap"
         rel="stylesheet">
-    <script src="chart.js"></script>
-    <script src="jspdf.min.js"></script>
+    <script src="integrations/chart.min.js"></script>
+    <script src="integrations/jspdf.min.js"></script>
 </head>
 
 <body>
@@ -334,16 +334,14 @@
             <button id="btn-download" class="action-btn secondary">
                 <svg width="18" height="18" viewBox="0 0 24 24">
                     <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                    ```
                 </svg>
                 JSON
             </button>
         </footer>
     </div>
-    <script src="xlsx.mini.min.js"></script>
-    <script src="chart.js"></script>
-    <script src="jspdf.min.js"></script>
-    <script src="utils.js"></script>
-    <script src="sidepanel.js"></script>
+    <script src="integrations/xlsx.mini.min.js"></script>
+    <script type="module" src="js/sidepanel.js"></script>
 </body>
 
 </html>

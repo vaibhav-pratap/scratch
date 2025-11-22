@@ -1,0 +1,85 @@
+/* CWV Section */
+.cwv-section {
+    background: var(--bg-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-lg);
+}
+
+.cwv-section h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-large);
+    color: var(--text-color);
+}
+
+.cwv-section canvas {
+    max-height: 200px;
+}
+
+/* Readability Section */
+.readability-section {
+    background: var(--bg-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-lg);
+}
+
+.readability-section h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-large);
+    color: var(--text-color);
+}
+
+.score-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) 0;
+}
+
+.score-item .label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.score-item .value {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* Chart Containers */
+.chart-container {
+    position: relative;
+    height: 250px;
+    margin-bottom: var(--spacing-lg);
+}
+
+.chart-container canvas {
+    max-height: 100%;
+}
+
+/* Images Grid */
+.images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--spacing-md);
+}
+
+/* Links Chart */
+#links-chart {
+    max-height: 200px;
+}
+
+/* Headings Chart */
+#headings-chart {
+    max-height: 200px;
+}
+
+/* PAA Chart */
+#paa-chart {
+    max-height: 250px;
+}

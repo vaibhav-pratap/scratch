@@ -1,0 +1,16 @@
+[data-theme="dark"] {
+    --primary-color: #8ab4f8;
+    --primary-hover: #aecbfa;
+    --bg-color: #202124;
+    --surface-color: #292a2d;
+    --text-color: #e8eaed;
+    --text-secondary: #dadce0;
+    --border-color: #3c4043;
+}
+
+/* Add smooth transitions when theme changes */
+* {
+    transition: background-color var(--transition-normal),
+        color var(--transition-normal),
+        border-color var(--transition-normal);
+}

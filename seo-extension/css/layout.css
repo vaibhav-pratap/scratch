@@ -1,0 +1,137 @@
+/* Main App Container */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Header */
+.app-header {
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+}
+
+.header-bottom {
+    padding: 0 var(--spacing-lg) var(--spacing-sm);
+}
+
+.content-area-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Logo and Branding */
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.google-g {
+    font-family: 'Google Sans', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--primary-color);
+}
+
+.version {
+    font-size: var(--font-size-small);
+    color: var(--text-secondary);
+    background: var(--surface-color);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.author a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--font-size-small);
+}
+
+.author a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* Tabs Navigation */
+.tabs-container {
+    background-color: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+.tabs::-webkit-scrollbar {
+    height: 2px;
+}
+
+.tabs::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+}
+
+/* Content Area */
+.content-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-lg);
+}
+
+.content-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+.content-area::-webkit-scrollbar-track {
+    background: var(--surface-color);
+}
+
+.content-area::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.content-area::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Footer */
+.footer {
+    border-top: 1px solid var(--border-color);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: var(--surface-color);
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+}
