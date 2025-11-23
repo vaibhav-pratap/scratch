@@ -29,7 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initThemeToggle();
 
     // 3. Initialize Data Fetching
-    initSidePanel(renderData);
+    initSidePanel((data) => {
+        window.currentSEOData = data;
+        renderData(data);
+    });
 
     // 4. Setup Copy Buttons
     setupStaticCopyButtons();

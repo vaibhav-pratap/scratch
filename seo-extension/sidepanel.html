@@ -5,7 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SEO Analyzer Side Panel</title>
-    <link rel="stylesheet" href="sidepanel.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link rel="stylesheet" href="css/charts.css">
+    <link rel="stylesheet" href="css/sidepanel.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500&display=swap"
         rel="stylesheet">
@@ -19,78 +24,88 @@
         <header class="app-header">
             <div class="header-top">
                 <div class="logo-area">
-                    <span class="google-g">SEO Analyzer Pro</span>
-                    <span class="version">v1.4.0</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z"
+                            fill="white" />
+                        <path d="M7 12L12 7L17 12H14V16H10V12H7Z" fill="white" />
+                    </svg>
+                    <h1>SEO Analyzer</h1>
                 </div>
-                <div class="actions">
+                <div class="header-actions">
                     <button id="theme-toggle" class="icon-btn" title="Toggle Dark Mode">
-                        <svg viewBox="0 0 24 24" width="20" height="20">
+                        <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24">
+                            <path
+                                d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z" />
+                        </svg>
+                        <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" style="display:none;">
                             <path
                                 d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z" />
                         </svg>
                     </button>
                 </div>
             </div>
-            <div class="header-bottom">
-                <div class="content-area-header">
-                    <span class="author">by <a href="https://exiverlabs.co.in/" target="_blank"
-                            rel="noopener noreferrer">ExiverLabs</a></span>
-                </div>
+
+            <!-- Navigation Tabs -->
+            <div class="tabs-container">
+                <button class="tab-btn active" data-tab="overview">Overview</button>
+                <button class="tab-btn" data-tab="meta">Meta</button>
+                <button class="tab-btn" data-tab="headings">Headings</button>
+                <button class="tab-btn" data-tab="images">Images</button>
+                <button class="tab-btn" data-tab="links">Links</button>
+                <button class="tab-btn" data-tab="schema">Schema</button>
+                <button class="tab-btn" data-tab="settings">Settings</button>
             </div>
-            <nav class="tabs-container">
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="overview">Overview</button>
-                    <button class="tab-btn" data-tab="meta">Meta</button>
-                    <button class="tab-btn" data-tab="headings">Headings</button>
-                    <button class="tab-btn" data-tab="images">Images</button>
-                    <button class="tab-btn" data-tab="links">Links</button>
-                    <button class="tab-btn" data-tab="schema">Schema</button>
-                    <button class="tab-btn" data-tab="settings">Settings</button>
-                </div>
-            </nav>
         </header>
 
-        <!-- Main Content -->
-        <main class="content-area">
+        <!-- Main Content Area -->
+        <main class="app-content">
             <!-- Overview Tab -->
             <div id="overview" class="tab-content active">
                 <div class="score-card">
                     <div class="score-circle">
                         <span id="seo-score">--</span>
-                        <span class="score-label">Score</span>
+                        <small>Score</small>
                     </div>
-                    <div class="quick-stats">
-                        <div class="stat-item">
-                            <span class="stat-value" id="title-length">--</span>
-                            <span class="stat-label">Title Length</span>
+                    <div class="score-details">
+                        <div class="detail-item">
+                            <span class="label">Title Length</span>
+                            <span id="title-length" class="value">--</span>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-value" id="desc-length">--</span>
-                            <span class="stat-label">Desc Length</span>
+                        <div class="detail-item">
+                            <span class="label">Desc Length</span>
+                            <span id="desc-length" class="value">--</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="cwv-section">
-                    <h3>Core Web Vitals</h3>
-                    <canvas id="cwv-chart"></canvas>
-                </div>
-
-                <div class="readability-section">
-                    <h3>Readability</h3>
-                    <div class="score-item">
-                        <span class="label">Flesch Score:</span>
-                        <span id="readability-score" class="value">--</span>
+                <div class="data-group">
+                    <label>Core Web Vitals</label>
+                    <div class="chart-container">
+                        <canvas id="cwv-chart"></canvas>
                     </div>
                 </div>
 
-                <div id="suggestions-list" class="suggestions-list"></div>
+                <div class="data-group">
+                    <label>Readability</label>
+                    <div id="readability-score" class="data-value highlight">--</div>
+                </div>
+
+                <div class="data-group">
+                    <label>Tech Stack</label>
+                    <div id="tech-stack" class="data-value">--</div>
+                </div>
+
+                <div class="suggestions-section">
+                    <h3>Suggestions</h3>
+                    <div id="suggestions-list" class="suggestions-list"></div>
+                </div>
             </div>
 
             <!-- Meta Tab -->
             <div id="meta" class="tab-content">
                 <div class="data-group">
-                    <label>Title</label>
+                    <label>Title Tag</label>
                     <div class="label-row">
                         <div id="meta-title" class="data-value"></div>
                         <button id="btn-copy-title" class="copy-icon-btn" title="Copy">
@@ -103,7 +118,7 @@
                 </div>
 
                 <div class="data-group">
-                    <label>Description</label>
+                    <label>Meta Description</label>
                     <div class="label-row">
                         <div id="meta-desc" class="data-value"></div>
                         <button id="btn-copy-desc" class="copy-icon-btn" title="Copy">
@@ -116,7 +131,7 @@
                 </div>
 
                 <div class="data-group">
-                    <label>Keywords</label>
+                    <label>Meta Keywords</label>
                     <div class="label-row">
                         <div id="meta-keywords" class="data-value"></div>
                         <button id="btn-copy-keywords" class="copy-icon-btn" title="Copy">
@@ -334,7 +349,6 @@
             <button id="btn-download" class="action-btn secondary">
                 <svg width="18" height="18" viewBox="0 0 24 24">
                     <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-                    ```
                 </svg>
                 JSON
             </button>

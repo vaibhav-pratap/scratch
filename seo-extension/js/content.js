@@ -4,29 +4,29 @@
  */
 
 // Import extractors
-import { getMetaContent, getOGTags, getTwitterTags } from './extractors/meta.js';
-import { getHeadings } from './extractors/headings.js';
-import { getImages } from './extractors/images.js';
-import { getLinks, getHreflangs } from './extractors/links.js';
-import { getEmails, getPhoneNumbers } from './extractors/contact.js';
-import { getSchema } from './extractors/schema.js';
-import { getSEOPlugins } from './extractors/plugins.js';
-import { getPAA } from './extractors/paa.js';
+import { getMetaContent, getOGTags, getTwitterTags } from './content/extractors/meta.js';
+import { getHeadings } from './content/extractors/headings.js';
+import { getImages } from './content/extractors/images.js';
+import { getLinks, getHreflangs } from './content/extractors/links.js';
+import { getEmails, getPhoneNumbers } from './content/extractors/contact.js';
+import { getSchema } from './content/extractors/schema.js';
+import { getSEOPlugins } from './content/extractors/plugins.js';
+import { getPAA } from './content/extractors/paa.js';
 
 // Import performance
-import { calculateReadability } from './performance/readability.js';
-import { initCWV, getCWV, onCWVUpdate } from './performance/cwv.js';
+import { calculateReadability } from './content/performance/readability.js';
+import { initCWV, getCWV, onCWVUpdate } from './content/performance/cwv.js';
 
 // Import highlighting
-import { injectHighlightStyles } from './highlighting/styles.js';
-import { toggleLinkHighlight } from './highlighting/links.js';
+import { injectHighlightStyles } from './content/highlighting/styles.js';
+import { toggleLinkHighlight } from './content/highlighting/links.js';
 
 // Import messaging
-import { sendUpdate, sendCWVUpdate } from './messaging/updates.js';
-import { setupMessageListener } from './messaging/handlers.js';
+import { sendUpdate, sendCWVUpdate } from './content/messaging/updates.js';
+import { setupMessageListener } from './content/messaging/handlers.js';
 
 // Import utils
-import { safeExtract, debounce } from './utils/helpers.js';
+import { safeExtract, debounce } from './content/utils/helpers.js';
 
 /**
  * Extract all SEO data from the page

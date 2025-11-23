@@ -25,7 +25,23 @@
         "<all_urls>"
       ],
       "js": [
-        "js/content.js"
+        "js/content-loader.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "js/*.js",
+        "js/content/*.js",
+        "js/content/extractors/*.js",
+        "js/content/performance/*.js",
+        "js/content/highlighting/*.js",
+        "js/content/messaging/*.js",
+        "js/content/utils/*.js"
+      ],
+      "matches": [
+        "<all_urls>"
       ]
     }
   ]

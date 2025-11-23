@@ -49,7 +49,9 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     width: 400px;
+    /* Default for popup */
     height: 600px;
+    /* Default for popup */
     overflow: hidden;
     font-size: var(--font-size-base);
 }

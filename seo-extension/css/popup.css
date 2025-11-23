@@ -1,0 +1,14 @@
+/* Popup-specific overrides */
+/* Applied after all base CSS modules */
+
+body {
+    width: 400px;
+    height: 600px;
+    margin: 0;
+    overflow: hidden;
+}
+
+.app-container {
+    width: 100%;
+    height: 100%;
+}

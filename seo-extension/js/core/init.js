@@ -28,7 +28,7 @@ export async function initPopup(renderCallback) {
         try {
             await chrome.scripting.executeScript({
                 target: { tabId: tab.id },
-                files: ['content.js']
+                files: ['js/content-loader.js']
             });
         } catch (e) {
             // Script might already be there, ignore
