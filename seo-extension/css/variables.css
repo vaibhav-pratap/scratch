@@ -1,0 +1,87 @@
+/* 
+ * Material 3 Design Tokens 
+ * Source: Google Material Design 3
+ */
+
+:root {
+    /* --- Color Palette --- */
+    /* Primary */
+    --md-sys-color-primary: #0b57d0;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-primary-container: #d3e3fd;
+    --md-sys-color-on-primary-container: #041e49;
+
+    /* Secondary */
+    --md-sys-color-secondary: #00639b;
+    --md-sys-color-on-secondary: #ffffff;
+    --md-sys-color-secondary-container: #c2e7ff;
+    --md-sys-color-on-secondary-container: #001d35;
+
+    /* Background & Surface */
+    --md-sys-color-background: #ffffff;
+    --md-sys-color-on-background: #1f1f1f;
+    --md-sys-color-surface: #f0f4f9;
+    --md-sys-color-on-surface: #1f1f1f;
+    --md-sys-color-surface-variant: #dfe3e7;
+    --md-sys-color-on-surface-variant: #444746;
+
+    /* Outline */
+    --md-sys-color-outline: #747775;
+    --md-sys-color-outline-variant: #c4c7c5;
+
+    /* States */
+    --md-sys-color-success: #146c2e;
+    --md-sys-color-success-container: #c4eed0;
+    --md-sys-color-warning: #ea8600;
+    --md-sys-color-warning-container: #ffe0b2;
+    --md-sys-color-error: #b3261e;
+    --md-sys-color-error-container: #f9dedc;
+
+    /* --- Typography --- */
+    --md-sys-typescale-body-large-font: 'Google Sans', 'Roboto', sans-serif;
+    --md-sys-typescale-body-large-size: 16px;
+    --md-sys-typescale-body-medium-size: 14px;
+    --md-sys-typescale-body-small-size: 12px;
+
+    /* --- Spacing --- */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+
+    /* --- Shape --- */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-full: 999px;
+
+    /* --- Elevation (None for Flat Design, but kept for reference) --- */
+    --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark Theme Overrides */
+[data-theme="dark"] {
+    --md-sys-color-primary: #a8c7fa;
+    --md-sys-color-on-primary: #062e6f;
+    --md-sys-color-primary-container: #0842a0;
+    --md-sys-color-on-primary-container: #d3e3fd;
+
+    --md-sys-color-background: #1f1f1f;
+    --md-sys-color-on-background: #e3e3e3;
+    --md-sys-color-surface: #2d2d2d;
+    --md-sys-color-on-surface: #e3e3e3;
+    --md-sys-color-surface-variant: #444746;
+    --md-sys-color-on-surface-variant: #c4c7c5;
+
+    --md-sys-color-outline: #8e918f;
+    --md-sys-color-outline-variant: #444746;
+
+    --md-sys-color-success: #6dd58c;
+    --md-sys-color-success-container: #0f5223;
+    --md-sys-color-warning: #ffb74d;
+    --md-sys-color-warning-container: #e65100;
+    --md-sys-color-error: #f2b8b5;
+    --md-sys-color-error-container: #601410;
+}

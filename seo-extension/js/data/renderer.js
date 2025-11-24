@@ -5,6 +5,7 @@
 
 import { setText } from '../utils/dom.js';
 import { renderCWVChart, renderLinksChart, renderHeadingsChart } from '../ui/charts.js';
+import { renderCWVSection } from '../ui/cwv-display.js';
 import { calculateSEOScore } from './calculators.js';
 import { copyToClipboard } from '../utils/clipboard.js';
 
@@ -74,7 +75,7 @@ function renderOverviewTab(data, score, suggestions) {
 
     // CWV
     if (data.cwv) {
-        renderCWVChart(data.cwv);
+        renderCWVSection(data.cwv, renderCWVChart);
     }
 
     // Readability

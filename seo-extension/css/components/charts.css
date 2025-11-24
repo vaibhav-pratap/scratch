@@ -1,0 +1,60 @@
+/* Charts */
+
+.chart-container {
+    position: relative;
+    height: 200px;
+    width: 100%;
+    margin-top: var(--spacing-md);
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Headings Tree */
+.headings-tree {
+    margin-top: var(--spacing-md);
+}
+
+.heading-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-left: 3px solid var(--md-sys-color-surface-variant);
+    background-color: var(--md-sys-color-surface);
+    margin-bottom: 4px;
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Images Grid */
+.images-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+.img-card {
+    border: 1px solid var(--md-sys-color-surface-variant);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.img-preview {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    background-color: var(--md-sys-color-surface-variant);
+}
+
+.img-info {
+    padding: var(--spacing-sm);
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+    background: var(--md-sys-color-background);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

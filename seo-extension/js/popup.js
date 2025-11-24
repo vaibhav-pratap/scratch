@@ -8,6 +8,7 @@ import { initPopup } from './core/init.js';
 import { listenForUpdates } from './core/messaging.js';
 
 // UI modules
+import { renderStaticLayout } from './ui/layout.js';
 import { initTabSwitching } from './ui/tabs.js';
 import { initThemeToggle } from './ui/theme.js';
 import { setupHighlightToggles, setupSidePanelToggle } from './ui/toggles.js';
@@ -21,7 +22,11 @@ import { downloadPDF, downloadExcel, downloadJSON, downloadCSV } from './data/ex
 import { setupStaticCopyButtons, copyToClipboard } from './utils/clipboard.js';
 
 // Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize when DOM is ready
+function init() {
+    // 0. Render Static Layout (Modular HTML)
+    renderStaticLayout();
+
     // 1. Tab Switching
     initTabSwitching();
 
@@ -46,7 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 7. Setup Export Buttons
     setupExportButtons();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
 
 /**
  * Setup export button handlers

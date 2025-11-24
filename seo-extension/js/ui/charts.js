@@ -55,6 +55,7 @@ export function renderCWVChart(cwv) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 tooltip: {
                     callbacks: {

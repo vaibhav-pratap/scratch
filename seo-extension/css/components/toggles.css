@@ -1,0 +1,72 @@
+/* Toggle Switches */
+
+.label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 48px;
+    gap: var(--spacing-md);
+    cursor: pointer;
+}
+
+.label-row>label:not(.switch) {
+    flex: 1;
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+    text-transform: none;
+    /* Override data-group label */
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--md-sys-color-surface-variant);
+    border: 2px solid var(--md-sys-color-outline);
+    border-radius: 16px;
+    transition: .2s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 6px;
+    bottom: 6px;
+    background-color: var(--md-sys-color-outline);
+    border-radius: 50%;
+    transition: .2s;
+}
+
+input:checked+.slider {
+    background-color: var(--md-sys-color-primary);
+    border-color: var(--md-sys-color-primary);
+}
+
+input:checked+.slider:before {
+    transform: translateX(20px);
+    background-color: var(--md-sys-color-on-primary);
+    width: 24px;
+    height: 24px;
+    left: 2px;
+    bottom: 2px;
+}

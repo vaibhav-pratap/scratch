@@ -60,9 +60,18 @@ export async function initSidePanel(renderCallback) {
 /**
  * Display an error message to the user
  */
+/**
+ * Display an error message to the user
+ */
 export function showError(msg) {
-    const container = document.getElementById('suggestions-container');
+    const container = document.getElementById('suggestions-list') || document.getElementById('suggestions-container');
     if (container) {
-        container.innerHTML = `<div  class="suggestion-item error">${msg}</div>`;
+        container.innerHTML = `<div class="suggestion-item error">${msg}</div>`;
+        // Ensure parent is visible if it was hidden
+        const parent = container.closest('.tab-content');
+        if (parent) parent.style.display = 'block';
+    } else {
+        // Fallback if UI is completely broken
+        document.body.innerHTML = `<div style="padding: 20px; color: red;">Error: ${msg}</div>`;
     }
 }

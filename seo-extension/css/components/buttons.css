@@ -1,0 +1,89 @@
+/* Button Components */
+
+.btn,
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 0 24px;
+    border-radius: var(--radius-full);
+    font-family: var(--md-sys-typescale-body-large-font);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+/* Primary */
+.btn-primary,
+.action-btn.primary {
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
+
+.btn-primary:hover,
+.action-btn.primary:hover {
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    box-shadow: var(--elevation-1);
+}
+
+/* Secondary (Outlined) */
+.action-btn.secondary {
+    background-color: transparent;
+    border: 1px solid var(--md-sys-color-outline);
+    color: var(--md-sys-color-primary);
+}
+
+.action-btn.secondary:hover {
+    background-color: rgba(11, 87, 208, 0.08);
+    border-color: var(--md-sys-color-primary);
+}
+
+/* Small Variant */
+.action-btn.small {
+    height: 32px;
+    padding: 0 16px;
+    font-size: 12px;
+}
+
+/* Icon Buttons */
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.icon-btn:hover {
+    background-color: rgba(31, 31, 31, 0.08);
+    color: var(--md-sys-color-on-surface);
+}
+
+/* Copy Icon Button */
+.copy-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--md-sys-color-outline);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.copy-icon-btn:hover {
+    background-color: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-primary);
+}

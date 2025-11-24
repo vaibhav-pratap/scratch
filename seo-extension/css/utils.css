@@ -1,0 +1,30 @@
+/* Utilities */
+
+.text-center {
+    text-align: center;
+}
+
+.mt-2 {
+    margin-top: var(--spacing-sm);
+}
+
+.mb-2 {
+    margin-bottom: var(--spacing-sm);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.highlight {
+    font-weight: 700;
+    color: var(--md-sys-color-primary);
+}
+
+.warning-text {
+    color: var(--md-sys-color-warning);
+}
+
+.error-text {
+    color: var(--md-sys-color-error);
+}

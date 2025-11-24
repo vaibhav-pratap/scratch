@@ -21,14 +21,22 @@ export function sendMessageToTab(tabId, message) {
 /**
  * Request SEO data from content script
  */
-export async function requestSEOData(tabId) {
-    try {
-        const response = await sendMessageToTab(tabId, { action: "getSEOData" });
-        return response;
-    } catch (error) {
-        console.warn("Failed to get SEO data:", error.message);
-        return null;
+/**
+ * Request SEO data from content script with retries
+ */
+export async function requestSEOData(tabId, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await sendMessageToTab(tabId, { action: "getSEOData" });
+            if (response) return response;
+        } catch (error) {
+            console.warn(`Attempt ${i + 1} failed:`, error.message);
+            if (i < retries - 1) {
+                await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms
+            }
+        }
     }
+    return null;
 }
 
 /**

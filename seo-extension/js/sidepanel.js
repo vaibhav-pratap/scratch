@@ -1,6 +1,6 @@
 /**
  * Sidepanel Entry Point
- * Imports and initializes all modules for the sidepanel interface (same as popup)
+ * Imports and initializes all modules for the sidepanel interface
  */
 
 // Core modules
@@ -8,6 +8,7 @@ import { initSidePanel } from './core/init.js';
 import { listenForUpdates } from './core/messaging.js';
 
 // UI modules
+import { renderStaticLayout } from './ui/layout.js';
 import { initTabSwitching } from './ui/tabs.js';
 import { initThemeToggle } from './ui/theme.js';
 import { setupHighlightToggles, setupSidePanelToggle } from './ui/toggles.js';
@@ -15,13 +16,16 @@ import { renderCWVChart } from './ui/charts.js';
 
 // Data modules
 import { renderData } from './data/renderer.js';
-import { downloadPDF, downloadExcel, downloadJSON } from './data/exporters.js';
+import { downloadPDF, downloadExcel, downloadJSON, downloadCSV } from './data/exporters.js';
 
 // Utils
 import { setupStaticCopyButtons, copyToClipboard } from './utils/clipboard.js';
 
 // Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+function init() {
+    // 0. Render Static Layout (Modular HTML)
+    renderStaticLayout();
+
     // 1. Tab Switching
     initTabSwitching();
 
@@ -58,7 +62,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 8. Setup Export Buttons
     setupExportButtons();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
 
 /**
  * Setup export button handlers
