@@ -3,7 +3,7 @@
  * Handles initial data loading and error states
  */
 
-import { saveToCache, loadFromCache } from './storage.js';
+import { saveToCache, loadFromCache, saveToSession } from './storage.js';
 import { requestSEOData } from './messaging.js';
 
 /**
@@ -39,6 +39,8 @@ export async function initPopup(renderCallback) {
         if (data) {
             renderCallback(data);
             saveToCache(tab.url, data);
+            // Save to session storage for sidepanel
+            await saveToSession(data);
         } else if (!cached) {
             showError("Received empty response from page.");
         }
@@ -64,52 +66,84 @@ export async function initSidePanel(renderCallback) {
             return;
         }
 
-        // Try to load cached data first
+        // STEP 1: Try session storage first (shared between popup/sidepanel)
+        const { loadFromSession } = await import('./storage.js');
+        const sessionData = await loadFromSession();
+        if (sessionData) {
+            console.log('[initSidePanel] Found data in session storage!');
+            window.currentSEOData = sessionData;
+            console.log('[initSidePanel] Set window.currentSEOData from session:', window.currentSEOData);
+            renderCallback(sessionData);
+            return; // Use session data if available
+        }
+
+        // STEP 2: Try localStorage cache
         const cached = loadFromCache(tab.url);
         console.log('[initSidePanel] Cached data:', cached ? 'found' : 'not found');
         if (cached) {
-            console.log('[initSidePanel] Calling renderCallback with cached data');
-            // Set global data for cached too
+            console.log('[initSidePanel] Using cached data');
             window.currentSEOData = cached;
             console.log('[initSidePanel] Set window.currentSEOData from cache:', window.currentSEOData);
             renderCallback(cached);
         }
 
-        // Inject content script if needed (with retries for sidepanel)
-        let injected = false;
-        for (let attempt = 0; attempt < 3; attempt++) {
+        // STEP 3: Inject content script with robust retry logic
+        console.log('[initSidePanel] Injecting content script...');
+        let scripExecuted = false;
+        for (let attempt = 0; attempt < 5; attempt++) {
             try {
                 await chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     files: ['js/content-loader.js']
                 });
-                injected = true;
-                console.log('[initSidePanel] Content script injected on attempt', attempt + 1);
+                scriptExecuted = true;
+                console.log('[initSidePanel] Content script injected successfully on attempt', attempt + 1);
                 break;
             } catch (e) {
-                console.warn('[initSidePanel] Injection attempt', attempt + 1, 'failed:', e);
-                if (attempt < 2) {
-                    await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
+                console.warn('[initSidePanel] Injection attempt', attempt + 1, 'failed:', e.message);
+                if (attempt < 4) {
+                    const delay = 300 * (attempt + 1); // Increasing delay
+                    console.log('[initSidePanel] Waiting', delay, 'ms before retry...');
+                    await new Promise(resolve => setTimeout(resolve, delay));
                 }
             }
         }
 
-        // Request fresh data (with extra delay for sidepanel to let content script initialize)
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-        console.log('[initSidePanel] Requesting fresh data from tab:', tab.id);
-        const data = await requestSEOData(tab.id);
-        console.log('[initSidePanel] Received data:', data ? 'yes' : 'no', data);
+        // STEP 4: Wait for content script to initialize
+        const initDelay = scriptExecuted ? 1500 : 500;
+        console.log('[initSidePanel] Waiting', initDelay, 'ms for content script to initialize...');
+        await new Promise(resolve => setTimeout(resolve, initDelay));
+
+        // STEP 5: Request fresh data with retries
+        console.log('[initSidePanel] Requesting fresh data...');
+        let data = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            data = await requestSEOData(tab.id);
+            if (data) {
+                console.log('[initSidePanel] Received data on attempt', attempt + 1);
+                break;
+            }
+            console.warn('[initSidePanel] No data on attempt', attempt + 1);
+            if (attempt < 2) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+
+        console.log('[initSidePanel] Final data:', data ? 'received' : 'none');
 
         if (data) {
             console.log('[initSidePanel] Calling renderCallback with fresh data');
-            // CRITICAL: Set global data BEFORE calling callback
             window.currentSEOData = data;
             console.log('[initSidePanel] Set window.currentSEOData:', window.currentSEOData);
             renderCallback(data);
             saveToCache(tab.url, data);
-        } else if (!cached) {
-            console.error('[initSidePanel] No data received and no cache');
-            showError("Received empty response from page.");
+
+            // Save to session storage for sharing
+            const { saveToSession } = await import('./storage.js');
+            await saveToSession(data);
+        } else if (!cached && !sessionData) {
+            console.error('[initSidePanel] No data received and no cache/session');
+            showError("Couldn't load SEO data. Please try refreshing the page.");
         }
 
     } catch (error) {
