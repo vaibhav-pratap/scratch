@@ -21,6 +21,10 @@ import { downloadPDF, downloadExcel, downloadJSON, downloadCSV } from './data/ex
 // Utils
 import { setupStaticCopyButtons, copyToClipboard } from './utils/clipboard.js';
 
+// Global variable to store the current data for export/copy functionality
+// This is the data source for setupExportButtons()
+window.currentSEOData = null;
+
 // Initialize when DOM is ready
 function init() {
     // 0. Render Static Layout (Modular HTML)
@@ -32,54 +36,54 @@ function init() {
     // 2. Theme Toggle
     initThemeToggle();
 
-    // 3. Initialize Data Fetching
-    initSidePanel((data) => {
-        console.log('[Sidepanel Callback] Received data:', data ? 'YES' : 'NO', data);
-        window.currentSEOData = data;
-        console.log('[Sidepanel Callback] Set window.currentSEOData:', window.currentSEOData);
-        renderData(data);
-        console.log('[Sidepanel Callback] After renderData, window.currentSEOData:', window.currentSEOData);
-    });
-
-    // 4. Setup Copy Buttons
+    // 3. Setup Copy Buttons (for static elements that don't need currentSEOData)
     setupStaticCopyButtons();
+
+    // 4. Setup Export Buttons (Listeners check window.currentSEOData on click, so safe to setup early)
+    setupExportButtons();
 
     // 5. Setup Toggles
     setupHighlightToggles();
     setupSidePanelToggle();
 
-    // 6. Real-time Updates Listener
-    listenForUpdates(renderData, renderCWVChart);
+    // 6. Initialize Data Fetching
+    // This callback runs when data is first retrieved
+    initSidePanel((data) => {
+        console.log('[Sidepanel Callback] Received initial data:', data ? 'YES' : 'NO');
 
-    // 7. Listen for tab switching and navigation
-    chrome.tabs.onActivated.addListener(() => {
-        initSidePanel((data) => {
-            window.currentSEOData = data;
-            renderData(data);
-            // Re-setup buttons after data reload
-            setupExportButtons();
-        });
+        // Ensure data is set before rendering
+        window.currentSEOData = data;
+        renderData(data);
     });
+
+    // 7. Real-time Updates Listener
+    // Note: The listener will call renderData, which updates the UI.
+    // However, we need to ensure renderData also updates window.currentSEOData
+    listenForUpdates(data => {
+        window.currentSEOData = data; // Update global data on real-time changes
+        renderData(data);
+    }, renderCWVChart);
+
+    // 8. Listen for tab switching and navigation changes
+    // Only re-fetch and re-render data, DO NOT re-setup buttons (listeners are already attached)
+    const handleTabChange = () => {
+        initSidePanel((data) => {
+            window.currentSEOData = data; // Update global data
+            renderData(data);
+        });
+    };
+
+    chrome.tabs.onActivated.addListener(handleTabChange);
 
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         if (changeInfo.status === 'complete') {
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs[0] && tabs[0].id === tabId) {
-                    initSidePanel((data) => {
-                        window.currentSEOData = data;
-                        renderData(data);
-                        // Re-setup buttons after data reload
-                        setupExportButtons();
-                    });
+                    handleTabChange();
                 }
             });
         }
     });
-
-    // 8. Setup Export Buttons (with delay to ensure DOM is ready)
-    setTimeout(() => {
-        setupExportButtons();
-    }, 500);
 }
 
 if (document.readyState === 'loading') {
@@ -89,50 +93,68 @@ if (document.readyState === 'loading') {
 }
 
 /**
- * Setup export button handlers using event delegation
+ * Setup export button handlers
+ * This function is called only ONCE after the initial data fetch.
  */
 function setupExportButtons() {
-    console.log('[Sidepanel] Setting up export buttons...');
+    // Only query the DOM once
+    const btnDownload = document.getElementById('btn-download');
+    const btnDownloadCsv = document.getElementById('btn-download-csv');
+    const btnDownloadPdf = document.getElementById('btn-download-pdf');
+    const btnCopy = document.getElementById('btn-copy');
 
-    // Use event delegation on the footer container
-    const footer = document.querySelector('.app-footer');
-    if (!footer) {
-        console.error('[Sidepanel] Footer not found!');
-        return;
+    console.log('Setting up export buttons:', { btnDownload, btnDownloadCsv, btnDownloadPdf, btnCopy });
+
+    // Listener for JSON download
+    if (btnDownload) {
+        btnDownload.addEventListener('click', () => {
+            console.log('Download JSON clicked');
+            const data = window.currentSEOData;
+            if (data) {
+                downloadJSON(data);
+            } else {
+                console.warn('No data available for export (JSON)');
+            }
+        });
     }
 
-    console.log('[Sidepanel] Footer found, attaching delegated listener');
+    // Listener for CSV/Excel download
+    if (btnDownloadCsv) {
+        btnDownloadCsv.addEventListener('click', () => {
+            console.log('Download CSV clicked');
+            const data = window.currentSEOData;
+            if (data) {
+                // Assuming downloadExcel can handle CSV format based on the button ID
+                downloadExcel(data);
+            } else {
+                console.warn('No data available for export (CSV)');
+            }
+        });
+    }
 
-    // Remove any existing listener to prevent duplicates
-    footer.removeEventListener('click', handleFooterClick);
-    footer.addEventListener('click', handleFooterClick);
-}
+    // Listener for PDF download
+    if (btnDownloadPdf) {
+        btnDownloadPdf.addEventListener('click', () => {
+            console.log('Download PDF clicked');
+            const data = window.currentSEOData;
+            if (data) {
+                downloadPDF(data);
+            } else {
+                console.warn('No data available for export (PDF)');
+            }
+        });
+    }
 
-function handleFooterClick(e) {
-    const target = e.target.closest('button');
-    if (!target) return;
-
-    const data = window.currentSEOData;
-
-    console.log('[Sidepanel] Button clicked:', target.id);
-    console.log('[Sidepanel] window.currentSEOData:', window.currentSEOData);
-    console.log('[Sidepanel] data variable:', data);
-
-    if (target.id === 'btn-download') {
-        console.log('[Sidepanel] Download JSON clicked');
-        if (data) downloadJSON(data);
-        else console.warn('[Sidepanel] No data available');
-    } else if (target.id === 'btn-download-csv') {
-        console.log('[Sidepanel] Download CSV clicked');
-        if (data) downloadExcel(data);
-        else console.warn('[Sidepanel] No data available');
-    } else if (target.id === 'btn-download-pdf') {
-        console.log('[Sidepanel] Download PDF clicked');
-        if (data) downloadPDF(data);
-        else console.warn('[Sidepanel] No data available');
-    } else if (target.id === 'btn-copy') {
-        console.log('[Sidepanel] Copy clicked');
-        if (data) copyToClipboard(JSON.stringify(data, null, 2), target);
-        else console.warn('[Sidepanel] No data available');
+    // Listener for Copy JSON to Clipboard
+    if (btnCopy) {
+        btnCopy.addEventListener('click', (e) => {
+            console.log('Copy JSON clicked');
+            const data = window.currentSEOData;
+            if (data) {
+                copyToClipboard(JSON.stringify(data, null, 2), e.target);
+            } else {
+                console.warn('No data available for copy');
+            }
+        });
     }
 }
