@@ -22,7 +22,6 @@ import { downloadPDF, downloadExcel, downloadJSON, downloadCSV } from './data/ex
 import { setupStaticCopyButtons, copyToClipboard } from './utils/clipboard.js';
 
 // Initialize when DOM is ready
-// Initialize when DOM is ready
 function init() {
     // 0. Render Static Layout (Modular HTML)
     renderStaticLayout();
@@ -49,8 +48,10 @@ function init() {
     // 6. Real-time Updates Listener
     listenForUpdates(renderData, renderCWVChart);
 
-    // 7. Setup Export Buttons
-    setupExportButtons();
+    // 7. Setup Export Buttons (with slight delay to ensure DOM is ready)
+    setTimeout(() => {
+        setupExportButtons();
+    }, 100);
 }
 
 if (document.readyState === 'loading') {
@@ -63,26 +64,60 @@ if (document.readyState === 'loading') {
  * Setup export button handlers
  */
 function setupExportButtons() {
-    // Note: data will be passed when button is clicked from renderData
-    document.getElementById('btn-download')?.addEventListener('click', (e) => {
-        const data = window.currentSEOData; // Set by renderData
-        if (data) downloadJSON(data);
-    });
+    const btnDownload = document.getElementById('btn-download');
+    const btnDownloadCsv = document.getElementById('btn-download-csv');
+    const btnDownloadPdf = document.getElementById('btn-download-pdf');
+    const btnCopy = document.getElementById('btn-copy');
 
-    document.getElementById('btn-download-csv')?.addEventListener('click', (e) => {
-        const data = window.currentSEOData;
-        if (data) downloadExcel(data);
-    });
+    console.log('Setting up export buttons:', { btnDownload, btnDownloadCsv, btnDownloadPdf, btnCopy });
 
-    document.getElementById('btn-download-pdf')?.addEventListener('click', (e) => {
-        const data = window.currentSEOData;
-        if (data) downloadPDF(data);
-    });
+    if (btnDownload) {
+        btnDownload.addEventListener('click', (e) => {
+            console.log('Download JSON clicked');
+            const data = window.currentSEOData;
+            if (data) {
+                downloadJSON(data);
+            } else {
+                console.warn('No data available for export');
+            }
+        });
+    }
 
-    document.getElementById('btn-copy')?.addEventListener('click', (e) => {
-        const data = window.currentSEOData;
-        if (data) copyToClipboard(JSON.stringify(data, null, 2), e.target);
-    });
+    if (btnDownloadCsv) {
+        btnDownloadCsv.addEventListener('click', (e) => {
+            console.log('Download CSV clicked');
+            const data = window.currentSEOData;
+            if (data) {
+                downloadExcel(data);
+            } else {
+                console.warn('No data available for export');
+            }
+        });
+    }
+
+    if (btnDownloadPdf) {
+        btnDownloadPdf.addEventListener('click', (e) => {
+            console.log('Download PDF clicked');
+            const data = window.currentSEOData;
+            if (data) {
+                downloadPDF(data);
+            } else {
+                console.warn('No data available for export');
+            }
+        });
+    }
+
+    if (btnCopy) {
+        btnCopy.addEventListener('click', (e) => {
+            console.log('Copy JSON clicked');
+            const data = window.currentSEOData;
+            if (data) {
+                copyToClipboard(JSON.stringify(data, null, 2), e.target);
+            } else {
+                console.warn('No data available for export');
+            }
+        });
+    }
 }
 
 // Store data globally for export buttons (temporary solution)

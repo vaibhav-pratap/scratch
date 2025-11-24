@@ -34,8 +34,11 @@ function init() {
 
     // 3. Initialize Data Fetching
     initSidePanel((data) => {
+        console.log('[Sidepanel Callback] Received data:', data ? 'YES' : 'NO', data);
         window.currentSEOData = data;
+        console.log('[Sidepanel Callback] Set window.currentSEOData:', window.currentSEOData);
         renderData(data);
+        console.log('[Sidepanel Callback] After renderData, window.currentSEOData:', window.currentSEOData);
     });
 
     // 4. Setup Copy Buttons
@@ -49,19 +52,34 @@ function init() {
     listenForUpdates(renderData, renderCWVChart);
 
     // 7. Listen for tab switching and navigation
-    chrome.tabs.onActivated.addListener(() => initSidePanel(renderData));
+    chrome.tabs.onActivated.addListener(() => {
+        initSidePanel((data) => {
+            window.currentSEOData = data;
+            renderData(data);
+            // Re-setup buttons after data reload
+            setupExportButtons();
+        });
+    });
+
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         if (changeInfo.status === 'complete') {
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs[0] && tabs[0].id === tabId) {
-                    initSidePanel(renderData);
+                    initSidePanel((data) => {
+                        window.currentSEOData = data;
+                        renderData(data);
+                        // Re-setup buttons after data reload
+                        setupExportButtons();
+                    });
                 }
             });
         }
     });
 
-    // 8. Setup Export Buttons
-    setupExportButtons();
+    // 8. Setup Export Buttons (with delay to ensure DOM is ready)
+    setTimeout(() => {
+        setupExportButtons();
+    }, 500);
 }
 
 if (document.readyState === 'loading') {
@@ -71,31 +89,56 @@ if (document.readyState === 'loading') {
 }
 
 /**
- * Setup export button handlers
+ * Setup export button handlers using event delegation
  */
 function setupExportButtons() {
-    document.getElementById('btn-download')?.addEventListener('click', (e) => {
-        const data = window.currentSEOData;
-        if (data) downloadJSON(data);
-    });
+    console.log('[Sidepanel] Setting up export buttons...');
 
-    document.getElementById('btn-download-csv')?.addEventListener('click', (e) => {
-        const data = window.currentSEOData;
-        if (data) downloadExcel(data);
-    });
+    // Use event delegation on the footer container
+    const footer = document.querySelector('.app-footer');
+    if (!footer) {
+        console.error('[Sidepanel] Footer not found!');
+        return;
+    }
 
-    document.getElementById('btn-download-pdf')?.addEventListener('click', (e) => {
-        const data = window.currentSEOData;
-        if (data) downloadPDF(data);
-    });
+    console.log('[Sidepanel] Footer found, attaching delegated listener');
 
-    document.getElementById('btn-copy')?.addEventListener('click', (e) => {
-        const data = window.currentSEOData;
-        if (data) copyToClipboard(JSON.stringify(data, null, 2), e.target);
-    });
+    // Remove any existing listener to prevent duplicates
+    footer.removeEventListener('click', handleFooterClick);
+    footer.addEventListener('click', handleFooterClick);
 }
 
-// Store data globally for export buttons
+function handleFooterClick(e) {
+    const target = e.target.closest('button');
+    if (!target) return;
+
+    const data = window.currentSEOData;
+
+    console.log('[Sidepanel] Button clicked:', target.id);
+    console.log('[Sidepanel] window.currentSEOData:', window.currentSEOData);
+    console.log('[Sidepanel] data variable:', data);
+
+    if (target.id === 'btn-download') {
+        console.log('[Sidepanel] Download JSON clicked');
+        if (data) downloadJSON(data);
+        else console.warn('[Sidepanel] No data available');
+    } else if (target.id === 'btn-download-csv') {
+        console.log('[Sidepanel] Download CSV clicked');
+        if (data) downloadExcel(data);
+        else console.warn('[Sidepanel] No data available');
+    } else if (target.id === 'btn-download-pdf') {
+        console.log('[Sidepanel] Download PDF clicked');
+        if (data) downloadPDF(data);
+        else console.warn('[Sidepanel] No data available');
+    } else if (target.id === 'btn-copy') {
+        console.log('[Sidepanel] Copy clicked');
+        if (data) copyToClipboard(JSON.stringify(data, null, 2), target);
+        else console.warn('[Sidepanel] No data available');
+    }
+}
+
+// Store data globally for export buttons (temporary solution)
+// A better approach would be to pass it via Events or State management
 const originalRenderData = renderData;
 window.renderData = function (data) {
     window.currentSEOData = data;
