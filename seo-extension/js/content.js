@@ -12,6 +12,7 @@ import { getEmails, getPhoneNumbers } from './content/extractors/contact.js';
 import { getSchema } from './content/extractors/schema.js';
 import { getSEOPlugins } from './content/extractors/plugins.js';
 import { getPAA } from './content/extractors/paa.js';
+import { getAccessibilityData } from './content/extractors/accessibility.js';
 
 // Import performance
 import { calculateReadability } from './content/performance/readability.js';
@@ -51,7 +52,8 @@ function extractSEOData() {
         plugins: safeExtract(() => getSEOPlugins(), []),
         paa: safeExtract(() => getPAA(), []),
         readability: safeExtract(() => calculateReadability(), { score: 0, level: 'N/A' }),
-        cwv: getCWV()
+        cwv: getCWV(),
+        accessibility: safeExtract(() => getAccessibilityData(), { score: 0, issues: { critical: [], warnings: [], notices: [] }, checks: {} })
     };
 }
 

@@ -36,6 +36,7 @@ export function renderStaticLayout() {
                 <button class="tab-btn" data-tab="headings">Headings</button>
                 <button class="tab-btn" data-tab="images">Images</button>
                 <button class="tab-btn" data-tab="links">Links</button>
+                <button class="tab-btn" data-tab="accessibility">Accessibility</button>
                 <button class="tab-btn" data-tab="schema">Schema</button>
                 <button class="tab-btn" data-tab="settings">Settings</button>
             </div>
@@ -48,6 +49,7 @@ export function renderStaticLayout() {
             ${renderHeadingsTab()}
             ${renderImagesTab()}
             ${renderLinksTab()}
+            ${renderAccessibilityTab()}
             ${renderSchemaTab()}
             ${renderSettingsTab()}
         </main>
@@ -219,6 +221,62 @@ function renderLinksTab() {
         <h3>Phone Numbers</h3>
         <div id="phones-list"></div>
     </div>`;
+}
+
+/**
+ * Render Accessibility Tab
+ */
+function renderAccessibilityTab() {
+    return `
+    <div id="accessibility" class="tab-content">
+        <h2>Accessibility Audit</h2>
+        
+        <!-- Overall Score Card -->
+        <div class="score-card">
+            <div class="score-circle" id="a11y-score-circle">
+                <span id="a11y-score-value">--</span>
+                <small>A11Y SCORE</small>
+            </div>
+            <div style="text-align: center; margin-top: 12px;">
+                <button id="btn-toggle-a11y-highlights" class="action-btn secondary small">Toggle Highlights</button>
+            </div>
+        </div>
+
+        <!-- Issues Summary -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+            <div class="data-group" style="margin-bottom: 0;">
+                <label style="color: var(--md-sys-color-error);">Critical</label>
+                <div id="a11y-critical-count" class="data-value" style="font-size: 24px; font-weight: 700;">0</div>
+            </div>
+            <div class="data-group" style="margin-bottom: 0;">
+                <label style="color: var(--md-sys-color-warning);">Warnings</label>
+                <div id="a11y-warning-count" class="data-value" style="font-size: 24px; font-weight: 700;">0</div>
+            </div>
+            <div class="data-group" style="margin-bottom: 0;">
+                <label style="color: var(--md-sys-color-primary);">Notices</label>
+                <div id="a11y-notice-count" class="data-value" style="font-size: 24px; font-weight: 700;">0</div>
+            </div>
+        </div>
+
+        <!-- Top Culprits -->
+        <div class="card">
+            <h3>Top Issues Affecting Score</h3>
+            <div id="a11y-culprits-list"></div>
+        </div>
+
+        <!-- Detailed Checks -->
+        <div class="card">
+            <h3>Detailed Accessibility Checks</h3>
+            <div id="a11y-checks-container"></div>
+        </div>
+
+        <!-- All Issues List -->
+        <div class="card">
+            <h3>All Issues</h3>
+            <div id="a11y-issues-list"></div>
+        </div>
+    </div>
+    `;
 }
 
 function renderSchemaTab() {
