@@ -156,7 +156,7 @@ function renderChecks(checks) {
 }
 
 /**
- * Render all issues with details
+ * Render all issues with details (CWV-card style)
  */
 function renderAllIssues(issues) {
     const container = document.getElementById('a11y-issues-list');
@@ -173,42 +173,87 @@ function renderAllIssues(issues) {
         return;
     }
 
-    const issuesHTML = allIssues.map((issue, index) => `
-        <div class="suggestion-item ${issue.severity}" style="margin-bottom: 12px; padding: 12px; border-left: 4px solid ${issue.severity === 'critical' ? 'var(--md-sys-color-error)' : issue.severity === 'warning' ? 'var(--md-sys-color-warning)' : 'var(--md-sys-color-primary)'};">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+    const issuesHTML = allIssues.map((issue, index) => {
+        // Determine severity color
+        const severityColor = issue.severity === 'critical' ? 'var(--md-sys-color-error)' :
+            issue.severity === 'warning' ? 'var(--md-sys-color-warning)' :
+                'var(--md-sys-color-primary)';
+
+        const severityBg = issue.severity === 'critical' ? 'var(--md-sys-color-error-container)' :
+            issue.severity === 'warning' ? 'var(--md-sys-color-warning-container)' :
+                'var(--md-sys-color-primary-container)';
+
+        return `
+        <div class="cwv-card" style="margin-bottom: 16px; padding: 16px; background: var(--md-sys-color-surface); border-radius: 12px; border-left: 4px solid ${severityColor};">
+            <!-- Header with title and highlight button -->
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
                 <div style="flex: 1;">
-                    <strong>${issue.message}</strong>
-                    <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin-top: 4px;">
-                        <code>${issue.element}</code>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${severityColor}; display: inline-block;"></span>
+                        <strong style="font-size: 15px;">${issue.message}</strong>
+                    </div>
+                    <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin-left: 16px;">
+                        Element: <code style="background: ${severityBg}; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${issue.element}</code>
                     </div>
                 </div>
-                <button class="action-btn secondary small highlight-issue-btn" data-selector="${issue.selector}" data-severity="${issue.severity}" data-message="${issue.message}" style="margin-left: 8px;">
-                    Highlight
+                <button class="action-btn secondary small highlight-issue-btn" 
+                        data-selector="${issue.selector}" 
+                        data-severity="${issue.severity}" 
+                        data-message="${issue.message}"
+                        style="flex-shrink: 0; margin-left: 12px;">
+                    👁️ Highlight
                 </button>
             </div>
 
-            <!-- Suggestion -->
+            <!-- Severity Badge -->
+            <div style="margin-bottom: 12px;">
+                <span style="
+                    display: inline-block;
+                    padding: 4px 10px;
+                    border-radius: 12px;
+                    font-size: 11px;
+                    font-weight: 600;
+                    background: ${severityBg};
+                    color: ${severityColor};
+                    text-transform: uppercase;
+                ">${issue.severity}</span>
+            </div>
+
+            <!-- Suggestion Section (if available) -->
             ${issue.suggestion ? `
-                <div class="a11y-suggestion" style="background: var(--md-sys-color-surface-variant); padding: 8px; border-radius: 4px; margin-top: 8px;">
-                    <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">💡 Suggestion:</div>
-                    <div style="font-size: 13px;">${issue.suggestion}</div>
-                    ${issue.fix ? `<div style="font-size: 12px; margin-top: 4px; font-family: monospace; color: var(--md-sys-color-primary);">${issue.fix}</div>` : ''}
+                <div style="background: var(--md-sys-color-surface-container); padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid ${severityColor};">
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                        <span style="font-size: 14px;">💡</span>
+                        <strong style="font-size: 13px; color: var(--md-sys-color-on-surface);">How to Fix</strong>
+                    </div>
+                    <div style="font-size: 13px; color: var(--md-sys-color-on-surface-variant); line-height: 1.5; margin-bottom: 6px;">
+                        ${issue.suggestion}
+                    </div>
+                    ${issue.fix ? `
+                        <div style="background: var(--md-sys-color-surface); padding: 8px; border-radius: 4px; margin-top: 8px;">
+                            <code style="font-size: 12px; color: ${severityColor}; display: block;">${issue.fix}</code>
+                        </div>
+                    ` : ''}
                 </div>
             ` : ''}
 
             <!-- WCAG Reference -->
             ${issue.wcagRef ? `
-                <div style="margin-top: 8px; font-size: 12px;">
-                    <a href="${issue.wcagRef.url}" target="_blank" class="wcag-link" style="color: var(--md-sys-color-primary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                        📖 WCAG ${issue.wcagRef.level}: ${issue.wcagRef.criterion}
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <div style="display: flex; align-items: center; gap: 6px; padding-top: 8px; border-top: 1px solid var(--md-sys-color-outline-variant);">
+                    <span style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);">WCAG ${issue.wcagRef.level}:</span>
+                    <a href="${issue.wcagRef.url}" 
+                       target="_blank" 
+                       style="color: ${severityColor}; text-decoration: none; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px;">
+                        ${issue.wcagRef.criterion}
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
                         </svg>
                     </a>
                 </div>
             ` : ''}
         </div>
-    `).join('');
+        `;
+    }).join('');
 
     container.innerHTML = issuesHTML;
 
