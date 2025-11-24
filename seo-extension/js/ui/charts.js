@@ -16,10 +16,6 @@ export function renderCWVChart(cwv) {
     const ctx = document.getElementById('cwv-chart');
     if (!ctx) return;
 
-    if (cwvChartInstance) {
-        cwvChartInstance.destroy();
-    }
-
     const labels = ['LCP', 'CLS', 'INP', 'FCP', 'TTFB'];
     const values = [
         cwv.lcp || 0,
@@ -29,64 +25,74 @@ export function renderCWVChart(cwv) {
         cwv.ttfb || 0
     ];
 
-    cwvChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Metric Value',
-                data: values.map((v, i) => i === 1 ? v * 1000 : v), // Scale CLS * 1000
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.5)',
-                    'rgba(54, 162, 235, 0.5)',
-                    'rgba(255, 206, 86, 0.5)',
-                    'rgba(75, 192, 192, 0.5)',
-                    'rgba(153, 102, 255, 0.5)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            let label = context.dataset.label || '';
-                            if (label) label += ': ';
+    // Prepare data array (scale CLS)
+    const chartData = values.map((v, i) => i === 1 ? v * 1000 : v);
 
-                            let value = context.raw;
-                            if (context.dataIndex === 1) { // CLS
-                                value = value / 1000;
-                                label += value.toFixed(3);
-                            } else {
-                                label += Math.round(value) + ' ms';
-                            }
-                            return label;
-                        }
-                    }
-                },
-                legend: { display: false }
+    if (cwvChartInstance) {
+        // Update existing chart to prevent flickering
+        cwvChartInstance.data.datasets[0].data = chartData;
+        cwvChartInstance.update('none'); // 'none' mode prevents animation jitter
+    } else {
+        // Create new chart
+        cwvChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Metric Value',
+                    data: chartData,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 206, 86, 0.5)',
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(153, 102, 255, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Value (ms) / CLS (*1000)'
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+
+                                let value = context.raw;
+                                if (context.dataIndex === 1) { // CLS
+                                    value = value / 1000;
+                                    label += value.toFixed(3);
+                                } else {
+                                    label += Math.round(value) + ' ms';
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Value (ms) / CLS (*1000)'
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 }
 
 /**

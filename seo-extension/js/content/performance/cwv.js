@@ -6,7 +6,9 @@
 // Global CWV data
 export const cwvData = {
     lcp: 0,
+    lcpElement: '',
     cls: 0,
+    clsElement: '',
     inp: 0,
     fcp: 0,
     ttfb: 0
@@ -63,6 +65,15 @@ export function initCWV() {
             const entries = list.getEntries();
             const lastEntry = entries[entries.length - 1];
             cwvData.lcp = Math.round(lastEntry.renderTime || lastEntry.loadTime);
+
+            // Capture LCP Element
+            if (lastEntry.element) {
+                let selector = lastEntry.element.tagName.toLowerCase();
+                if (lastEntry.element.id) selector += '#' + lastEntry.element.id;
+                else if (lastEntry.element.className) selector += '.' + lastEntry.element.className.split(' ').join('.');
+                cwvData.lcpElement = selector;
+            }
+
             sendCWVUpdate();
         });
         lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
@@ -77,6 +88,19 @@ export function initCWV() {
             for (const entry of list.getEntries()) {
                 if (!entry.hadRecentInput) {
                     clsValue += entry.value;
+
+                    // Capture CLS Element (from the largest shift source)
+                    if (entry.sources && entry.sources.length > 0) {
+                        const source = entry.sources[0];
+                        if (source.node) {
+                            let selector = source.node.tagName.toLowerCase();
+                            if (source.node.id) selector += '#' + source.node.id;
+                            else if (source.node.className && typeof source.node.className === 'string') {
+                                selector += '.' + source.node.className.split(' ').join('.');
+                            }
+                            cwvData.clsElement = selector;
+                        }
+                    }
                 }
             }
             cwvData.cls = Math.round(clsValue * 1000) / 1000;

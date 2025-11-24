@@ -94,102 +94,6 @@
     color: var(--md-sys-color-error);
 }
 
-/* Cards & Data Groups */
-
-.card,
-.score-card {
-    background-color: var(--md-sys-color-surface);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-lg);
-    border: 1px solid var(--md-sys-color-surface-variant);
-    margin-bottom: var(--spacing-lg);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-}
-
-/* Score Circle */
-.score-circle {
-    width: 96px;
-    height: 96px;
-    border-radius: 50%;
-    border: 8px solid var(--md-sys-color-surface-variant);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    color: var(--md-sys-color-on-surface);
-}
-
-.score-circle span {
-    font-size: 32px;
-    font-weight: 400;
-}
-
-.score-circle small {
-    font-size: 11px;
-    text-transform: uppercase;
-    color: var(--md-sys-color-on-surface-variant);
-}
-
-/* Data Group */
-.data-group {
-    background-color: var(--md-sys-color-background);
-    border: 1px solid var(--md-sys-color-surface-variant);
-    border-radius: var(--radius-sm);
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
-    border-left: 4px solid var(--md-sys-color-surface-variant);
-}
-
-.data-group label {
-    display: block;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--md-sys-color-on-surface-variant);
-    margin-bottom: 4px;
-    text-transform: uppercase;
-}
-
-.data-value {
-    font-size: 14px;
-    color: var(--md-sys-color-on-surface);
-    word-break: break-word;
-}
-
-/* Highlight Colors */
-.data-group.active-highlight.nofollow {
-    border-left-color: var(--md-sys-color-error);
-}
-
-.data-group.active-highlight.follow {
-    border-left-color: var(--md-sys-color-success);
-}
-
-.data-group.active-highlight.external {
-    border-left-color: var(--md-sys-color-primary);
-}
-
-.data-group.active-highlight.internal {
-    border-left-color: var(--md-sys-color-warning);
-}
-
-/* Suggestions */
-.suggestion-item {
-    padding: var(--spacing-md);
-    border-radius: var(--radius-sm);
-    margin-bottom: var(--spacing-sm);
-    font-size: 13px;
-    display: flex;
-    gap: 8px;
-}
-
-.suggestion-item.error {
-    background-color: var(--md-sys-color-error-container);
-    color: var(--md-sys-color-error);
-}
-
 .suggestion-item.warning {
     background-color: var(--md-sys-color-warning-container);
     color: var(--md-sys-color-warning);
@@ -208,4 +112,85 @@
     border-radius: var(--radius-sm);
     padding: var(--spacing-sm);
     background-color: var(--md-sys-color-background);
+}
+
+/* Detailed CWV Cards */
+.cwv-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.cwv-card {
+    background-color: var(--md-sys-color-background);
+    border: 1px solid var(--md-sys-color-surface-variant);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.metric-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    background-color: var(--md-sys-color-surface-variant);
+    /* Default */
+}
+
+.metric-dot.good {
+    background-color: var(--md-sys-color-success);
+}
+
+.metric-dot.needs-improvement {
+    background-color: var(--md-sys-color-warning);
+}
+
+.metric-dot.poor {
+    background-color: var(--md-sys-color-error);
+}
+
+.metric-value {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.metric-rating {
+    font-size: 11px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.metric-element {
+    font-size: 10px;
+    color: var(--md-sys-color-on-surface-variant);
+    border-top: 1px solid var(--md-sys-color-surface-variant);
+    padding-top: 4px;
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.metric-element code {
+    font-family: monospace;
+    background-color: var(--md-sys-color-surface-variant);
+    padding: 2px 4px;
+    border-radius: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
 }

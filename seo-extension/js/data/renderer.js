@@ -76,11 +76,66 @@ function renderOverviewTab(data, score, suggestions) {
     // CWV
     if (data.cwv) {
         renderCWVSection(data.cwv, renderCWVChart);
+
+        // Populate Detailed Cards
+        updateCWVCard('lcp', data.cwv.lcp, data.cwv.lcpElement, 2500, 4000);
+        updateCWVCard('cls', data.cwv.cls, data.cwv.clsElement, 0.1, 0.25);
+        updateCWVCard('inp', data.cwv.inp, null, 200, 500);
+        updateCWVCard('fcp', data.cwv.fcp, null, 1800, 3000);
+        updateCWVCard('ttfb', data.cwv.ttfb, null, 800, 1800);
     }
 
     // Readability
     if (data.readability) {
         setText('readability-score', `${data.readability.score} (${data.readability.level})`);
+    }
+}
+
+/**
+ * Helper to update a CWV card
+ */
+function updateCWVCard(metric, value, element, goodThreshold, poorThreshold) {
+    const valueEl = document.getElementById(`${metric}-value`);
+    const ratingEl = document.getElementById(`${metric}-rating`);
+    const elementEl = document.getElementById(`${metric}-element`);
+    const dotEl = document.getElementById(`${metric}-dot`);
+
+    if (!valueEl || !ratingEl) return;
+
+    // Format value
+    let displayValue = value;
+    if (metric === 'cls') displayValue = value ? value.toFixed(3) : '0';
+    else displayValue = value ? Math.round(value) + ' ms' : '--';
+
+    valueEl.textContent = displayValue;
+
+    // Determine rating
+    let rating = 'Good';
+    let colorClass = 'good';
+    let color = 'var(--success-color)';
+
+    if (value > poorThreshold) {
+        rating = 'Poor';
+        colorClass = 'poor';
+        color = 'var(--error-color)';
+    } else if (value > goodThreshold) {
+        rating = 'Needs Improvement';
+        colorClass = 'needs-improvement';
+        color = 'var(--warning-color)';
+    }
+
+    ratingEl.textContent = rating;
+    ratingEl.style.color = color;
+
+    // Update dot
+    if (dotEl) {
+        dotEl.className = `metric-dot ${colorClass}`;
+    }
+
+    // Element selector
+    if (elementEl) {
+        elementEl.textContent = element || 'N/A';
+        elementEl.title = element || ''; // Tooltip for long selectors
     }
 }
 

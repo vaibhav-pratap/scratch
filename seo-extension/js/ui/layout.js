@@ -87,6 +87,66 @@ function renderOverviewTab() {
             <div class="chart-container">
                 <canvas id="cwv-chart"></canvas>
             </div>
+            
+            <!-- Detailed CWV Cards -->
+            <div class="cwv-details-grid">
+                <!-- LCP Card -->
+                <div class="cwv-card">
+                    <div class="metric-header">
+                        <div><span id="lcp-dot" class="metric-dot"></span>LCP</div>
+                        <span id="lcp-value" class="metric-value">--</span>
+                    </div>
+                    <div id="lcp-rating" class="metric-rating">--</div>
+                    <div class="metric-element">
+                        <small>Element:</small>
+                        <code id="lcp-element">--</code>
+                    </div>
+                </div>
+
+                <!-- CLS Card -->
+                <div class="cwv-card">
+                    <div class="metric-header">
+                        <div><span id="cls-dot" class="metric-dot"></span>CLS</div>
+                        <span id="cls-value" class="metric-value">--</span>
+                    </div>
+                    <div id="cls-rating" class="metric-rating">--</div>
+                    <div class="metric-element">
+                        <small>Element:</small>
+                        <code id="cls-element">--</code>
+                    </div>
+                </div>
+
+                <!-- INP Card -->
+                <div class="cwv-card">
+                    <div class="metric-header">
+                        <div><span id="inp-dot" class="metric-dot"></span>INP</div>
+                        <span id="inp-value" class="metric-value">--</span>
+                    </div>
+                    <div id="inp-rating" class="metric-rating">--</div>
+                    <div class="metric-element">
+                        <small>Element:</small>
+                        <code id="inp-element">--</code>
+                    </div>
+                </div>
+
+                <!-- FCP Card -->
+                <div class="cwv-card">
+                    <div class="metric-header">
+                        <div><span id="fcp-dot" class="metric-dot"></span>FCP</div>
+                        <span id="fcp-value" class="metric-value">--</span>
+                    </div>
+                    <div id="fcp-rating" class="metric-rating">--</div>
+                </div>
+
+                <!-- TTFB Card -->
+                <div class="cwv-card">
+                    <div class="metric-header">
+                        <div><span id="ttfb-dot" class="metric-dot"></span>TTFB</div>
+                        <span id="ttfb-value" class="metric-value">--</span>
+                    </div>
+                    <div id="ttfb-rating" class="metric-rating">--</div>
+                </div>
+            </div>
         </div>
 
         <div class="data-group">
