@@ -4,7 +4,6 @@
  */
 
 // Core modules
-// Ensure all storage functions are imported statically for consistency
 import { saveToCache, loadFromCache, saveToSession, loadFromSession } from './storage.js';
 import { requestSEOData } from './messaging.js';
 
@@ -21,31 +20,53 @@ export async function initPopup(renderCallback) {
             return;
         }
 
-        // Try to load cached data first for instant render
-        const cached = loadFromCache(tab.url);
-        if (cached) {
-            renderCallback(cached);
+        // STEP 1: Try session storage first (shared with sidepanel, fastest)
+        const sessionData = await loadFromSession();
+        if (sessionData) {
+            console.log('[initPopup] Loaded from session storage');
+            renderCallback(sessionData);
+            // We still fetch fresh data in background, but UI is ready
         }
 
-        // Inject content script if needed (robustness)
-        try {
-            await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                files: ['js/content-loader.js']
-            });
-        } catch (e) {
-            // Script might already be there, ignore
+        // STEP 2: Try local cache if no session data
+        if (!sessionData) {
+            const cached = loadFromCache(tab.url);
+            if (cached) {
+                console.log('[initPopup] Loaded from local cache');
+                renderCallback(cached);
+            }
         }
 
-        // Request fresh data
-        const data = await requestSEOData(tab.id);
+        // STEP 3: Optimistic Data Request (Avoid injecting if script is alive)
+        console.log('[initPopup] Requesting fresh data...');
+        let data = await requestSEOData(tab.id, 1); // 1 attempt only first
+
+        // STEP 4: Inject content script ONLY if request failed
+        if (!data) {
+            console.log('[initPopup] No response, injecting content script...');
+            try {
+                await chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    files: ['js/content-loader.js']
+                });
+                // Wait a bit for script to initialize
+                await new Promise(resolve => setTimeout(resolve, 200));
+            } catch (e) {
+                console.warn('[initPopup] Script injection failed (maybe already there?):', e);
+            }
+
+            // Retry request after injection
+            data = await requestSEOData(tab.id, 3);
+        }
+
+        // STEP 5: Handle fresh data
         if (data) {
+            console.log('[initPopup] Received fresh data');
             renderCallback(data);
             saveToCache(tab.url, data);
-            // Save to session storage for sidepanel to pick up
             await saveToSession(data);
-        } else if (!cached) {
-            showError("Received empty response from page.");
+        } else if (!sessionData && !loadFromCache(tab.url)) {
+            showError("Received empty response from page. Try refreshing.");
         }
 
     } catch (error) {

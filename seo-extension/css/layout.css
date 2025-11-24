@@ -50,7 +50,7 @@
     background-color: var(--md-sys-color-surface);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: space-around;
     flex-shrink: 0;
     gap: var(--spacing-sm);
     z-index: 20;

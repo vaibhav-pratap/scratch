@@ -59,50 +59,48 @@ function extractSEOData() {
  * Initialize content script
  */
 function init() {
-    console.log('[SEO Analyzer] Initializing modular content script...');
+    console.log('[SEO Analyzer] Initializing DOM-dependent features...');
 
-    // 1. Initialize Core Web Vitals tracking
-    initCWV();
-
-    // Set up CWV update callback
-    onCWVUpdate((cwvData) => {
-        sendCWVUpdate();
-    });
-
-    // 2. Inject highlight styles
+    // 1. Inject highlight styles
     injectHighlightStyles();
 
-    // 3. Setup message listener
-    setupMessageListener(extractSEOData);
-
-    // 4. Observer for DOM changes (SPA navigation, dynamic content)
+    // 2. Observer for DOM changes (SPA navigation, dynamic content)
     const observer = new MutationObserver(debounce(() => {
         const data = extractSEOData();
         sendUpdate(data);
     }, 1000)); // 1 second debounce
 
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        attributes: false,
-        characterData: false
-    });
-
-    // 5. Initial send on load
-    if (document.readyState === 'complete') {
-        const data = extractSEOData();
-        sendUpdate(data);
-    } else {
-        window.addEventListener('load', () => {
-            const data = extractSEOData();
-            sendUpdate(data);
+    if (document.body) {
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: false,
+            characterData: false
         });
     }
+
+    // 3. Initial send on load
+    const data = extractSEOData();
+    sendUpdate(data);
 
     console.log('[SEO Analyzer] Content script initialized successfully');
 }
 
-// Initialize when ready
+// --- Initialize Core Features Immediately ---
+console.log('[SEO Analyzer] Starting content script...');
+
+// 1. Initialize Core Web Vitals tracking (needs to be early)
+initCWV();
+
+// Set up CWV update callback
+onCWVUpdate((cwvData) => {
+    sendCWVUpdate();
+});
+
+// 2. Setup message listener (MUST be ready for popup requests)
+setupMessageListener(extractSEOData);
+
+// 3. Initialize DOM-dependent features when ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {

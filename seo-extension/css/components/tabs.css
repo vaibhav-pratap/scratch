@@ -1,4 +1,5 @@
 /* Tabs Component */
+/* -------------------------------------------------------------------------- */
 
 .tabs-container {
     background-color: var(--md-sys-color-background);
@@ -9,22 +10,57 @@
     white-space: nowrap;
     padding: 0 var(--spacing-lg);
     gap: var(--spacing-lg);
-    scrollbar-width: none;
-    /* Hide scrollbar for cleaner look, or thin */
+
+    /* 1. Scrolling Enhancements */
+    scroll-behavior: smooth;
+
+    /* 2. Drag Hint (for browsers that support it) */
+    cursor: grab;
+
+    /* 3. Sleek Scrollbar Styling (Firefox) */
+    scrollbar-width: thin;
+    scrollbar-color: var(--md-sys-color-primary) transparent;
 }
 
+/* 4. Sleek Scrollbar Styling (WebKit: Chrome, Safari, Edge) */
+
 .tabs-container::-webkit-scrollbar {
-    height: 0;
+    height: 8px;
+    /* Thickness of the scrollbar */
 }
+
+.tabs-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tabs-container::-webkit-scrollbar-thumb {
+    background-color: var(--md-sys-color-primary);
+    /* Primary color for the slider */
+    border-radius: 10px;
+    border: 2px solid var(--md-sys-color-background);
+    /* Creates separation from track */
+}
+
+.tabs-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--md-sys-color-on-surface);
+    /* Darken thumb on hover */
+}
+
+
+/* Tab Buttons */
+/* -------------------------------------------------------------------------- */
 
 .tab-btn {
     background: none;
     border: none;
     padding: 12px 4px;
+
+    /* MD Typography */
     font-family: var(--md-sys-typescale-body-large-font);
     font-size: var(--md-sys-typescale-body-medium-size);
     font-weight: 500;
     color: var(--md-sys-color-on-surface-variant);
+
     cursor: pointer;
     position: relative;
     transition: color 0.2s;
@@ -51,8 +87,12 @@
     border-radius: 3px 3px 0 0;
 }
 
-/* Tab Content Visibility */
+
+/* Tab Content Visibility & Animation */
+/* -------------------------------------------------------------------------- */
+
 .tab-content {
+    /* Hides the content but allows it to be block when active */
     display: none !important;
     animation: fadeIn 0.2s ease-in-out;
 }
