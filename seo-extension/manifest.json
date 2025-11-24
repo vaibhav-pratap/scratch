@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SEO Analyzer Pro",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Advanced SEO tool with Google-inspired UI to view, copy, and download SEO data.",
   "permissions": [
     "activeTab",
