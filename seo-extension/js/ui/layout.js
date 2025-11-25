@@ -4,6 +4,38 @@
  * This ensures a modular HTML approach without build steps.
  */
 
+// Helper function to create AI insights card HTML
+function createAIInsightsCard(tabId) {
+    return `
+        <div class="card ai-insights-card" id="ai-insights-${tabId}" style="margin-top: 16px;">
+            <div class="data-group" style="margin-bottom: 0;">
+                <div class="label-row" style="justify-content: space-between; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg>
+                        AI Insights
+                    </label>
+                    <button class="btn-ai-insights action-btn secondary small" data-tab="${tabId}" style="display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        Get Insights
+                    </button>
+                </div>
+                <div class="ai-insights-content" id="ai-insights-content-${tabId}" style="margin-top: 12px; display: none;">
+                    <div class="ai-insights-text" id="ai-insights-text-${tabId}" style="white-space: pre-wrap; line-height: 1.6; padding: 12px; background: var(--md-sys-color-surface-variant); border-radius: 8px; font-size: 13px;"></div>
+                    <div class="ai-insights-loading" id="ai-insights-loading-${tabId}" style="display: none; text-align: center; padding: 20px;">
+                        <div style="display: inline-block; width: 18px; height: 18px; border: 3px solid var(--md-sys-color-primary-container); border-top-color: var(--md-sys-color-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <p style="margin-top: 12px; color: var(--md-sys-color-on-surface-variant); font-size: 12px;">Generating insights...</p>
+                    </div>
+                    <div class="ai-insights-error" id="ai-insights-error-${tabId}" style="display: none; color: var(--md-sys-color-error); padding: 12px; background: var(--md-sys-color-error-container); border-radius: 4px; margin-top: 8px; font-size: 12px;"></div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 export function renderStaticLayout() {
     const app = document.getElementById('app');
     if (!app) return;
@@ -38,6 +70,7 @@ export function renderStaticLayout() {
                 <button class="tab-btn" data-tab="links">Links</button>
                 <button class="tab-btn" data-tab="accessibility">Accessibility</button>
                 <button class="tab-btn" data-tab="schema">Schema</button>
+                <button class="tab-btn" data-tab="ai-analysis">AI Analysis</button>
                 <button class="tab-btn" data-tab="settings">Settings</button>
             </div>
         </header>
@@ -51,6 +84,7 @@ export function renderStaticLayout() {
             ${renderLinksTab()}
             ${renderAccessibilityTab()}
             ${renderSchemaTab()}
+            ${renderAIAnalysisTab()}
             ${renderSettingsTab()}
         </main>
 
@@ -154,6 +188,7 @@ function renderOverviewTab() {
         <div class="data-group">
             <label>Readability</label>
             <div id="readability-score" class="data-value highlight">--</div>
+            <div id="readability-details" style="margin-top: 12px; display: none;"></div>
         </div>
 
         <div class="data-group">
@@ -164,6 +199,34 @@ function renderOverviewTab() {
         <div class="suggestions-section">
             <h3>Suggestions</h3>
             <div id="suggestions-list" class="suggestions-list"></div>
+        </div>
+
+        <!-- AI Summary Card -->
+        <div class="card" id="ai-summary-card" style="margin-top: 24px;">
+            <div class="data-group" style="margin-bottom: 0;">
+                <div class="label-row" style="justify-content: space-between; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg>
+                        AI Summary
+                    </label>
+                    <button id="btn-generate-ai-summary" class="action-btn secondary small" style="display: flex; align-items: center; gap: 6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        Generate
+                    </button>
+                </div>
+                <div id="ai-summary-content" class="data-value" style="margin-top: 12px; min-height: 40px; padding: 16px; background: var(--md-sys-color-surface-variant); border-radius: 8px; display: none;">
+                    <div id="ai-summary-text" style="white-space: pre-wrap; line-height: 1.6;"></div>
+                    <div id="ai-summary-loading" style="display: none; text-align: center; padding: 20px;">
+                        <div style="display: inline-block; width: 20px; height: 20px; border: 3px solid var(--md-sys-color-primary-container); border-top-color: var(--md-sys-color-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <p style="margin-top: 12px; color: var(--md-sys-color-on-surface-variant);">Generating AI summary...</p>
+                    </div>
+                    <div id="ai-summary-error" style="display: none; color: var(--md-sys-color-error); padding: 12px; background: var(--md-sys-color-error-container); border-radius: 4px; margin-top: 8px;"></div>
+                </div>
+            </div>
         </div>
     </div>`;
 }
@@ -178,6 +241,7 @@ function renderMetaTab() {
         ${renderDataGroup('Robots Tag', 'meta-robots', 'btn-copy-robots')}
         <div id="og-data"></div>
         <div id="twitter-data"></div>
+        ${createAIInsightsCard('meta')}
     </div>`;
 }
 
@@ -188,6 +252,7 @@ function renderHeadingsTab() {
             <canvas id="headings-chart"></canvas>
         </div>
         <div id="headings-list" class="headings-tree"></div>
+        ${createAIInsightsCard('headings')}
     </div>`;
 }
 
@@ -199,6 +264,7 @@ function renderImagesTab() {
             <span>Missing Alt: <b id="img-missing-alt">0</b></span>
         </div>
         <div id="images-list" class="images-grid"></div>
+        ${createAIInsightsCard('images')}
     </div>`;
 }
 
@@ -220,6 +286,7 @@ function renderLinksTab() {
         <div id="emails-list"></div>
         <h3>Phone Numbers</h3>
         <div id="phones-list"></div>
+        ${createAIInsightsCard('links')}
     </div>`;
 }
 
@@ -278,6 +345,8 @@ function renderAccessibilityTab() {
             <h3>All Issues</h3>
             <div id="a11y-issues-list"></div>
         </div>
+        
+        ${createAIInsightsCard('accessibility')}
     </div>
     `;
 }
@@ -310,6 +379,84 @@ function renderSchemaTab() {
                 <canvas id="paa-chart"></canvas>
             </div>
         </div>
+        ${createAIInsightsCard('schema')}
+    </div>`;
+}
+
+function renderAIAnalysisTab() {
+    return `
+    <div id="ai-analysis" class="tab-content">
+        <!-- API Key Check Message -->
+        <div id="ai-analysis-api-warning" class="card" style="padding: 24px; text-align: center; background: var(--md-sys-color-surface-variant); border-radius: 8px; display: none;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" style="margin: 0 auto 16px; color: var(--md-sys-color-warning);">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            <h3 style="margin: 0 0 8px 0; font-size: 18px;">API Key Required</h3>
+            <p style="margin: 0 0 16px 0; color: var(--md-sys-color-on-surface-variant);">
+                Please configure your Gemini API key in Settings to use AI Content Analysis.
+            </p>
+            <button id="btn-go-to-settings" class="action-btn primary">Go to Settings</button>
+        </div>
+        
+        <!-- Analysis Content -->
+        <div id="ai-analysis-content" style="display: none;">
+            <!-- Overall Score Card -->
+            <div class="score-card" style="margin-bottom: 24px;">
+                <div class="score-circle" style="width: 120px; height: 120px; margin: 0 auto;">
+                    <span id="ai-overall-score" style="font-size: 48px; font-weight: 700;">--</span>
+                    <small style="font-size: 12px; margin-top: 8px;">AI Score</small>
+                </div>
+                <div style="text-align: center; margin-top: 16px;">
+                    <div id="ai-overall-rating" style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">--</div>
+                    <div id="ai-overall-summary" style="font-size: 13px; color: var(--md-sys-color-on-surface-variant); max-width: 400px; margin: 0 auto;"></div>
+                </div>
+                <div style="text-align: center; margin-top: 16px;">
+                    <button id="btn-generate-ai-analysis" class="action-btn primary">Generate Analysis</button>
+                </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="ai-analysis-loading" style="display: none; text-align: center; padding: 40px;">
+                <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid var(--md-sys-color-primary-container); border-top-color: var(--md-sys-color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px;"></div>
+                <p style="color: var(--md-sys-color-on-surface-variant); font-size: 14px;">Analyzing content with AI...</p>
+                <p style="color: var(--md-sys-color-on-surface-variant); font-size: 12px; margin-top: 8px;">This may take a few moments</p>
+            </div>
+            
+            <!-- Error State -->
+            <div id="ai-analysis-error" style="display: none; padding: 20px; background: var(--md-sys-color-error-container); border-radius: 8px; color: var(--md-sys-color-on-error-container);"></div>
+            
+            <!-- Metrics Chart -->
+            <div id="ai-metrics-chart-container" style="margin-bottom: 24px; display: none;">
+                <div class="card">
+                    <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Content Quality Metrics</h3>
+                    <div class="chart-container">
+                        <canvas id="ai-metrics-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detailed Metrics Grid -->
+            <div id="ai-metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;"></div>
+            
+            <!-- Detailed Analysis Sections -->
+            <div id="ai-detailed-analysis"></div>
+            
+            <!-- Recommendations -->
+            <div id="ai-recommendations" style="margin-top: 24px;"></div>
+            
+            <!-- Improvement Plan -->
+            <div id="ai-improvement-plan" style="margin-top: 24px;"></div>
+            
+            <!-- Comparison Chart -->
+            <div id="ai-comparison-chart-container" style="margin-top: 24px; display: none;">
+                <div class="card">
+                    <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">Score Comparison</h3>
+                    <div class="chart-container">
+                        <canvas id="ai-comparison-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>`;
 }
 
@@ -326,6 +473,36 @@ function renderSettingsTab() {
                 </label>
             </div>
         </div>
+        
+        <h3>Google Gemini AI</h3>
+        <p class="text-xs text-secondary">Configure your Gemini API key to enable AI-powered SEO analysis.</p>
+        <div class="data-group">
+            <label>API Key</label>
+            <div class="label-row">
+                <input type="password" id="gemini-api-key" class="data-value" placeholder="Enter your Gemini API key" style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface);">
+                <button id="btn-save-api-key" class="action-btn secondary small">Save</button>
+            </div>
+            <p class="text-xs text-secondary" style="margin-top: 4px;">
+                Get your API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" style="color: var(--md-sys-color-primary);">Google AI Studio</a>
+            </p>
+        </div>
+        <div class="data-group">
+            <label>Model</label>
+            <select id="gemini-model" class="data-value" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface);">
+                <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro (Latest)</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash (Latest)</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash 8B</option>
+                <option value="gemini-pro">Gemini Pro</option>
+                <option value="gemini-pro-vision">Gemini Pro Vision</option>
+                <option value="gemini-exp-1206">Gemini Experimental 1206</option>
+            </select>
+        </div>
+        <div id="gemini-status" style="margin-top: 8px; padding: 8px; border-radius: 4px; display: none;"></div>
+        
         <h3>Link Highlighting</h3>
         <p class="text-xs text-secondary">Toggle highlighting for different link types.</p>
         ${renderToggle('Nofollow Links', 'toggle-nofollow')}

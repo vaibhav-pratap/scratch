@@ -13,6 +13,10 @@ import { initTabSwitching } from './ui/tabs.js';
 import { initThemeToggle } from './ui/theme.js';
 import { setupHighlightToggles, setupSidePanelToggle } from './ui/toggles.js';
 import { renderCWVChart } from './ui/charts.js';
+import { initGeminiSettings } from './ui/gemini-settings.js';
+import { initAISummary } from './ui/ai-summary.js';
+import { initAIInsights } from './ui/ai-insights.js';
+import { initAIAnalysisTab } from './data/renderers/ai-analysis.js';
 
 // Data modules
 import { renderData } from './data/renderer.js';
@@ -45,10 +49,33 @@ function init() {
     setupHighlightToggles();
     setupSidePanelToggle();
 
-    // 6. Real-time Updates Listener
+    // 6. Setup Gemini Settings
+    initGeminiSettings();
+
+    // 7. Setup AI Summary
+    initAISummary();
+
+    // 8. Setup AI Insights for all tabs
+    try {
+        initAIInsights();
+    } catch (error) {
+        console.error('[Popup] Error initializing AI Insights:', error);
+    }
+
+    // 9. Setup AI Analysis Tab (async, don't await to avoid blocking)
+    try {
+        // Call without await - it handles its own initialization timing
+        initAIAnalysisTab().catch(error => {
+            console.error('[Popup] Error initializing AI Analysis:', error);
+        });
+    } catch (error) {
+        console.error('[Popup] Error calling initAIAnalysisTab:', error);
+    }
+
+    // 10. Real-time Updates Listener
     listenForUpdates(renderData, renderCWVChart);
 
-    // 7. Setup Export Buttons (with slight delay to ensure DOM is ready)
+    // 11. Setup Export Buttons (with slight delay to ensure DOM is ready)
     setTimeout(() => {
         setupExportButtons();
     }, 100);

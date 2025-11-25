@@ -15,7 +15,7 @@ import { getPAA } from './content/extractors/paa.js';
 import { getAccessibilityData } from './content/extractors/accessibility.js';
 
 // Import performance
-import { calculateReadability } from './content/performance/readability.js';
+import { calculateReadability } from './content/performance/readability-advanced.js';
 import { initCWV, getCWV, onCWVUpdate } from './content/performance/cwv.js';
 
 // Import highlighting

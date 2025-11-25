@@ -1,6 +1,6 @@
 /**
  * Charts module for all Chart.js visualizations
- * Handles CWV, Links, Headings, and PAA charts
+ * Handles CWV, Links, Headings, PAA, and AI charts
  */
 
 // Chart instances (global state for destruction)
@@ -8,6 +8,8 @@ let cwvChartInstance = null;
 let linksChartInstance = null;
 let headingsChartInstance = null;
 let paaChartInstance = null;
+let aiMetricsChartInstance = null;
+let aiComparisonChartInstance = null;
 
 /**
  * Render Core Web Vitals chart
@@ -254,4 +256,157 @@ export function destroyAllCharts() {
         paaChartInstance.destroy();
         paaChartInstance = null;
     }
+    if (aiMetricsChartInstance) {
+        aiMetricsChartInstance.destroy();
+        aiMetricsChartInstance = null;
+    }
+    if (aiComparisonChartInstance) {
+        aiComparisonChartInstance.destroy();
+        aiComparisonChartInstance = null;
+    }
+}
+
+/**
+ * Render AI Metrics Chart (Bar chart)
+ */
+export function renderAIMetricsChart(canvas, labels, scores, colors) {
+    if (!canvas) return;
+
+    // Destroy existing chart if any
+    if (aiMetricsChartInstance) {
+        aiMetricsChartInstance.destroy();
+        aiMetricsChartInstance = null;
+    }
+
+    const ctx = canvas.getContext('2d');
+
+    // Create bar chart for metrics
+    aiMetricsChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Score',
+                data: scores,
+                backgroundColor: colors,
+                borderColor: colors.map(c => c.replace('0.5', '1')),
+                borderWidth: 2,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Score: ${context.parsed.y}/100`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20,
+                        callback: function(value) {
+                            return value;
+                        }
+                    },
+                    grid: {
+                        color: 'var(--border-color)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Render AI Comparison Chart
+ */
+export function renderAIComparisonChart(canvas, comparison) {
+    if (!canvas || !comparison) return;
+
+    // Destroy existing chart if any
+    if (aiComparisonChartInstance) {
+        aiComparisonChartInstance.destroy();
+        aiComparisonChartInstance = null;
+    }
+
+    const ctx = canvas.getContext('2d');
+
+    const labels = ['Your Score', 'Industry Average', 'Best Practice'];
+    const scores = [
+        comparison.yourScore || 0,
+        comparison.industryAverage || 0,
+        comparison.bestPractice || 0
+    ];
+    const colors = [
+        'rgba(66, 133, 244, 0.8)',
+        'rgba(158, 158, 158, 0.8)',
+        'rgba(76, 175, 80, 0.8)'
+    ];
+
+    aiComparisonChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Score',
+                data: scores,
+                backgroundColor: colors,
+                borderColor: colors.map(c => c.replace('0.8', '1')),
+                borderWidth: 2,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Score: ${context.parsed.y}/100`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20,
+                        callback: function(value) {
+                            return value;
+                        }
+                    },
+                    grid: {
+                        color: 'var(--border-color)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
 }

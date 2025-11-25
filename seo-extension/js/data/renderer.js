@@ -45,6 +45,9 @@ export function renderData(data) {
 
     // --- Schema Tab ---
     renderSchemaTab(data);
+    
+    // --- AI Analysis Tab ---
+    // Note: AI Analysis tab is initialized separately and checks for API key
 }
 
 /**
@@ -93,7 +96,7 @@ function renderOverviewTab(data, score, suggestions) {
 
     // Readability
     if (data.readability) {
-        setText('readability-score', `${data.readability.score} (${data.readability.level})`);
+        renderReadabilitySection(data.readability);
     }
 }
 
@@ -386,4 +389,149 @@ function renderSimpleList(containerId, items, prefix = '') {
         div.querySelector('button').addEventListener('click', (e) => copyToClipboard(`${prefix}${item}`, e.currentTarget));
         container.appendChild(div);
     });
+}
+
+/**
+ * Render comprehensive readability section
+ */
+function renderReadabilitySection(readability) {
+    const scoreEl = document.getElementById('readability-score');
+    const detailsEl = document.getElementById('readability-details');
+    
+    if (!scoreEl) return;
+    
+    // Display main score
+    const score = readability.score || readability.fleschScore || 0;
+    const level = readability.level || 'N/A';
+    scoreEl.textContent = `${score} (${level})`;
+    scoreEl.style.color = score >= 70 ? 'var(--success-color)' : (score >= 50 ? 'var(--warning-color)' : 'var(--error-color)');
+    
+    // Show detailed analysis
+    if (detailsEl && readability.wordCount) {
+        const statusColor = (status) => {
+            if (status === 'good') return 'var(--success-color)';
+            if (status === 'warning') return 'var(--warning-color)';
+            return 'var(--error-color)';
+        };
+        
+        const statusIcon = (status) => {
+            if (status === 'good') return '✓';
+            if (status === 'warning') return '⚠';
+            return '✗';
+        };
+        
+        let html = `
+            <div class="card" style="margin-top: 12px; padding: 16px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">Content Analysis</h4>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-bottom: 4px;">Word Count</div>
+                        <div style="font-size: 18px; font-weight: 700;">${readability.wordCount.toLocaleString()}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-bottom: 4px;">Sentences</div>
+                        <div style="font-size: 18px; font-weight: 700;">${readability.sentenceCount}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-bottom: 4px;">Paragraphs</div>
+                        <div style="font-size: 18px; font-weight: 700;">${readability.paragraphCount}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-bottom: 4px;">Avg Words/Sentence</div>
+                        <div style="font-size: 18px; font-weight: 700;">${readability.averageWordsPerSentence}</div>
+                    </div>
+                </div>
+        `;
+        
+        // Voice Analysis
+        if (readability.passiveVoice) {
+            const pv = readability.passiveVoice;
+            html += `
+                <div style="margin-bottom: 12px; padding: 12px; background: var(--md-sys-color-surface-variant); border-radius: 8px; border-left: 4px solid ${statusColor(pv.status)};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <strong style="font-size: 13px;">Passive Voice</strong>
+                        <span style="color: ${statusColor(pv.status)}; font-weight: 700;">${statusIcon(pv.status)} ${pv.percentage}%</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--md-sys-color-on-surface-variant);">
+                        ${pv.count} of ${readability.sentenceCount} sentences use passive voice
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Transitional Words
+        if (readability.transitionalWords) {
+            const tw = readability.transitionalWords;
+            html += `
+                <div style="margin-bottom: 12px; padding: 12px; background: var(--md-sys-color-surface-variant); border-radius: 8px; border-left: 4px solid ${statusColor(tw.status)};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <strong style="font-size: 13px;">Transitional Words</strong>
+                        <span style="color: ${statusColor(tw.status)}; font-weight: 700;">${statusIcon(tw.status)} ${tw.percentage}%</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--md-sys-color-on-surface-variant);">
+                        ${tw.count} transitional words found
+                        ${tw.found.length > 0 ? `(${tw.found.slice(0, 5).join(', ')})` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Sentence Analysis
+        if (readability.sentences) {
+            const s = readability.sentences;
+            html += `
+                <div style="margin-bottom: 12px; padding: 12px; background: var(--md-sys-color-surface-variant); border-radius: 8px; border-left: 4px solid ${statusColor(s.status)};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <strong style="font-size: 13px;">Sentence Length</strong>
+                        <span style="color: ${statusColor(s.status)}; font-weight: 700;">${statusIcon(s.status)} Avg: ${s.averageLength} words</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--md-sys-color-on-surface-variant);">
+                        ${s.longSentences} long (>20), ${s.veryLongSentences} very long (>25), ${s.shortSentences} short (<10)
+                        ${s.consecutiveSameStart > 0 ? ` • ${s.consecutiveSameStart} consecutive same starts` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Paragraph Analysis
+        if (readability.paragraphs) {
+            const p = readability.paragraphs;
+            html += `
+                <div style="margin-bottom: 12px; padding: 12px; background: var(--md-sys-color-surface-variant); border-radius: 8px; border-left: 4px solid ${statusColor(p.status)};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <strong style="font-size: 13px;">Paragraph Length</strong>
+                        <span style="color: ${statusColor(p.status)}; font-weight: 700;">${statusIcon(p.status)} Avg: ${p.averageLength} words</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--md-sys-color-on-surface-variant);">
+                        ${p.longParagraphs} long (>150), ${p.shortParagraphs} short (<50)
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Recommendations
+        if (readability.recommendations && readability.recommendations.length > 0) {
+            html += `
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                    <strong style="font-size: 13px; display: block; margin-bottom: 8px;">Recommendations</strong>
+            `;
+            
+            readability.recommendations.forEach(rec => {
+                const recColor = rec.type === 'error' ? 'var(--error-color)' : 'var(--warning-color)';
+                html += `
+                    <div style="padding: 8px; margin-bottom: 6px; background: var(--md-sys-color-surface-variant); border-radius: 4px; border-left: 3px solid ${recColor}; font-size: 12px;">
+                        ${rec.message}
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+        }
+        
+        html += `</div>`;
+        
+        detailsEl.innerHTML = html;
+        detailsEl.style.display = 'block';
+    }
 }
