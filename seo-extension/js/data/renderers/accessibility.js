@@ -13,6 +13,16 @@ function sendTabMessage(action, data = {}) {
 }
 
 /**
+ * Helper function to escape HTML in data attributes
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
  * Render accessibility tab data
  */
 export function renderAccessibilityTab(data) {
@@ -156,7 +166,7 @@ function renderChecks(checks) {
 }
 
 /**
- * Render all issues with details (using exact metric card structure from cards.css)
+ * Render all issues with details
  */
 function renderAllIssues(issues) {
     const container = document.getElementById('a11y-issues-list');
@@ -169,20 +179,110 @@ function renderAllIssues(issues) {
     ];
 
     if (allIssues.length === 0) {
-        let highlightsEnabled = false;
-
-        btn.addEventListener('click', () => {
-            highlightsEnabled = !highlightsEnabled;
-
-            const allIssues = [
-                ...(issues.critical || []),
-                ...(issues.warnings || []),
-                ...(issues.notices || [])
-            ];
-
-            sendTabMessage('toggleAccessibilityHighlights', { enabled: highlightsEnabled, issues: allIssues });
-
-            btn.textContent = highlightsEnabled ? 'Hide Highlights' : 'Show Highlights';
-            btn.classList.toggle('active', highlightsEnabled);
-        });
+        container.innerHTML = '<p style="color: var(--md-sys-color-on-surface-variant);">No accessibility issues found! 🎉</p>';
+        return;
     }
+
+    const issuesHTML = allIssues.map((issue, index) => {
+        const dotClass = issue.severity === 'critical' ? 'poor' :
+            issue.severity === 'warning' ? 'needs-improvement' :
+                'good';
+
+        const severityColor = issue.severity === 'critical' ? 'var(--md-sys-color-error)' :
+            issue.severity === 'warning' ? 'var(--md-sys-color-warning)' :
+                'var(--md-sys-color-success)';
+
+        return `
+        <div class="cwv-card" style="margin-bottom: 16px;">
+            <div class="metric-header">
+                <span>
+                    <span class="metric-dot ${dotClass}"></span>
+                    <strong>${issue.message}</strong>
+                </span>
+                <button class="action-btn secondary small highlight-issue-btn" 
+                        data-selector="${escapeHtml(issue.selector)}" 
+                        data-severity="${issue.severity}" 
+                        data-message="${escapeHtml(issue.message)}">
+                    Highlight
+                </button>
+            </div>
+
+            <div class="metric-value" style="color: ${severityColor};">
+                ${issue.severity.charAt(0).toUpperCase() + issue.severity.slice(1)} Issue
+            </div>
+
+            <div class="metric-element">
+                <span>Element:</span>
+                <code style="white-space: pre-wrap; word-break: break-all; overflow: visible; text-overflow: clip;">${escapeHtml(issue.element)}</code>
+            </div>
+
+            ${issue.suggestion ? `
+                <div class="metric-element" style="margin-top: 8px;">
+                    <strong style="display: block; margin-bottom: 4px;">💡 How to Fix</strong>
+                    <span style="font-size: 10px; display: block; white-space: normal;">${escapeHtml(issue.suggestion)}</span>
+                    ${issue.fix ? `<code style="margin-top: 4px; font-size: 9px; white-space: pre-wrap; word-break: break-all; overflow: visible; text-overflow: clip;">${escapeHtml(issue.fix)}</code>` : ''}
+                </div>
+            ` : ''}
+
+            ${issue.wcagRef ? `
+                <div class="metric-element" style="margin-top: 4px;">
+                    <a href="${issue.wcagRef.url}" 
+                       target="_blank" 
+                       style="color: var(--md-sys-color-primary); text-decoration: none; font-size: 10px; display: inline-flex; align-items: center; gap: 4px;">
+                        📖 WCAG ${issue.wcagRef.level}: ${issue.wcagRef.criterion}
+                        <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                        </svg>
+                    </a>
+                </div>
+            ` : ''}
+        </div>
+        `;
+    }).join('');
+
+    container.innerHTML = issuesHTML;
+
+    // Setup highlight buttons
+    const buttons = container.querySelectorAll('.highlight-issue-btn');
+    console.log(`[A11Y Renderer] Setting up ${buttons.length} highlight buttons`);
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const selector = this.getAttribute('data-selector');
+            const severity = this.getAttribute('data-severity');
+            const message = this.getAttribute('data-message');
+
+            console.log('[A11Y Renderer] Highlight clicked:', { selector, severity, message });
+
+            sendTabMessage('highlightAccessibilityIssue', { selector, severity, message });
+        });
+    });
+}
+
+/**
+ * Setup toggle highlights button
+ */
+function setupHighlightToggle(issues) {
+    const btn = document.getElementById('btn-toggle-a11y-highlights');
+    if (!btn) return;
+
+    let highlightsEnabled = false;
+
+    btn.addEventListener('click', () => {
+        highlightsEnabled = !highlightsEnabled;
+
+        const allIssues = [
+            ...(issues.critical || []),
+            ...(issues.warnings || []),
+            ...(issues.notices || [])
+        ];
+
+        sendTabMessage('toggleAccessibilityHighlights', { enabled: highlightsEnabled, issues: allIssues });
+
+        btn.textContent = highlightsEnabled ? 'Hide Highlights' : 'Show Highlights';
+        btn.classList.toggle('active', highlightsEnabled);
+    });
+}
