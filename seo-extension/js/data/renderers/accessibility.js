@@ -63,15 +63,29 @@ function renderAccessibilityScore(score, checks) {
 
     scoreValue.textContent = score;
 
-    // Create doughnut chart
+    // Create doughnut chart with DPI scaling for crisp rendering
     const ctx = canvas.getContext('2d');
-    const centerX = 70;
-    const centerY = 70;
-    const outerRadius = 65;
-    const innerRadius = 50;
+    const dpr = window.devicePixelRatio || 1;
+    const size = 100;
+
+    // Set display size (css pixels)
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+
+    // Set actual size in memory (scaled for DPI)
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+
+    // Scale the context to match DPI
+    ctx.scale(dpr, dpr);
+
+    const centerX = 50;
+    const centerY = 50;
+    const outerRadius = 48;
+    const innerRadius = 36;
 
     // Clear canvas
-    ctx.clearRect(0, 0, 140, 140);
+    ctx.clearRect(0, 0, 100, 100);
 
     // Prepare data from checks
     const categories = [
@@ -99,27 +113,23 @@ function renderAccessibilityScore(score, checks) {
     chartData.forEach(data => {
         const sliceAngle = (data.score / total) * 2 * Math.PI || 0;
 
+        // Add small gap between segments for visual separation
+        const gapAngle = 0.02;
+
         // Draw segment
         ctx.beginPath();
-        ctx.arc(centerX, centerY, outerRadius, startAngle, startAngle + sliceAngle);
-        ctx.arc(centerX, centerY, innerRadius, startAngle + sliceAngle, startAngle, true);
+        ctx.arc(centerX, centerY, outerRadius, startAngle + gapAngle, startAngle + sliceAngle - gapAngle);
+        ctx.arc(centerX, centerY, innerRadius, startAngle + sliceAngle - gapAngle, startAngle + gapAngle, true);
         ctx.closePath();
 
-        // Color based on score
-        if (data.score >= 90) {
-            ctx.fillStyle = '#0F9D58'; // Green
-        } else if (data.score >= 70) {
-            ctx.fillStyle = '#F4B400'; // Yellow
+        // Use category color for vibrant visualization
+        if (data.score > 0) {
+            ctx.fillStyle = data.color;
         } else {
-            ctx.fillStyle = '#DB4437'; // Red
+            ctx.fillStyle = '#E0E0E0'; // Gray for no data
         }
 
         ctx.fill();
-
-        // Add border
-        ctx.strokeStyle = 'var(--md-sys-color-surface)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
 
         startAngle += sliceAngle;
     });
@@ -127,8 +137,34 @@ function renderAccessibilityScore(score, checks) {
     // Add tooltip on hover
     canvas.style.cursor = 'pointer';
 
-    canvas.addEventListener('mousemove', function (e) {
-        const rect = canvas.getBoundingClientRect();
+    // Remove old listeners by cloning (simplest way to clear event listeners)
+    const newCanvas = canvas.cloneNode(true);
+    canvas.parentNode.replaceChild(newCanvas, canvas);
+
+    // We need to get the context again for the new canvas and redraw because cloning clears content
+    const ctx2 = newCanvas.getContext('2d');
+    ctx2.scale(dpr, dpr);
+
+    // Redraw on new canvas
+    startAngle = -Math.PI / 2;
+    chartData.forEach(data => {
+        const sliceAngle = (data.score / total) * 2 * Math.PI || 0;
+        const gapAngle = 0.02;
+
+        ctx2.beginPath();
+        ctx2.arc(centerX, centerY, outerRadius, startAngle + gapAngle, startAngle + sliceAngle - gapAngle);
+        ctx2.arc(centerX, centerY, innerRadius, startAngle + sliceAngle - gapAngle, startAngle + gapAngle, true);
+        ctx2.closePath();
+
+        if (data.score > 0) ctx2.fillStyle = data.color;
+        else ctx2.fillStyle = '#E0E0E0';
+
+        ctx2.fill();
+        startAngle += sliceAngle;
+    });
+
+    newCanvas.addEventListener('mousemove', function (e) {
+        const rect = newCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
@@ -157,12 +193,9 @@ function renderAccessibilityScore(score, checks) {
         }
     });
 
-    canvas.addEventListener('mouseleave', hideTooltip);
+    newCanvas.addEventListener('mouseleave', hideTooltip);
 }
 
-/**
- * Show tooltip for chart segment
- */
 let tooltipElement = null;
 function showTooltip(e, data) {
     if (!tooltipElement) {
@@ -182,9 +215,12 @@ function showTooltip(e, data) {
     }
 
     tooltipElement.innerHTML = `
-        <strong>${data.label}</strong><br>
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background-color: ${data.color}; display: inline-block;"></span>
+            <strong>${data.label}</strong>
+        </div>
         Score: ${data.score}%<br>
-        Passed: ${data.passed} | Failed: ${data.failed}
+        <span style="color: var(--md-sys-color-success);">Passed: ${data.passed}</span> | <span style="color: var(--md-sys-color-error);">Failed: ${data.failed}</span>
     `;
 
     tooltipElement.style.left = (e.clientX + 10) + 'px';
@@ -251,12 +287,12 @@ function renderChecks(checks) {
     if (!container) return;
 
     const checkCategories = [
-        { key: 'images', label: 'Images', icon: '🖼️' },
-        { key: 'forms', label: 'Forms', icon: '📝' },
-        { key: 'headings', label: 'Headings', icon: '📑' },
-        { key: 'landmarks', label: 'Landmarks', icon: '🏛️' },
-        { key: 'links', label: 'Links', icon: '🔗' },
-        { key: 'language', label: 'Language', icon: '🌐' }
+        { key: 'images', label: 'Images', icon: '🖼️', color: '#4CAF50' },
+        { key: 'forms', label: 'Forms', icon: '📝', color: '#2196F3' },
+        { key: 'headings', label: 'Headings', icon: '📑', color: '#FF9800' },
+        { key: 'landmarks', label: 'Landmarks', icon: '🏛️', color: '#9C27B0' },
+        { key: 'links', label: 'Links', icon: '🔗', color: '#F44336' },
+        { key: 'language', label: 'Language', icon: '🌐', color: '#00BCD4' }
     ];
 
     const checksHTML = checkCategories.map(category => {
@@ -268,11 +304,11 @@ function renderChecks(checks) {
         const score = check.score || 0;
 
         return `
-            <div class="data-group" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px;">
+            <div class="data-group" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; border-left: 4px solid ${category.color};">
                 <div style="flex: 1;">
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
                         <span style="font-size: 20px;">${category.icon}</span>
-                        <strong>${category.label}</strong>
+                        <strong style="color: ${category.color};">${category.label}</strong>
                     </div>
                     <div style="font-size: 13px; color: var(--md-sys-color-on-surface-variant);">
                         ${passedTests} passed • ${totalIssues} ${totalIssues === 1 ? 'issue' : 'issues'}

@@ -233,11 +233,11 @@ function renderAccessibilityTab() {
         
         <!-- Overall Score Card with Doughnut Chart -->
         <div class="score-card">
-            <div style="position: relative; width: 140px; height: 140px; margin: 0 auto;">
-                <canvas id="a11y-score-chart" width="140" height="140"></canvas>
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-                    <div id="a11y-score-value" style="font-size: 32px; font-weight: 400; line-height: 1;">--</div>
-                    <small style="font-size: 11px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant);">A11Y SCORE</small>
+            <div style="position: relative; width: 100px; height: 100px; margin: 0 auto;">
+                <canvas id="a11y-score-chart" width="100" height="100"></canvas>
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
+                    <div id="a11y-score-value" style="font-size: 32px; font-weight: 700; line-height: 1; margin: 0; color: var(--md-sys-color-on-surface);">--</div>
+                    <small style="font-size: 10px; font-weight: 500; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); letter-spacing: 0.5px; margin-top: 2px;">A11Y</small>
                 </div>
             </div>
             <div style="text-align: center; margin-top: 12px;">
