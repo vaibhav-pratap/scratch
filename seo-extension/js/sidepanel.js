@@ -13,6 +13,10 @@ import { initTabSwitching } from './ui/tabs.js';
 import { initThemeToggle } from './ui/theme.js';
 import { setupHighlightToggles, setupSidePanelToggle } from './ui/toggles.js';
 import { renderCWVChart } from './ui/charts.js';
+import { initGeminiSettings } from './ui/gemini-settings.js';
+import { initAISummary } from './ui/ai-summary.js';
+import { initAIInsights } from './ui/ai-insights.js';
+import { initAIAnalysisTab } from './data/renderers/ai-analysis.js';
 
 // Data modules
 import { renderData } from './data/renderer.js';
@@ -46,7 +50,30 @@ function init() {
     setupHighlightToggles();
     setupSidePanelToggle();
 
-    // 6. Initialize Data Fetching
+    // 6. Setup Gemini Settings
+    initGeminiSettings();
+
+    // 7. Setup AI Summary
+    initAISummary();
+
+    // 8. Setup AI Insights for all tabs
+    try {
+        initAIInsights();
+    } catch (error) {
+        console.error('[Sidepanel] Error initializing AI Insights:', error);
+    }
+
+    // 9. Setup AI Analysis Tab (async, don't await to avoid blocking)
+    try {
+        // Call without await - it handles its own initialization timing
+        initAIAnalysisTab().catch(error => {
+            console.error('[Sidepanel] Error initializing AI Analysis:', error);
+        });
+    } catch (error) {
+        console.error('[Sidepanel] Error calling initAIAnalysisTab:', error);
+    }
+
+    // 10. Initialize Data Fetching
     // This callback runs when data is first retrieved
     initSidePanel((data) => {
         console.log('[Sidepanel Callback] Received initial data:', data ? 'YES' : 'NO');
@@ -56,7 +83,7 @@ function init() {
         renderData(data);
     });
 
-    // 7. Real-time Updates Listener
+    // 11. Real-time Updates Listener
     // Note: The listener will call renderData, which updates the UI.
     // However, we need to ensure renderData also updates window.currentSEOData
     listenForUpdates(data => {
@@ -64,7 +91,7 @@ function init() {
         renderData(data);
     }, renderCWVChart);
 
-    // 8. Listen for tab switching and navigation changes
+    // 12. Listen for tab switching and navigation changes
     // Only re-fetch and re-render data, DO NOT re-setup buttons (listeners are already attached)
     const handleTabChange = () => {
         initSidePanel((data) => {
