@@ -81,26 +81,55 @@ export function highlightAccessibilityIssue(selector, severity = 'warning', mess
     try {
         injectHighlightStyles();
 
-        const elements = document.querySelectorAll(selector);
+        // Try to find elements
+        let elements = [];
+        try {
+            elements = Array.from(document.querySelectorAll(selector));
+        } catch (e) {
+            console.warn('[A11y Highlight] Invalid selector:', selector, e);
+            return;
+        }
+
+        if (elements.length === 0) {
+            console.warn('[A11y Highlight] No elements found for selector:', selector);
+            return;
+        }
+
         const highlightClass = HIGHLIGHT_CLASSES[severity] || HIGHLIGHT_CLASSES.warning;
 
         elements.forEach(element => {
             // Add highlight class
             element.classList.add(highlightClass);
 
+            // Scroll element into view
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
             // Add hover tooltip if message provided
             if (message) {
                 const overlay = document.createElement('div');
                 overlay.className = 'a11y-highlight-overlay';
                 overlay.textContent = message;
-                element.parentNode.insertBefore(overlay, element.nextSibling);
+                overlay.style.opacity = '1'; // Show immediately
+
+                // Position overlay near the element
+                const rect = element.getBoundingClientRect();
+                overlay.style.top = `${rect.bottom + window.scrollY + 5}px`;
+                overlay.style.left = `${rect.left + window.scrollX}px`;
+
+                document.body.appendChild(overlay);
+
+                // Auto-hide after 3 seconds
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.remove(), 300);
+                }, 3000);
             }
         });
 
         // Store for later removal
-        activeHighlights.set(selector, { elements: Array.from(elements), severity, message });
+        activeHighlights.set(selector, { elements, severity, message });
 
-        console.log(`[A11y Highlight] Highlighted ${elements.length} elements matching "${selector}"`);
+        console.log(`[A11y Highlight] Highlighted ${elements.length} element(s) matching "${selector}"`);
     } catch (error) {
         console.error('[A11y Highlight] Error highlighting:', error);
     }

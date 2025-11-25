@@ -50,19 +50,82 @@ const WCAG_REFS = {
 };
 
 /**
- * Get unique selector for an element
+ * Get unique and precise selector for an element
+ * Uses combination of ID, classes, nth-child, and path to ensure uniqueness
  */
 function getElementSelector(element) {
+    // If element has an ID, that's the most unique selector
     if (element.id) {
-        return `#${element.id}`;
+        return `#${CSS.escape(element.id)}`;
     }
-    if (element.className) {
-        const classes = element.className.split(' ').filter(c => c).slice(0, 2).join('.');
-        if (classes) {
-            return `${element.tagName.toLowerCase()}.${classes}`;
+
+    // Build a path from root to element
+    const path = [];
+    let current = element;
+
+    while (current && current !== document.body && current !== document.documentElement) {
+        let selector = current.tagName.toLowerCase();
+
+        // Add classes if available (limit to most specific ones)
+        if (current.className && typeof current.className === 'string') {
+            const classes = current.className.split(' ')
+                .filter(c => c && !c.startsWith('a11y-')) // Exclude our highlight classes
+                .slice(0, 2)
+                .map(c => CSS.escape(c))
+                .join('.');
+            if (classes) {
+                selector += '.' + classes;
+            }
         }
+
+        // Add nth-child position for precision
+        if (current.parentElement) {
+            const siblings = Array.from(current.parentElement.children);
+            const sameTagSiblings = siblings.filter(s => s.tagName === current.tagName);
+
+            if (sameTagSiblings.length > 1) {
+                const index = sameTagSiblings.indexOf(current) + 1;
+                selector += `:nth-of-type(${index})`;
+            }
+        }
+
+        path.unshift(selector);
+        current = current.parentElement;
     }
-    return element.tagName.toLowerCase();
+
+    // Return the full path (max 4 levels to avoid overly long selectors)
+    return path.slice(-4).join(' > ');
+}
+
+/**
+ * Store element references for highlighting
+ * Maps selectors to actual DOM elements to improve reliability
+ */
+const elementReferences = new Map();
+
+function storeElementReference(element, selector) {
+    // Generate a unique key based on selector + index
+    const key = selector;
+    if (!elementReferences.has(key)) {
+        elementReferences.set(key, element);
+    }
+    return key;
+}
+
+function getElementByStoredReference(selector) {
+    // First try the stored reference
+    if (elementReferences.has(selector)) {
+        const element = elementReferences.get(selector);
+        // Check if element still exists in DOM
+        if (document.contains(element)) {
+            return [element];
+        }
+        // If not, remove the stale reference
+        elementReferences.delete(selector);
+    }
+
+    // Fall back to querySelectorAll
+    return document.querySelectorAll(selector);
 }
 
 /**

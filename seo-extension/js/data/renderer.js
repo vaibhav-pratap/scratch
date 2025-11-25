@@ -5,6 +5,7 @@
 
 import { setText } from '../utils/dom.js';
 import { renderCWVChart, renderLinksChart, renderHeadingsChart } from '../ui/charts.js';
+import { renderAccessibilityTab } from './renderers/accessibility.js';
 import { renderCWVSection } from '../ui/cwv-display.js';
 import { calculateSEOScore } from './calculators.js';
 import { copyToClipboard } from '../utils/clipboard.js';
@@ -36,6 +37,11 @@ export function renderData(data) {
 
     // --- Links Tab ---
     renderLinksTab(data);
+
+    // --- Accessibility Tab ---
+    if (data.accessibility) {
+        renderAccessibilityTab(data.accessibility);
+    }
 
     // --- Schema Tab ---
     renderSchemaTab(data);
