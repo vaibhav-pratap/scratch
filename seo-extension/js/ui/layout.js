@@ -231,11 +231,14 @@ function renderAccessibilityTab() {
     <div id="accessibility" class="tab-content">
         <h2>Accessibility Audit</h2>
         
-        <!-- Overall Score Card -->
+        <!-- Overall Score Card with Doughnut Chart -->
         <div class="score-card">
-            <div class="score-circle" id="a11y-score-circle">
-                <span id="a11y-score-value">--</span>
-                <small>A11Y SCORE</small>
+            <div style="position: relative; width: 140px; height: 140px; margin: 0 auto;">
+                <canvas id="a11y-score-chart" width="140" height="140"></canvas>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                    <div id="a11y-score-value" style="font-size: 32px; font-weight: 400; line-height: 1;">--</div>
+                    <small style="font-size: 11px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant);">A11Y SCORE</small>
+                </div>
             </div>
             <div style="text-align: center; margin-top: 12px;">
                 <button id="btn-toggle-a11y-highlights" class="action-btn secondary small">Toggle Highlights</button>

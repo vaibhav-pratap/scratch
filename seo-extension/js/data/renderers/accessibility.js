@@ -29,8 +29,8 @@ export function renderAccessibilityTab(data) {
     if (!data) return;
 
     try {
-        // Render overall score
-        renderAccessibilityScore(data.score);
+        // Render overall score with checks data for doughnut chart
+        renderAccessibilityScore(data.score, data.checks || {});
 
         // Render issues summary
         renderIssuesSummary(data.issues);
@@ -53,23 +53,148 @@ export function renderAccessibilityTab(data) {
 }
 
 /**
- * Render overall accessibility score
+ * Render overall accessibility score with doughnut chart
  */
-function renderAccessibilityScore(score) {
+function renderAccessibilityScore(score, checks) {
     const scoreValue = document.getElementById('a11y-score-value');
-    const scoreCircle = document.getElementById('a11y-score-circle');
+    const canvas = document.getElementById('a11y-score-chart');
 
-    if (!scoreValue || !scoreCircle) return;
+    if (!scoreValue || !canvas) return;
 
     scoreValue.textContent = score;
 
-    // Color code based on score
-    if (score >= 90) {
-        scoreCircle.style.borderColor = 'var(--md-sys-color-success)';
-    } else if (score >= 70) {
-        scoreCircle.style.borderColor = 'var(--md-sys-color-warning)';
-    } else {
-        scoreCircle.style.borderColor = 'var(--md-sys-color-error)';
+    // Create doughnut chart
+    const ctx = canvas.getContext('2d');
+    const centerX = 70;
+    const centerY = 70;
+    const outerRadius = 65;
+    const innerRadius = 50;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, 140, 140);
+
+    // Prepare data from checks
+    const categories = [
+        { key: 'images', label: 'Images', color: '#4CAF50' },
+        { key: 'forms', label: 'Forms', color: '#2196F3' },
+        { key: 'headings', label: 'Headings', color: '#FF9800' },
+        { key: 'landmarks', label: 'Landmarks', color: '#9C27B0' },
+        { key: 'links', label: 'Links', color: '#F44336' },
+        { key: 'language', label: 'Language', color: '#00BCD4' }
+    ];
+
+    const chartData = categories.map(cat => ({
+        ...cat,
+        score: checks[cat.key]?.score || 0,
+        passed: checks[cat.key]?.passed || 0,
+        failed: checks[cat.key]?.failed || 0
+    }));
+
+    // Calculate total for percentages
+    const total = chartData.reduce((sum, d) => sum + d.score, 0);
+
+    // Draw segments
+    let startAngle = -Math.PI / 2; // Start from top
+
+    chartData.forEach(data => {
+        const sliceAngle = (data.score / total) * 2 * Math.PI || 0;
+
+        // Draw segment
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, outerRadius, startAngle, startAngle + sliceAngle);
+        ctx.arc(centerX, centerY, innerRadius, startAngle + sliceAngle, startAngle, true);
+        ctx.closePath();
+
+        // Color based on score
+        if (data.score >= 90) {
+            ctx.fillStyle = '#0F9D58'; // Green
+        } else if (data.score >= 70) {
+            ctx.fillStyle = '#F4B400'; // Yellow
+        } else {
+            ctx.fillStyle = '#DB4437'; // Red
+        }
+
+        ctx.fill();
+
+        // Add border
+        ctx.strokeStyle = 'var(--md-sys-color-surface)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        startAngle += sliceAngle;
+    });
+
+    // Add tooltip on hover
+    canvas.style.cursor = 'pointer';
+
+    canvas.addEventListener('mousemove', function (e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Check if mouse is in the doughnut ring
+        if (distance >= innerRadius && distance <= outerRadius) {
+            const angle = Math.atan2(dy, dx);
+            const normalizedAngle = angle < -Math.PI / 2 ? angle + 2 * Math.PI : angle;
+            const adjustedAngle = normalizedAngle + Math.PI / 2;
+
+            // Find which segment
+            let currentAngle = 0;
+            for (let i = 0; i < chartData.length; i++) {
+                const sliceAngle = (chartData[i].score / total) * 2 * Math.PI || 0;
+                if (adjustedAngle >= currentAngle && adjustedAngle < currentAngle + sliceAngle) {
+                    showTooltip(e, chartData[i]);
+                    return;
+                }
+                currentAngle += sliceAngle;
+            }
+        } else {
+            hideTooltip();
+        }
+    });
+
+    canvas.addEventListener('mouseleave', hideTooltip);
+}
+
+/**
+ * Show tooltip for chart segment
+ */
+let tooltipElement = null;
+function showTooltip(e, data) {
+    if (!tooltipElement) {
+        tooltipElement = document.createElement('div');
+        tooltipElement.style.cssText = `
+            position: fixed;
+            background: var(--md-sys-color-surface-variant);
+            color: var(--md-sys-color-on-surface-variant);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 10000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        `;
+        document.body.appendChild(tooltipElement);
+    }
+
+    tooltipElement.innerHTML = `
+        <strong>${data.label}</strong><br>
+        Score: ${data.score}%<br>
+        Passed: ${data.passed} | Failed: ${data.failed}
+    `;
+
+    tooltipElement.style.left = (e.clientX + 10) + 'px';
+    tooltipElement.style.top = (e.clientY + 10) + 'px';
+    tooltipElement.style.display = 'block';
+}
+
+function hideTooltip() {
+    if (tooltipElement) {
+        tooltipElement.style.display = 'none';
     }
 }
 
