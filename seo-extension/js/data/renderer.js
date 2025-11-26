@@ -45,7 +45,7 @@ export function renderData(data) {
 
     // --- Schema Tab ---
     renderSchemaTab(data);
-    
+
     // --- AI Analysis Tab ---
     // Note: AI Analysis tab is initialized separately and checks for API key
 }
@@ -60,10 +60,17 @@ function renderOverviewTab(data, score, suggestions) {
     setText('title-length', `${titleLen} chars`);
     setText('desc-length', `${descLen} chars`);
 
-    // Tech Stack (optional element)
+    // Tech Stack - comprehensive categorized display
     const techStackEl = document.getElementById('tech-stack');
-    if (techStackEl && data.plugins) {
-        techStackEl.textContent = data.plugins.length ? data.plugins.join(', ') : 'None detected';
+    if (techStackEl) {
+        // Clear previous data to prevent stale results
+        techStackEl.innerHTML = '';
+
+        if (data.techStack && Object.keys(data.techStack).length > 0) {
+            renderTechStack(data.techStack, techStackEl);
+        } else {
+            techStackEl.innerHTML = '<div class="data-value" style="color: var(--md-sys-color-on-surface-variant);">None detected</div>';
+        }
     }
 
     // SEO Score
@@ -397,15 +404,15 @@ function renderSimpleList(containerId, items, prefix = '') {
 function renderReadabilitySection(readability) {
     const scoreEl = document.getElementById('readability-score');
     const detailsEl = document.getElementById('readability-details');
-    
+
     if (!scoreEl) return;
-    
+
     // Display main score
     const score = readability.score || readability.fleschScore || 0;
     const level = readability.level || 'N/A';
     scoreEl.textContent = `${score} (${level})`;
     scoreEl.style.color = score >= 70 ? 'var(--success-color)' : (score >= 50 ? 'var(--warning-color)' : 'var(--error-color)');
-    
+
     // Show detailed analysis
     if (detailsEl && readability.wordCount) {
         const statusColor = (status) => {
@@ -413,13 +420,13 @@ function renderReadabilitySection(readability) {
             if (status === 'warning') return 'var(--warning-color)';
             return 'var(--error-color)';
         };
-        
+
         const statusIcon = (status) => {
             if (status === 'good') return '✓';
             if (status === 'warning') return '⚠';
             return '✗';
         };
-        
+
         let html = `
             <div class="card" style="margin-top: 12px; padding: 16px;">
                 <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">Content Analysis</h4>
@@ -443,7 +450,7 @@ function renderReadabilitySection(readability) {
                     </div>
                 </div>
         `;
-        
+
         // Voice Analysis
         if (readability.passiveVoice) {
             const pv = readability.passiveVoice;
@@ -459,7 +466,7 @@ function renderReadabilitySection(readability) {
                 </div>
             `;
         }
-        
+
         // Transitional Words
         if (readability.transitionalWords) {
             const tw = readability.transitionalWords;
@@ -476,7 +483,7 @@ function renderReadabilitySection(readability) {
                 </div>
             `;
         }
-        
+
         // Sentence Analysis
         if (readability.sentences) {
             const s = readability.sentences;
@@ -493,7 +500,7 @@ function renderReadabilitySection(readability) {
                 </div>
             `;
         }
-        
+
         // Paragraph Analysis
         if (readability.paragraphs) {
             const p = readability.paragraphs;
@@ -509,14 +516,14 @@ function renderReadabilitySection(readability) {
                 </div>
             `;
         }
-        
+
         // Recommendations
         if (readability.recommendations && readability.recommendations.length > 0) {
             html += `
                 <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
                     <strong style="font-size: 13px; display: block; margin-bottom: 8px;">Recommendations</strong>
             `;
-            
+
             readability.recommendations.forEach(rec => {
                 const recColor = rec.type === 'error' ? 'var(--error-color)' : 'var(--warning-color)';
                 html += `
@@ -525,13 +532,88 @@ function renderReadabilitySection(readability) {
                     </div>
                 `;
             });
-            
+
             html += `</div>`;
         }
-        
+
         html += `</div>`;
-        
+
         detailsEl.innerHTML = html;
         detailsEl.style.display = 'block';
     }
+}
+
+/**
+ * Render comprehensive tech stack display
+ */
+function renderTechStack(techStack, container) {
+    if (!techStack || Object.keys(techStack).length === 0) {
+        container.innerHTML = '<div class="data-value" style="color: var(--md-sys-color-on-surface-variant);">None detected</div>';
+        return;
+    }
+
+    // Category display names and colors
+    const categoryConfig = {
+        cms: { label: 'CMS', color: 'var(--md-sys-color-primary)' },
+        frameworks: { label: 'JS Frameworks', color: 'var(--md-sys-color-secondary)' },
+        uiFrameworks: { label: 'UI Frameworks', color: 'var(--md-sys-color-tertiary)' },
+        libraries: { label: 'Libraries', color: '#00BCD4' },
+        analytics: { label: 'Analytics', color: '#4CAF50' },
+        ecommerce: { label: 'E-commerce', color: '#FF9800' },
+        cdn: { label: 'CDN', color: '#9C27B0' },
+        fonts: { label: 'Fonts', color: '#795548' },
+        advertising: { label: 'Advertising', color: '#F44336' },
+        seo: { label: 'SEO Tools', color: '#2196F3' },
+        server: { label: 'Server', color: '#607D8B' },
+        security: { label: 'Security', color: '#4CAF50' },
+        language: { label: 'Backend', color: '#FF5722' },
+        payment: { label: 'Payment', color: '#009688' },
+        communication: { label: 'Communication', color: '#E91E63' },
+        media: { label: 'Media', color: '#673AB7' },
+        buildTools: { label: 'Build Tools', color: '#3F51B5' },
+        hosting: { label: 'Hosting', color: '#00BCD4' },
+        social: { label: 'Social', color: '#FF9800' }
+    };
+
+    let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+
+    for (const [category, technologies] of Object.entries(techStack)) {
+        if (!technologies || technologies.length === 0) continue;
+
+        const config = categoryConfig[category] || { label: category, color: 'var(--md-sys-color-on-surface)' };
+
+        html += `
+            <div style="padding: 12px; background: var(--md-sys-color-surface-variant); border-radius: 8px; border-left: 4px solid ${config.color};">
+                <div style="font-size: 11px; font-weight: 700; color: ${config.color}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                    ${config.label}
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+        `;
+
+        technologies.forEach(tech => {
+            const displayName = tech.version ? `${tech.name} ${tech.version}` : tech.name;
+            html += `
+                <span style="
+                    display: inline-block;
+                    padding: 4px 10px;
+                    background: var(--md-sys-color-surface);
+                    border: 1px solid ${config.color}20;
+                    border-radius: 12px;
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: var(--md-sys-color-on-surface);
+                ">
+                    ${displayName}
+                </span>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
 }
