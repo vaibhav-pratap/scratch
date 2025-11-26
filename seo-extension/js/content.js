@@ -10,7 +10,7 @@ import { getImages } from './content/extractors/images.js';
 import { getLinks, getHreflangs } from './content/extractors/links.js';
 import { getEmails, getPhoneNumbers } from './content/extractors/contact.js';
 import { getSchema } from './content/extractors/schema.js';
-import { getSEOPlugins } from './content/extractors/plugins.js';
+import { detectTechStack } from './content/extractors/tech-stack.js';
 import { getPAA } from './content/extractors/paa.js';
 import { getAccessibilityData } from './content/extractors/accessibility.js';
 
@@ -49,7 +49,7 @@ function extractSEOData() {
         emails: safeExtract(() => getEmails(), []),
         phones: safeExtract(() => getPhoneNumbers(), []),
         schema: safeExtract(() => getSchema(), []),
-        plugins: safeExtract(() => getSEOPlugins(), []),
+        techStack: safeExtract(() => detectTechStack(), {}),
         paa: safeExtract(() => getPAA(), []),
         readability: safeExtract(() => calculateReadability(), { score: 0, level: 'N/A' }),
         cwv: getCWV(),
