@@ -16,9 +16,20 @@ export function getMetaContent(name) {
  */
 export function getOGTags() {
     const og = {};
-    document.querySelectorAll('meta[property^="og:"]').forEach(meta => {
-        const property = meta.getAttribute('property').replace('og:', '');
-        og[property] = meta.getAttribute('content');
+    // Query both property and name attributes for maximum compatibility
+    const selectors = [
+        'meta[property^="og:"]',
+        'meta[name^="og:"]'
+    ];
+
+    document.querySelectorAll(selectors.join(',')).forEach(meta => {
+        const prop = meta.getAttribute('property') || meta.getAttribute('name');
+        const property = prop.replace(/^og:/, '');
+        const content = meta.getAttribute('content');
+
+        if (property && content) {
+            og[property] = content;
+        }
     });
     return og;
 }
@@ -28,9 +39,39 @@ export function getOGTags() {
  */
 export function getTwitterTags() {
     const twitter = {};
-    document.querySelectorAll('meta[name^="twitter:"]').forEach(meta => {
-        const name = meta.getAttribute('name').replace('twitter:', '');
-        twitter[name] = meta.getAttribute('content');
+    // Query both name and property attributes (some sites use property for twitter tags)
+    const selectors = [
+        'meta[name^="twitter:"]',
+        'meta[property^="twitter:"]'
+    ];
+
+    document.querySelectorAll(selectors.join(',')).forEach(meta => {
+        const nameAttr = meta.getAttribute('name') || meta.getAttribute('property');
+        const name = nameAttr.replace(/^twitter:/, '');
+        const content = meta.getAttribute('content');
+
+        if (name && content) {
+            twitter[name] = content;
+        }
     });
     return twitter;
+}
+
+/**
+ * Get Favicon URL
+ */
+export function getFavicon() {
+    const selectors = [
+        'link[rel="icon"]',
+        'link[rel="shortcut icon"]',
+        'link[rel="apple-touch-icon"]'
+    ];
+
+    for (const selector of selectors) {
+        const element = document.querySelector(selector);
+        if (element && element.href) {
+            return element.href;
+        }
+    }
+    return '/favicon.ico'; // Default fallback
 }

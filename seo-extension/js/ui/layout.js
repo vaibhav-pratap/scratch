@@ -71,6 +71,9 @@ export function renderStaticLayout() {
                 <button class="tab-btn" data-tab="accessibility">Accessibility</button>
                 <button class="tab-btn" data-tab="schema">Schema</button>
                 <button class="tab-btn" data-tab="ai-analysis">AI Analysis</button>
+                <button class="tab-btn" data-tab="ad-transparency">Ad Transparency</button>
+                <button class="tab-btn" data-tab="tag-detector">Tag Detector</button>
+                <button class="tab-btn" data-tab="tracking-builder">Tracking Builder</button>
                 <button class="tab-btn" data-tab="settings">Settings</button>
             </div>
         </header>
@@ -85,6 +88,9 @@ export function renderStaticLayout() {
             ${renderAccessibilityTab()}
             ${renderSchemaTab()}
             ${renderAIAnalysisTab()}
+            ${renderAdTransparencyTab()}
+            ${renderTagDetectorTab()}
+            ${renderTrackingBuilderTab()}
             ${renderSettingsTab()}
         </main>
 
@@ -234,13 +240,7 @@ function renderOverviewTab() {
 function renderMetaTab() {
     return `
     <div id="meta" class="tab-content">
-        ${renderDataGroup('Title Tag', 'meta-title', 'btn-copy-title')}
-        ${renderDataGroup('Meta Description', 'meta-desc', 'btn-copy-desc')}
-        ${renderDataGroup('Meta Keywords', 'meta-keywords', 'btn-copy-keywords')}
-        ${renderDataGroup('Canonical URL', 'meta-canonical', 'btn-copy-canonical')}
-        ${renderDataGroup('Robots Tag', 'meta-robots', 'btn-copy-robots')}
-        <div id="og-data"></div>
-        <div id="twitter-data"></div>
+        <div id="meta-grouped-content"></div>
         ${createAIInsightsCard('meta')}
     </div>`;
 }
@@ -503,6 +503,11 @@ function renderSettingsTab() {
         </div>
         <div id="gemini-status" style="margin-top: 8px; padding: 8px; border-radius: 4px; display: none;"></div>
         
+        
+        <h3>Keywords Research APIs</h3>
+        <p class="text-xs text-secondary">Configure Google Search Console and Google Ads API access for keyword insights.</p>
+        <div id="keywords-api-settings"></div>
+        
         <h3>Link Highlighting</h3>
         <p class="text-xs text-secondary">Toggle highlighting for different link types.</p>
         ${renderToggle('Nofollow Links', 'toggle-nofollow')}
@@ -525,6 +530,182 @@ function renderDataGroup(label, valueId, copyBtnId) {
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
             </button>
         </div>
+    </div>`;
+}
+
+/**
+ * Render Ad Transparency Tab
+ */
+function renderAdTransparencyTab() {
+    return `
+    <div id="ad-transparency" class="tab-content">
+        <div class="data-group">
+            <div class="label-row" style="justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    Google Ads Lookup
+                </label>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); margin-bottom: 6px; text-transform: uppercase;">Region</label>
+                    <select id="ads-region-selector" style="width: 100%; padding: 10px 12px; border: 1px solid var(--md-sys-color-surface-variant); border-radius: var(--radius-sm); background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font-size: 14px; cursor: pointer;">
+                        <option value="US">United States</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="EU">European Union</option>
+                        <option value="anywhere">Worldwide</option>
+                        <option value="CA">Canada</option>
+                        <option value="AU">Australia</option>
+                        <option value="IN">India</option>
+                        <option value="JP">Japan</option>
+                        <option value="DE">Germany</option>
+                        <option value="FR">France</option>
+                        <option value="BR">Brazil</option>
+                        <option value="MX">Mexico</option>
+                    </select>
+                </div>
+                <button id="btn-view-ads" class="action-btn primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                    </svg>
+                    View Ads in Transparency Center
+                </button>
+            </div>
+        </div>
+
+        <div class="data-group">
+            <div class="label-row" style="justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    Meta Ads Lookup
+                </label>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); margin-bottom: 6px; text-transform: uppercase;">Country</label>
+                    <select id="meta-ads-country-selector" style="width: 100%; padding: 10px 12px; border: 1px solid var(--md-sys-color-surface-variant); border-radius: var(--radius-sm); background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font-size: 14px; cursor: pointer;">
+                        <option value="US">United States</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="ALL">All Countries</option>
+                        <option value="CA">Canada</option>
+                        <option value="AU">Australia</option>
+                        <option value="IN">India</option>
+                        <option value="JP">Japan</option>
+                        <option value="DE">Germany</option>
+                        <option value="FR">France</option>
+                        <option value="BR">Brazil</option>
+                        <option value="MX">Mexico</option>
+                    </select>
+                </div>
+                <button id="btn-view-meta-ads" class="action-btn primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                    </svg>
+                    View Ads in Meta Library
+                </button>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 24px;">
+            <div class="data-group" style="margin-bottom: 0;">
+                <div class="label-row">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                        </svg>
+                        About Ad Transparency
+                    </label>
+                </div>
+                <p style="margin-top: 12px; line-height: 1.6; color: var(--md-sys-color-on-surface-variant); font-size: 13px;">
+                    View advertising campaigns from major ad platforms. These tools help you research competitor strategies and understand ad messaging across different platforms.
+                </p>
+                <ul style="margin-top: 12px; line-height: 1.8; color: var(--md-sys-color-on-surface-variant); font-size: 13px; padding-left: 20px;">
+                    <li><strong>Google Ads Transparency:</strong> Search and political ads running on Google platforms</li>
+                    <li><strong>Meta Ads Library:</strong> All ads currently running on Facebook and Instagram</li>
+                </ul>
+            </div>
+        </div>
+    </div>`;
+}
+
+/**
+ * Render Tag Detector Tab
+ */
+function renderTagDetectorTab() {
+    return `
+    <div id="tag-detector" class="tab-content">
+        <div class="card">
+            <h3 style="margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
+                </svg>
+                Analytics & Tag Managers
+            </h3>
+            <div id="tags-analytics" class="data-value">--</div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                </svg>
+                Advertising Pixels
+            </h3>
+            <div id="tags-pixels" class="data-value">--</div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"/>
+                </svg>
+                Privacy & Compliance
+            </h3>
+            <div id="tags-privacy" class="data-value">--</div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
+                </svg>
+                Other Marketing Tools
+            </h3>
+            <div id="tags-other" class="data-value">--</div>
+        </div>
+
+        <div class="card" style="background: var(--md-sys-color-surface-variant); border-left: 4px solid var(--md-sys-color-primary);">
+            <div class="data-group" style="margin-bottom: 0;">
+                <div class="label-row">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                        </svg>
+                        About Tag Detection
+                    </label>
+                </div>
+                <p style="margin-top: 12px; line-height: 1.6; color: var(--md-sys-color-on-surface-variant); font-size: 13px;">
+                    This tool scans the page to detect marketing tags, analytics scripts, advertising pixels, and privacy compliance tools. Understanding which tags are present helps you:
+                </p>
+                <ul style="margin-top: 8px; line-height: 1.8; color: var(--md-sys-color-on-surface-variant); font-size: 13px; padding-left: 20px;">
+                    <li>Verify proper tag implementation</li>
+                    <li>Identify competitor tracking strategies</li>
+                    <li>Ensure privacy compliance</li>
+                    <li>Debug analytics issues</li>
+                </ul>
+            </div>
+        </div>
+    </div>`;
+}
+
+function renderTrackingBuilderTab() {
+    return `
+    <div id="tracking-builder" class="tab-content">
+        <div id="tracking-builder-content"></div>
     </div>`;
 }
 
