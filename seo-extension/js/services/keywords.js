@@ -4,105 +4,105 @@
  */
 
 import { getSettings, saveSettings } from '../core/storage.js';
+import { getToken, signOut } from './auth.js';
 
 // API Base URLs
 const GSC_API_BASE = 'https://www.googleapis.com/webmasters/v3';
 const GOOGLE_ADS_API_BASE = 'https://googleads.googleapis.com/v14';
 
 /**
- * Get Google Search Console API credentials
- */
-export async function getGSCCredentials() {
-    const settings = await getSettings(['gscApiKey', 'gscPropertyUrl']);
-    return {
-        apiKey: settings.gscApiKey || null,
-        propertyUrl: settings.gscPropertyUrl || null
-    };
-}
-
-/**
- * Save Google Search Console API credentials
- */
-export async function saveGSCCredentials(apiKey, propertyUrl) {
-    await saveSettings({
-        gscApiKey: apiKey,
-        gscPropertyUrl: propertyUrl
-    });
-}
-
-/**
  * Get Google Ads API credentials
  */
 export async function getGoogleAdsCredentials() {
-    const settings = await getSettings(['googleAdsApiKey', 'googleAdsCustomerId']);
+    const settings = await getSettings(['googleAdsApiKey']);
     return {
-        apiKey: settings.googleAdsApiKey || null,
-        customerId: settings.googleAdsCustomerId || null
+        apiKey: settings.googleAdsApiKey || null
     };
-}
-
-/**
- * Save Google Ads API credentials
- */
-export async function saveGoogleAdsCredentials(apiKey, customerId) {
-    await saveSettings({
-        googleAdsApiKey: apiKey,
-        googleAdsCustomerId: customerId
-    });
 }
 
 /**
  * Fetch Search Console Performance Data
- * @param {Object} params - Query parameters (startDate, endDate, dimensions, filters)
- * @returns {Promise<Object>} Search Console data
+ * @param {Object} params - { domain, startDate, endDate, dimensions, limit }
+ * @returns {Promise<Object>} Search Console data (queries, pages, totals)
  */
 export async function getSearchConsoleData(params = {}) {
     try {
-        const { apiKey, propertyUrl } = await getGSCCredentials();
+        const accessToken = await getToken();
 
-        if (!apiKey || !propertyUrl) {
-            throw new Error('Google Search Console credentials not configured. Please add them in Settings.');
+        if (!accessToken) {
+            throw new Error('Google Search Console not connected. Please sign in via Profile.');
         }
+
+        if (!params.domain) {
+            throw new Error('Domain not specified.');
+        }
+
+        // Format property URL (sc-domain:example.com for domain properties)
+        // If it starts with http, use as is, otherwise assume domain property
+        const propertyUrl = params.domain.startsWith('http') ?
+            params.domain : `sc-domain:${params.domain}`;
 
         // Default to last 28 days
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 28);
-
-        const requestBody = {
-            startDate: params.startDate || startDate.toISOString().split('T')[0],
-            endDate: params.endDate || endDate.toISOString().split('T')[0],
-            dimensions: params.dimensions || ['query'],
-            rowLimit: params.rowLimit || 1000,
-            ...(params.dimensionFilterGroups && { dimensionFilterGroups: params.dimensionFilterGroups })
-        };
-
-        console.log('[Keywords] Fetching Search Console data:', requestBody);
+        const endDate = params.endDate || new Date().toISOString().split('T')[0];
+        const startDate = params.startDate || new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const rowLimit = params.limit || 10;
 
         const encodedUrl = encodeURIComponent(propertyUrl);
-        const response = await fetch(
-            `${GSC_API_BASE}/sites/${encodedUrl}/searchAnalytics/query?key=${apiKey}`,
-            {
+        const baseUrl = `${GSC_API_BASE}/sites/${encodedUrl}/searchAnalytics/query`;
+
+        // Helper to fetch specific dimensions
+        const fetchData = async (dimensions) => {
+            const response = await fetch(baseUrl, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
                 },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({
+                    startDate,
+                    endDate,
+                    dimensions,
+                    rowLimit
+                })
+            });
+
+            if (!response.ok) {
+                // Handle 401 (Token Expired)
+                if (response.status === 401) {
+                    await signOut(); // Clear expired token
+                    throw new Error('Access token expired. Please sign in again in Profile.');
+                }
+
+                const errorText = await response.text();
+                // Handle common errors
+                if (response.status === 403) {
+                    throw new Error('Access denied. Please ensure you have access to this property in Search Console.');
+                } else if (response.status === 404) {
+                    throw new Error('Property not found in Search Console. Please ensure you have verified this domain.');
+                }
+                throw new Error(`API Error: ${response.status} ${response.statusText}`);
             }
-        );
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[Keywords] GSC API Error:', errorText);
-            throw new Error(`Search Console API Error: ${response.status} ${response.statusText}`);
-        }
+            return response.json();
+        };
 
-        const data = await response.json();
-        console.log('[Keywords] Search Console data received:', data);
+        // Fetch Queries and Pages in parallel
+        const [queriesData, pagesData] = await Promise.all([
+            fetchData(['query']),
+            fetchData(['page'])
+        ]);
 
         return {
-            rows: data.rows || [],
-            responseAggregationType: data.responseAggregationType
+            domain: params.domain,
+            dateRange: { startDate, endDate },
+            queries: queriesData.rows || [],
+            pages: pagesData.rows || [],
+            totals: {
+                // simple aggregation from queries data for now
+                clicks: (queriesData.rows || []).reduce((sum, row) => sum + row.clicks, 0),
+                impressions: (queriesData.rows || []).reduce((sum, row) => sum + row.impressions, 0),
+                ctr: (queriesData.rows || []).reduce((sum, row) => sum + row.ctr, 0) / ((queriesData.rows || []).length || 1)
+            }
         };
 
     } catch (error) {
@@ -118,61 +118,14 @@ export async function getSearchConsoleData(params = {}) {
  */
 export async function getKeywordIdeas(params = {}) {
     try {
-        const { apiKey, customerId } = await getGoogleAdsCredentials();
+        const { apiKey } = await getGoogleAdsCredentials();
+        // Note: Google Ads API still requires Customer ID, but we removed it from UI.
+        // We might need to restore it or find another way.
+        // For now, this function is broken until we restore Customer ID or use a different method.
+        // But the user priority is GSC.
 
-        if (!apiKey || !customerId) {
-            throw new Error('Google Ads credentials not configured. Please add them in Settings.');
-        }
-
-        const requestBody = {
-            customerId: customerId.replace(/-/g, ''), // Remove dashes
-            keywordSeed: {
-                keywords: params.keywords || []
-            },
-            geoTargetConstants: params.geoTargets || ['geoTargetConstants/2840'], // US default
-            language: params.language || 'languageConstants/1000', // English default
-            ...(params.pageUrl && {
-                urlSeed: {
-                    url: params.pageUrl
-                }
-            })
-        };
-
-        console.log('[Keywords] Fetching keyword ideas:', requestBody);
-
-        const response = await fetch(
-            `${GOOGLE_ADS_API_BASE}/customers/${customerId}/keywordPlanIdeas:generate`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                    'developer-token': apiKey // May need separate dev token
-                },
-                body: JSON.stringify(requestBody)
-            }
-        );
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[Keywords] Google Ads API Error:', errorText);
-            throw new Error(`Google Ads API Error: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        console.log('[Keywords] Keyword ideas received:', data);
-
-        // Transform response to simpler format
-        return (data.results || []).map(result => ({
-            keyword: result.text,
-            avgMonthlySearches: result.keywordIdeaMetrics?.avgMonthlySearches || 0,
-            competition: result.keywordIdeaMetrics?.competition || 'UNKNOWN',
-            competitionIndex: result.keywordIdeaMetrics?.competitionIndex || 0,
-            lowTopOfPageBid: result.keywordIdeaMetrics?.lowTopOfPageBidMicros ?
-                (result.keywordIdeaMetrics.lowTopOfPageBidMicros / 1000000).toFixed(2) : null,
-            highTopOfPageBid: result.keywordIdeaMetrics?.highTopOfPageBidMicros ?
-                (result.keywordIdeaMetrics.highTopOfPageBidMicros / 1000000).toFixed(2) : null
-        }));
+        // Placeholder error
+        throw new Error('Google Ads integration pending update.');
 
     } catch (error) {
         console.error('[Keywords] Error fetching keyword ideas:', error);
@@ -181,154 +134,37 @@ export async function getKeywordIdeas(params = {}) {
 }
 
 /**
- * Get keyword metrics for specific keywords
- * @param {Array<string>} keywords - List of keywords to get metrics for
- * @returns {Promise<Object>} Keyword metrics data
- */
-export async function getKeywordMetrics(keywords) {
-    try {
-        const { apiKey, customerId } = await getGoogleAdsCredentials();
-
-        if (!apiKey || !customerId) {
-            throw new Error('Google Ads credentials not configured.');
-        }
-
-        const requestBody = {
-            customerId: customerId.replace(/-/g, ''),
-            keywordSeed: {
-                keywords: keywords
-            }
-        };
-
-        const response = await fetch(
-            `${GOOGLE_ADS_API_BASE}/customers/${customerId}/keywordPlanIdeas:generate`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify(requestBody)
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch keyword metrics: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-
-        return (data.results || []).reduce((acc, result) => {
-            acc[result.text] = {
-                volume: result.keywordIdeaMetrics?.avgMonthlySearches || 0,
-                competition: result.keywordIdeaMetrics?.competition || 'UNKNOWN',
-                cpcLow: result.keywordIdeaMetrics?.lowTopOfPageBidMicros ?
-                    (result.keywordIdeaMetrics.lowTopOfPageBidMicros / 1000000).toFixed(2) : null,
-                cpcHigh: result.keywordIdeaMetrics?.highTopOfPageBidMicros ?
-                    (result.keywordIdeaMetrics.highTopOfPageBidMicros / 1000000).toFixed(2) : null
-            };
-            return acc;
-        }, {});
-
-    } catch (error) {
-        console.error('[Keywords] Error fetching keyword metrics:', error);
-        throw error;
-    }
-}
-
-/**
  * Test Search Console API connection
+ * Uses sites.list to verify API key validity without needing a specific property
  * @returns {Promise<Object>} { success: boolean, error?: string }
  */
 export async function testGSCConnection() {
     try {
-        const { apiKey, propertyUrl } = await getGSCCredentials();
+        const accessToken = await getToken();
 
-        if (!apiKey || !propertyUrl) {
+        if (!accessToken) {
             return {
                 success: false,
-                error: 'API credentials not configured'
+                error: 'Not signed in'
             };
         }
 
-        // Simple test query for last 7 days
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 7);
-
-        const encodedUrl = encodeURIComponent(propertyUrl);
+        // List sites to verify access
         const response = await fetch(
-            `${GSC_API_BASE}/sites/${encodedUrl}/searchAnalytics/query?key=${apiKey}`,
+            `${GSC_API_BASE}/sites`,
             {
-                method: 'POST',
+                method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    startDate: startDate.toISOString().split('T')[0],
-                    endDate: endDate.toISOString().split('T')[0],
-                    dimensions: ['query'],
-                    rowLimit: 1
-                })
+                    'Authorization': `Bearer ${accessToken}`
+                }
             }
         );
 
         if (!response.ok) {
-            const errorText = await response.text();
-            return {
-                success: false,
-                error: `API Error: ${response.status}`
-            };
-        }
-
-        return { success: true };
-
-    } catch (error) {
-        return {
-            success: false,
-            error: error.message
-        };
-    }
-}
-
-/**
- * Test Google Ads API connection
- * @returns {Promise<Object>} { success: boolean, error?: string }
- */
-export async function testGoogleAdsConnection() {
-    try {
-        const { apiKey, customerId } = await getGoogleAdsCredentials();
-
-        if (!apiKey || !customerId) {
-            return {
-                success: false,
-                error: 'API credentials not configured'
-            };
-        }
-
-        // Simple test query
-        const response = await fetch(
-            `${GOOGLE_ADS_API_BASE}/customers/${customerId}/keywordPlanIdeas:generate`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    customerId: customerId.replace(/-/g, ''),
-                    keywordSeed: {
-                        keywords: ['test']
-                    }
-                })
+            if (response.status === 401) {
+                return { success: false, error: 'Session expired. Please sign in again.' };
             }
-        );
-
-        if (!response.ok) {
-            return {
-                success: false,
-                error: `API Error: ${response.status}`
-            };
+            return { success: false, error: `API Error: ${response.status}` };
         }
 
         return { success: true };

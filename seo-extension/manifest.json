@@ -9,10 +9,12 @@
     "scripting",
     "contextMenus",
     "storage",
-    "sidePanel"
+    "sidePanel",
+    "identity"
   ],
   "host_permissions": [
-    "https://generativelanguage.googleapis.com/*"
+    "https://generativelanguage.googleapis.com/*",
+    "https://www.googleapis.com/*"
   ],
   "background": {
     "service_worker": "background.js"

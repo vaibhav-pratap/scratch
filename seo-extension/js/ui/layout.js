@@ -58,6 +58,11 @@ export function renderStaticLayout() {
                         <!-- Moon Icon (Hidden by default via CSS) -->
                         <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
                     </button>
+                    <button id="btn-profile" class="icon-btn" title="Profile">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
             
@@ -71,10 +76,13 @@ export function renderStaticLayout() {
                 <button class="tab-btn" data-tab="accessibility">Accessibility</button>
                 <button class="tab-btn" data-tab="schema">Schema</button>
                 <button class="tab-btn" data-tab="ai-analysis">AI Analysis</button>
+                <button class="tab-btn" data-tab="keywords-insights">Keywords Insights</button>
+                <button class="tab-btn" data-tab="keywords-planner">Keywords Planner</button>
                 <button class="tab-btn" data-tab="ad-transparency">Ad Transparency</button>
                 <button class="tab-btn" data-tab="tag-detector">Tag Detector</button>
                 <button class="tab-btn" data-tab="tracking-builder">Tracking Builder</button>
                 <button class="tab-btn" data-tab="settings">Settings</button>
+                <button class="tab-btn" data-tab="profile" style="display: none;">Profile</button>
             </div>
         </header>
 
@@ -88,10 +96,13 @@ export function renderStaticLayout() {
             ${renderAccessibilityTab()}
             ${renderSchemaTab()}
             ${renderAIAnalysisTab()}
+            ${renderKeywordsInsightsTab()}
+            ${renderKeywordsPlannerTab()}
             ${renderAdTransparencyTab()}
             ${renderTagDetectorTab()}
             ${renderTrackingBuilderTab()}
             ${renderSettingsTab()}
+            ${renderProfileTab()}
         </main>
 
         <!-- Footer -->
@@ -460,6 +471,17 @@ function renderAIAnalysisTab() {
     </div>`;
 }
 
+function renderKeywordsInsightsTab() {
+    return `
+    <div id="keywords-insights" class="tab-content">
+        <h3>Keywords Insights</h3>
+        <p class="text-xs text-secondary" style="margin-bottom: 16px;">Organic keyword performance data from Google Search Console for the current domain.</p>
+        
+        <!-- Performance data will be rendered here by keywords-performance.js -->
+        <div id="keywords-performance-container"></div>
+    </div>`;
+}
+
 function renderSettingsTab() {
     return `
     <div id="settings" class="tab-content">
@@ -641,7 +663,7 @@ function renderTagDetectorTab() {
         <div class="card">
             <h3 style="margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
+                    <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
                 </svg>
                 Analytics & Tag Managers
             </h3>
@@ -720,4 +742,12 @@ function renderToggle(label, id) {
             </label>
         </div>
     </div>`;
+}
+
+export function renderKeywordsPlannerTab() {
+    return `<div id="keywords-planner" class="tab-content"><div id="keywords-planner-container"></div></div>`;
+}
+
+export function renderProfileTab() {
+    return `<div id="profile" class="tab-content"><div id="profile-container"></div></div>`;
 }

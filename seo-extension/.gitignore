@@ -1,0 +1,21 @@
+# OAuth Client Secret Files
+client_secret_*.json
+
+# Node modules (if any)
+node_modules/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+
+# Environment files
+.env
+.env.local
