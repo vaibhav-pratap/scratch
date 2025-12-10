@@ -78,6 +78,7 @@ export function renderStaticLayout() {
                 <button class="tab-btn" data-tab="ai-analysis">AI Analysis</button>
                 <button class="tab-btn" data-tab="keywords-insights">Keywords Insights</button>
                 <button class="tab-btn" data-tab="keywords-planner">Keywords Planner</button>
+                <button class="tab-btn" data-tab="keywords-ideas">Keywords Ideas</button>
                 <button class="tab-btn" data-tab="ad-transparency">Ad Transparency</button>
                 <button class="tab-btn" data-tab="tag-detector">Tag Detector</button>
                 <button class="tab-btn" data-tab="tracking-builder">Tracking Builder</button>
@@ -98,6 +99,7 @@ export function renderStaticLayout() {
             ${renderAIAnalysisTab()}
             ${renderKeywordsInsightsTab()}
             ${renderKeywordsPlannerTab()}
+            ${renderKeywordsIdeasTab()}
             ${renderAdTransparencyTab()}
             ${renderTagDetectorTab()}
             ${renderTrackingBuilderTab()}
@@ -270,11 +272,16 @@ function renderHeadingsTab() {
 function renderImagesTab() {
     return `
     <div id="images" class="tab-content">
-        <div class="flex-between mb-2">
-            <span>Total: <b id="img-total">0</b></span>
-            <span>Missing Alt: <b id="img-missing-alt">0</b></span>
+        <div id="images-grouped-content" style="max-width: 1200px; margin: 0 auto;"></div>
+        
+        <!-- Legacy fallback (hidden by default) -->
+        <div id="images-legacy" style="display: none;">
+            <div class="flex-between mb-2">
+                <span>Total: <b id="img-total">0</b></span>
+                <span>Missing Alt: <b id="img-missing-alt">0</b></span>
+            </div>
+            <div id="images-list" class="images-grid"></div>
         </div>
-        <div id="images-list" class="images-grid"></div>
         ${createAIInsightsCard('images')}
     </div>`;
 }
@@ -750,4 +757,8 @@ export function renderKeywordsPlannerTab() {
 
 export function renderProfileTab() {
     return `<div id="profile" class="tab-content"><div id="profile-container"></div></div>`;
+}
+
+export function renderKeywordsIdeasTab() {
+    return `<div id="keywords-ideas" class="tab-content"><div id="keywords-ideas-container"></div></div>`;
 }

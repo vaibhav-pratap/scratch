@@ -9,6 +9,7 @@ import { renderAccessibilityTab } from './renderers/accessibility.js';
 import { renderMetaTab } from './renderers/meta.js';
 import { renderTagsTab } from './renderers/tags.js';
 import { renderTrackingBuilder } from './renderers/tracking-builder.js';
+import { renderImagesTab as renderImagesTabNew } from './renderers/images.js';
 import { renderCWVSection } from '../ui/cwv-display.js';
 import { calculateSEOScore } from './calculators.js';
 import { copyToClipboard } from '../utils/clipboard.js';
@@ -209,6 +210,14 @@ function renderHeadingsTab(data) {
  * Render Images Tab
  */
 function renderImagesTab(data) {
+    // Try new renderer first
+    const groupedContainer = document.getElementById('images-grouped-content');
+    if (groupedContainer) {
+        renderImagesTabNew(data);
+        return;
+    }
+
+    // Fallback to legacy
     const missingAlt = data.images.filter(i => !i.alt).length;
     setText('img-total', data.images.length);
     setText('img-missing-alt', missingAlt);

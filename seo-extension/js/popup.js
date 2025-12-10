@@ -21,6 +21,7 @@ import { initAdsTransparency, initMetaAds } from './ui/ads-transparency.js';
 import { renderKeywordsSettings } from './ui/keywords-settings.js';
 import { renderKeywordsPerformance } from './data/renderers/keywords-performance.js';
 import { renderKeywordsPlanner } from './ui/keywords-planner.js';
+import { renderKeywordsIdeas } from './ui/keywords-ideas.js';
 import { renderProfile } from './ui/profile.js';
 
 // Data modules
@@ -74,6 +75,12 @@ function init() {
     const keywordsPlannerContainer = document.getElementById('keywords-planner-container');
     if (keywordsPlannerContainer) {
         renderKeywordsPlanner(keywordsPlannerContainer);
+    }
+
+    // 9b. Initialize Keywords Ideas (BigQuery)
+    const keywordsIdeasContainer = document.getElementById('keywords-ideas-container');
+    if (keywordsIdeasContainer) {
+        renderKeywordsIdeas(keywordsIdeasContainer);
     }
 
     // 10. Setup Ads Transparency

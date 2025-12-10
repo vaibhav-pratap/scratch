@@ -5,6 +5,7 @@
 
 import { toggleLinkHighlight } from '../highlighting/links.js';
 import { highlightAccessibilityIssue, clearAccessibilityHighlights, toggleAccessibilityHighlights } from '../highlighting/accessibility.js';
+import { highlightImage } from '../highlighting/images.js';
 
 /**
  * Setup message listener
@@ -23,6 +24,8 @@ export function setupMessageListener(extractDataFn) {
             clearAccessibilityHighlights();
         } else if (request.action === "toggleAccessibilityHighlights") {
             toggleAccessibilityHighlights(request.enabled, request.issues);
+        } else if (request.action === "highlightImage") {
+            highlightImage(request.src);
         }
         return true; // Keep channel open for async response
     });

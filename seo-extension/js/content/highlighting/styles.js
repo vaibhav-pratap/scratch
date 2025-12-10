@@ -43,6 +43,27 @@ export function injectHighlightStyles() {
             outline-offset: 2px !important;
             background-color: rgba(151, 117, 250, 0.1) !important;
         }
+
+        /* Image Highlighting */
+        .seo-ext-highlight-image {
+            outline: 4px solid #ff6b00 !important;
+            outline-offset: 4px !important;
+            box-shadow: 0 0 20px rgba(255, 107, 0, 0.6) !important;
+            animation: imageHighlightPulse 1.5s ease-in-out infinite !important;
+            position: relative !important;
+            z-index: 999999 !important;
+        }
+
+        @keyframes imageHighlightPulse {
+            0%, 100% {
+                outline-color: #ff6b00;
+                box-shadow: 0 0 20px rgba(255, 107, 0, 0.6);
+            }
+            50% {
+                outline-color: #ff8c00;
+                box-shadow: 0 0 30px rgba(255, 107, 0, 1);
+            }
+        }
     `;
     document.head.appendChild(style);
 }

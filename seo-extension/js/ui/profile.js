@@ -11,7 +11,7 @@ export async function renderProfile(container) {
     const user = await getUserProfile();
 
     container.innerHTML = `
-        <div class="profile-container" style="padding: 20px; max-width: 600px; margin: 0 auto;">
+        <div class="profile-container" style="max-width: 600px; margin: 0 auto;">
             <div class="profile-header" style="text-align: center; margin-bottom: 24px;">
                 ${isAuth && user ? `
                     <img src="${user.picture}" alt="${user.name}" style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 16px; border: 2px solid var(--md-sys-color-primary);">

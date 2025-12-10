@@ -24,7 +24,8 @@ const SCOPES = [
     'profile',
     'email',
     'https://www.googleapis.com/auth/webmasters.readonly', // Search Console
-    'https://www.googleapis.com/auth/adwords' // Google Ads API
+    'https://www.googleapis.com/auth/adwords', // Google Ads API
+    'https://www.googleapis.com/auth/bigquery.readonly' // BigQuery API
 ];
 
 /**

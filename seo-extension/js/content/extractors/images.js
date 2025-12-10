@@ -44,7 +44,7 @@ export function getImages() {
     const seenSrcs = new Set();
 
     // Helper: Add image to list
-    const addImage = (src, alt, type, element) => {
+    const addImage = (src, alt, title, type, element) => {
         const absUrl = getAbsoluteUrl(src);
         if (!absUrl || seenSrcs.has(absUrl)) return;
 
@@ -59,6 +59,7 @@ export function getImages() {
         images.push({
             src: absUrl,
             alt: alt || '',
+            title: title || '',
             type: type,
             width: element.width || 0,
             height: element.height || 0
@@ -72,7 +73,8 @@ export function getImages() {
         const tag = el.tagName.toLowerCase();
         let src = null;
         let type = tag;
-        let alt = el.getAttribute('alt') || el.getAttribute('title') || '';
+        let alt = el.getAttribute('alt') || '';
+        let title = el.getAttribute('title') || '';
 
         // Strategy 0: Inline SVG
         if (tag === 'svg') {
@@ -133,11 +135,14 @@ export function getImages() {
         // Special handling for <source> tags
         if (tag === 'source' && !alt) {
             const parentImg = el.parentElement && el.parentElement.querySelector('img');
-            if (parentImg) alt = parentImg.alt;
+            if (parentImg) {
+                alt = parentImg.alt || '';
+                title = parentImg.title || '';
+            }
         }
 
         if (src) {
-            addImage(src, alt, type, el);
+            addImage(src, alt, title, type, el);
         }
     });
 
