@@ -38,7 +38,7 @@ function sendCWVUpdate() {
             const cacheKey = 'seo_cwv_cache_' + window.location.pathname;
             localStorage.setItem(cacheKey, JSON.stringify(cwvData));
         } catch (e) {
-            console.warn('[CWV] Cache error:', e);
+            // console.warn('[CWV] Cache error:', e);
         }
     }, 300);
 }
@@ -56,7 +56,7 @@ export function initCWV() {
             Object.assign(cwvData, parsedCache);
         }
     } catch (e) {
-        console.warn('[CWV] Cache load error:', e);
+        // console.warn('[CWV] Cache load error:', e);
     }
 
     // LCP Observer
@@ -67,7 +67,7 @@ export function initCWV() {
             cwvData.lcp = Math.round(lastEntry.renderTime || lastEntry.loadTime);
 
             // Capture LCP Element
-            if (lastEntry.element) {
+            if (lastEntry.element && lastEntry.element.tagName) {
                 let selector = lastEntry.element.tagName.toLowerCase();
                 if (lastEntry.element.id) selector += '#' + lastEntry.element.id;
                 else if (lastEntry.element.className) selector += '.' + lastEntry.element.className.split(' ').join('.');
@@ -78,7 +78,7 @@ export function initCWV() {
         });
         lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
     } catch (e) {
-        console.warn('[CWV] LCP observer error:', e);
+        // console.warn('[CWV] LCP observer error:', e);
     }
 
     // CLS Observer
@@ -89,10 +89,9 @@ export function initCWV() {
                 if (!entry.hadRecentInput) {
                     clsValue += entry.value;
 
-                    // Capture CLS Element (from the largest shift source)
                     if (entry.sources && entry.sources.length > 0) {
                         const source = entry.sources[0];
-                        if (source.node) {
+                        if (source.node && source.node.tagName) {
                             let selector = source.node.tagName.toLowerCase();
                             if (source.node.id) selector += '#' + source.node.id;
                             else if (source.node.className && typeof source.node.className === 'string') {
@@ -108,7 +107,7 @@ export function initCWV() {
         });
         clsObserver.observe({ type: 'layout-shift', buffered: true });
     } catch (e) {
-        console.warn('[CWV] CLS observer error:', e);
+        // console.warn('[CWV] CLS observer error:', e);
     }
 
     // INP Observer (Interaction to Next Paint)
@@ -121,7 +120,7 @@ export function initCWV() {
         });
         inpObserver.observe({ type: 'event', buffered: true, durationThreshold: 16 });
     } catch (e) {
-        console.warn('[CWV] INP observer error:', e);
+        // console.warn('[CWV] INP observer error:', e);
     }
 
     // FCP Observer
@@ -136,7 +135,7 @@ export function initCWV() {
         });
         fcpObserver.observe({ type: 'paint', buffered: true });
     } catch (e) {
-        console.warn('[CWV] FCP observer error:', e);
+        // console.warn('[CWV] FCP observer error:', e);
     }
 
     // TTFB (Time to First Byte)
@@ -147,7 +146,7 @@ export function initCWV() {
             sendCWVUpdate();
         }
     } catch (e) {
-        console.warn('[CWV] TTFB error:', e);
+        // console.warn('[CWV] TTFB error:', e);
     }
 }
 

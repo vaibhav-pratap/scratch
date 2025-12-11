@@ -5,13 +5,15 @@
   "description": "Advanced SEO tool with Google-inspired UI to view, copy, and download SEO data.",
   "permissions": [
     "activeTab",
+    "tabs",
     "scripting",
     "contextMenus",
     "storage",
-    "sidePanel"
+    "sidePanel",
+    "identity"
   ],
   "host_permissions": [
-    "https://generativelanguage.googleapis.com/*"
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"
@@ -38,6 +40,7 @@
         "js/*.js",
         "js/content/*.js",
         "js/content/extractors/*.js",
+        "js/content/injected-tag-detector.js",
         "js/content/performance/*.js",
         "js/content/highlighting/*.js",
         "js/content/messaging/*.js",

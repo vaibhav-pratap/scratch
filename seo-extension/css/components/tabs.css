@@ -1,90 +1,124 @@
-/* Tabs Component */
+/* Tabs Component - Material Design 3 Style */
 /* -------------------------------------------------------------------------- */
 
 .tabs-container {
-    background-color: var(--md-sys-color-background);
-    border-bottom: 1px solid var(--md-sys-color-surface-variant);
+    background-color: var(--md-sys-color-surface);
+    /* Clean background */
+    /* border-bottom: 1px solid var(--md-sys-color-surface-variant); Optional: remove if full navbar look */
     display: flex;
     width: 100%;
     overflow-x: auto;
     white-space: nowrap;
-    padding: 0 var(--spacing-lg);
-    gap: var(--spacing-lg);
+    padding: 12px 16px 16px;
+    /* Increased padding for better spacing */
+    gap: 8px;
+    /* MD3 spacing between items */
 
     /* 1. Scrolling Enhancements */
     scroll-behavior: smooth;
 
-    /* 2. Drag Hint (for browsers that support it) */
+    /* 2. Drag Hint */
     cursor: grab;
 
-    /* 3. Sleek Scrollbar Styling (Firefox) */
-    scrollbar-width: thin;
-    scrollbar-color: var(--md-sys-color-primary) transparent;
+    /* 3. Hide Scrollbar */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE 10+ */
 }
-
-/* 4. Sleek Scrollbar Styling (WebKit: Chrome, Safari, Edge) */
 
 .tabs-container::-webkit-scrollbar {
-    height: 8px;
-    /* Thickness of the scrollbar */
-}
-
-.tabs-container::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.tabs-container::-webkit-scrollbar-thumb {
-    background-color: var(--md-sys-color-primary);
-    /* Primary color for the slider */
-    border-radius: 10px;
-    border: 2px solid var(--md-sys-color-background);
-    /* Creates separation from track */
-}
-
-.tabs-container::-webkit-scrollbar-thumb:hover {
-    background-color: var(--md-sys-color-on-surface);
-    /* Darken thumb on hover */
+    display: none;
+    /* Chrome/Safari/Webkit */
+    width: 0;
+    height: 0;
 }
 
 
-/* Tab Buttons */
+/* Tab Buttons (MD3 Navigation Bar Item Style) */
 /* -------------------------------------------------------------------------- */
 
 .tab-btn {
     background: none;
     border: none;
-    padding: 12px 4px;
+    padding: 8px 16px;
+    /* Pill shape padding for the whole button if active */
+    margin: 0;
 
-    /* MD Typography */
-    font-family: var(--md-sys-typescale-body-large-font);
-    font-size: var(--md-sys-typescale-body-medium-size);
-    font-weight: 500;
+    display: flex;
+    flex-direction: row;
+    /* Horizontal alignment */
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    /* Space between icon and text */
+
+    border-radius: 100px;
+    /* Full pill shape */
+
+    min-width: auto;
+    /* Allow natural width */
+    height: 36px;
+    /* Fixed height for consistency */
     color: var(--md-sys-color-on-surface-variant);
 
     cursor: pointer;
     position: relative;
-    transition: color 0.2s;
     flex-shrink: 0;
+
+    /* Text Styles */
+    font-family: var(--md-sys-typescale-body-large-font, 'Google Sans', sans-serif);
+    font-size: 14px;
+    /* Increased slightly for better legibility */
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    line-height: 20px;
+
+    transition: all 0.2s ease;
 }
 
+/* Icon Styling */
+/* Icon Styling */
+.tab-btn i {
+    font-size: 18px;
+    display: flex;
+    /* Ensure proper veertical alignment */
+}
+
+.tab-btn span {
+    white-space: nowrap;
+    transition: font-weight 0.2s ease;
+}
+
+/* Hover State */
 .tab-btn:hover {
-    color: var(--md-sys-color-primary);
+    background-color: var(--md-sys-color-surface-variant);
+    /* Hover on the whole button */
+    color: var(--md-sys-color-on-surface);
 }
 
+.tab-btn:hover i {
+    background-color: transparent;
+    color: inherit;
+}
+
+/* Active State */
 .tab-btn.active {
-    color: var(--md-sys-color-primary);
+    background-color: var(--md-sys-color-secondary-container);
+    /* Active background on the whole button */
+    color: var(--md-sys-color-on-secondary-container);
 }
 
-/* Active Indicator */
+/* Reset Icon Active State (since parent handles it now) */
+.tab-btn.active i {
+    background-color: transparent;
+    /* Remove individual icon pill */
+    color: inherit;
+}
+
+/* Remove old underline */
 .tab-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background-color: var(--md-sys-color-primary);
-    border-radius: 3px 3px 0 0;
+    display: none;
 }
 
 
@@ -92,9 +126,9 @@
 /* -------------------------------------------------------------------------- */
 
 .tab-content {
-    /* Hides the content but allows it to be block when active */
     display: none !important;
-    animation: fadeIn 0.2s ease-in-out;
+    animation: fadeIn 0.3s cubic-bezier(0.2, 0.0, 0, 1.0);
+    /* Material Easing */
 }
 
 .tab-content.active {
@@ -104,7 +138,7 @@
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(5px);
+        transform: translateY(10px);
     }
 
     to {

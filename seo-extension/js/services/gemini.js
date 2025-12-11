@@ -63,7 +63,7 @@ export async function generateAISummary(seoData) {
         }
 
         const model = await getGeminiModel();
-        
+
         // Prepare the prompt
         const prompt = createSEOAuditPrompt(seoData);
 
@@ -120,24 +120,24 @@ export async function generateAISummary(seoData) {
         if (!response.ok) {
             const errorText = await response.text();
             console.error('[Gemini] Error response:', errorText);
-            
+
             let errorData;
             try {
                 errorData = JSON.parse(errorText);
             } catch (e) {
                 errorData = { error: { message: errorText || response.statusText } };
             }
-            
-            const errorMessage = errorData.error?.message || 
-                                errorData.message || 
-                                `API request failed: ${response.status} ${response.statusText}`;
-            
+
+            const errorMessage = errorData.error?.message ||
+                errorData.message ||
+                `API request failed: ${response.status} ${response.statusText}`;
+
             throw new Error(errorMessage);
         }
 
         const data = await response.json();
         console.log('[Gemini] Response data:', data);
-        
+
         // Check for blocked content
         if (data.candidates && data.candidates[0] && data.candidates[0].finishReason) {
             const finishReason = data.candidates[0].finishReason;
@@ -145,7 +145,7 @@ export async function generateAISummary(seoData) {
                 throw new Error(`Content generation stopped: ${finishReason}`);
             }
         }
-        
+
         if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
             console.error('[Gemini] Invalid response structure:', data);
             throw new Error('Invalid response format from Gemini API');
@@ -164,12 +164,88 @@ export async function generateAISummary(seoData) {
 }
 
 /**
+ * Generate Tracking Parameters using AI
+ * @param {Object} inputs - { goal, platform, audience, purpose, placement, details, url }
+ * @returns {Promise<Object>} - { source, medium, campaign, term, content }
+ */
+export async function generateTrackingParams(inputs) {
+    try {
+        const apiKey = await getGeminiApiKey();
+        if (!apiKey) {
+            throw new Error('Gemini API key not configured. Please add your API key in Settings.');
+        }
+
+        const model = await getGeminiModel();
+
+        const prompt = `
+            You are an expert digital marketer. Generate the best UTM tracking parameters based on the following campaign details:
+            
+            - Campaign Goal: ${inputs.goal}
+            - Platform/Channel: ${inputs.platform}
+            - Target Audience: ${inputs.audience || 'General'}
+            - Campaign Purpose: ${inputs.purpose || 'Not specified'}
+            - Ad Placement: ${inputs.placement || 'Not specified'}
+            - Additional Details: ${inputs.details || 'None'}
+            - Landing Page URL: ${inputs.url}
+
+            Rules:
+            1. Use standard snake_case for all values (e.g., spring_sale, facebook_ads).
+            2. Be specific but concise.
+            3. Return ONLY a valid JSON object with the following keys: "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content".
+            4. Do not include markdown formatting or explanations. Just the JSON.
+        `;
+
+        const requestBody = {
+            contents: [{
+                parts: [{
+                    text: prompt
+                }]
+            }],
+            generationConfig: {
+                temperature: 0.4, // Lower temperature for more deterministic/structured output
+                maxOutputTokens: 500,
+                response_mime_type: "application/json" // Force JSON response if supported by model, otherwise prompt handles it
+            }
+        };
+
+        const response = await fetch(
+            `${API_BASE_URL}/models/${model}:generateContent`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-goog-api-key': apiKey
+                },
+                body: JSON.stringify(requestBody)
+            }
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Gemini API Error: ${errorText}`);
+        }
+
+        const data = await response.json();
+        const text = data.candidates[0].content.parts[0].text;
+
+        // Clean up markdown code blocks if present (just in case)
+        const jsonStr = text.replace(/```json\n?|\n?```/g, '').trim();
+
+        return JSON.parse(jsonStr);
+
+    } catch (error) {
+        console.error('[Gemini] Error generating tracking params:', error);
+        throw error;
+    }
+}
+
+/**
  * Create comprehensive SEO audit prompt
  */
 function createSEOAuditPrompt(data) {
     const {
         url, title, description, keywords, canonical, robots,
-        og, twitter, headings, images, links, schema, 
+        og, twitter, headings, images, links, schema,
         accessibility, cwv, readability, score, suggestions
     } = data;
 
@@ -307,35 +383,34 @@ export async function testApiKey(apiKey, model = DEFAULT_MODEL) {
         if (!response.ok) {
             const errorText = await response.text();
             console.error('[Gemini] API key test error response:', errorText);
-            
+
             let errorData;
             try {
                 errorData = JSON.parse(errorText);
             } catch (e) {
                 errorData = { error: { message: errorText || response.statusText } };
             }
-            
-            const errorMessage = errorData.error?.message || 
-                                errorData.message || 
-                                `API request failed: ${response.status} ${response.statusText}`;
-            
+
+            const errorMessage = errorData.error?.message ||
+                errorData.message ||
+                `API request failed: ${response.status} ${response.statusText}`;
+
             throw new Error(errorMessage);
         }
 
         const data = await response.json();
         const isValid = data.candidates && data.candidates[0] && data.candidates[0].content;
-        
+
         if (!isValid) {
             throw new Error('Invalid response from API');
         }
-        
+
         return { valid: true };
     } catch (error) {
         console.error('[Gemini] API key test failed:', error);
-        return { 
-            valid: false, 
-            error: error.message || 'Failed to validate API key' 
+        return {
+            valid: false,
+            error: error.message || 'Failed to validate API key'
         };
     }
 }
-

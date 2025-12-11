@@ -76,7 +76,7 @@ export async function initPopup(renderCallback) {
 }
 
 /**
- * Initialize sidepanel with data
+ * Initialize sidepanel with data - OPTIMIZED for fast tab switching
  * Uses chrome.sidePanel.getCurrentTabId() for robust active tab detection.
  */
 export async function initSidePanel(renderCallback) {
@@ -88,15 +88,15 @@ export async function initSidePanel(renderCallback) {
         tabId = await chrome.sidePanel.getCurrentTabId();
     } catch (e) {
         // Fallback if getCurrentTabId is unavailable or fails
-        console.warn('[initSidePanel] chrome.sidePanel.getCurrentTabId failed. Falling back to chrome.tabs.query.');
+        // console.warn('[initSidePanel] chrome.sidePanel.getCurrentTabId failed. Falling back to chrome.tabs.query.');
         const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
         tabId = activeTab ? activeTab.id : null;
     }
 
-    // Main Error Catch (moved the check inside the outer block to ensure all sync failures are caught)
+    // Main Error Catch
     try {
         if (!tabId) {
-            console.warn('[initSidePanel] Could not determine active tab ID.');
+            // console.warn('[initSidePanel] Could not determine active tab ID.');
             showError("Could not find an active web page tab to analyze.");
             return;
         }
@@ -111,59 +111,36 @@ export async function initSidePanel(renderCallback) {
             return;
         }
 
-        // STEP 1: Try session storage first (shared between popup/sidepanel)
-        const sessionData = await loadFromSession();
-        if (sessionData) {
-            console.log('[initSidePanel] Found data in session storage!');
-            renderCallback(sessionData);
-            return; // Use session data and exit
-        }
-
-        // STEP 2: Try localStorage cache
+        // STEP 1: Show cached data IMMEDIATELY (faster UX)
         const cached = loadFromCache(tab.url);
-        console.log('[initSidePanel] Cached data:', cached ? 'found' : 'not found');
         if (cached) {
-            console.log('[initSidePanel] Using cached data');
+            console.log('[initSidePanel] Using cached data immediately');
             renderCallback(cached);
+            // Continue to fetch fresh data in background
         }
 
-        // STEP 3 & 4: Inject content script with robust retry logic and delay
-        console.log('[initSidePanel] Injecting content script...');
-        let scriptExecuted = false;
-        for (let attempt = 0; attempt < 5; attempt++) {
+        // STEP 2: Request fresh data with minimal delay
+        console.log('[initSidePanel] Requesting fresh data...');
+        let data = await requestSEOData(tabId, 2); // Only 2 attempts for speed
+
+        // STEP 3: Inject content script ONLY if no response
+        if (!data) {
+            console.log('[initSidePanel] No response, injecting content script...');
             try {
                 await chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     files: ['js/content-loader.js']
                 });
-                scriptExecuted = true;
-                console.log('[initSidePanel] Content script injected successfully on attempt', attempt + 1);
-                break;
+                console.log('[initSidePanel] Content script injected');
+
+                // Shorter wait time for better performance
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                // Retry request after injection
+                data = await requestSEOData(tab.id, 2);
             } catch (e) {
-                console.warn('[initSidePanel] Injection attempt', attempt + 1, 'failed:', e.message);
-                if (attempt < 4) {
-                    const delay = 300 * (attempt + 1); // Increasing delay
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
-        }
-
-        const initDelay = scriptExecuted ? 1500 : 500;
-        console.log('[initSidePanel] Waiting', initDelay, 'ms for content script to initialize...');
-        await new Promise(resolve => setTimeout(resolve, initDelay));
-
-        // STEP 5: Request fresh data with retries
-        console.log('[initSidePanel] Requesting fresh data...');
-        let data = null;
-        for (let attempt = 0; attempt < 3; attempt++) {
-            data = await requestSEOData(tab.id);
-            if (data) {
-                console.log('[initSidePanel] Received data on attempt', attempt + 1);
-                break;
-            }
-            console.warn('[initSidePanel] No data on attempt', attempt + 1);
-            if (attempt < 2) {
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Silently fail or log debug only if needed
+                // console.warn('[initSidePanel] Script injection failed:', e.message);
             }
         }
 
@@ -174,8 +151,8 @@ export async function initSidePanel(renderCallback) {
             renderCallback(data);
             saveToCache(tab.url, data);
             await saveToSession(data);
-        } else if (!cached && !sessionData) {
-            console.error('[initSidePanel] No data received and no cache/session');
+        } else if (!cached) {
+            console.error('[initSidePanel] No data received and no cache');
             showError("Couldn't load SEO data. Please try refreshing the page.");
         }
 

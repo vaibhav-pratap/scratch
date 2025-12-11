@@ -16,7 +16,7 @@ let aiComparisonChartInstance = null;
  */
 export function renderCWVChart(cwv) {
     const ctx = document.getElementById('cwv-chart');
-    if (!ctx) return;
+    if (!ctx || !cwv) return;
 
     const labels = ['LCP', 'CLS', 'INP', 'FCP', 'TTFB'];
     const values = [
@@ -270,7 +270,7 @@ export function destroyAllCharts() {
  * Render AI Metrics Chart (Bar chart)
  */
 export function renderAIMetricsChart(canvas, labels, scores, colors) {
-    if (!canvas) return;
+    if (!canvas || !scores) return;
 
     // Destroy existing chart if any
     if (aiMetricsChartInstance) {
@@ -303,7 +303,7 @@ export function renderAIMetricsChart(canvas, labels, scores, colors) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return `Score: ${context.parsed.y}/100`;
                         }
                     }
@@ -315,7 +315,7 @@ export function renderAIMetricsChart(canvas, labels, scores, colors) {
                     max: 100,
                     ticks: {
                         stepSize: 20,
-                        callback: function(value) {
+                        callback: function (value) {
                             return value;
                         }
                     },
@@ -381,7 +381,7 @@ export function renderAIComparisonChart(canvas, comparison) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return `Score: ${context.parsed.y}/100`;
                         }
                     }
@@ -393,7 +393,7 @@ export function renderAIComparisonChart(canvas, comparison) {
                     max: 100,
                     ticks: {
                         stepSize: 20,
-                        callback: function(value) {
+                        callback: function (value) {
                             return value;
                         }
                     },

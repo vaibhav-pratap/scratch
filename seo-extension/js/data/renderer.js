@@ -6,9 +6,15 @@
 import { setText } from '../utils/dom.js';
 import { renderCWVChart, renderLinksChart, renderHeadingsChart } from '../ui/charts.js';
 import { renderAccessibilityTab } from './renderers/accessibility.js';
+import { renderMetaTab } from './renderers/meta.js';
+import { renderTagsTab } from './renderers/tags.js';
+import { renderTrackingBuilder } from './renderers/tracking-builder.js';
+import { renderImagesTab as renderImagesTabNew } from './renderers/images.js';
+import { renderContentQualityTab } from './renderers/content-quality.js';
 import { renderCWVSection } from '../ui/cwv-display.js';
 import { calculateSEOScore } from './calculators.js';
 import { copyToClipboard } from '../utils/clipboard.js';
+import { renderKeywordsTab } from './renderers/keywords.js';
 
 /**
  * Main function to render all SEO data
@@ -43,8 +49,22 @@ export function renderData(data) {
         renderAccessibilityTab(data.accessibility);
     }
 
+    // --- Content Quality Tab ---
+    renderContentQualityTab(data);
+
     // --- Schema Tab ---
     renderSchemaTab(data);
+
+    // --- Tag Detector Tab ---
+    if (data.tags) {
+        renderTagsTab(data.tags);
+    }
+
+    // --- Tracking Builder Tab ---
+    renderTrackingBuilder(data);
+
+    // --- Keywords Tab ---
+    renderKeywordsTab(data);
 
     // --- AI Analysis Tab ---
     // Note: AI Analysis tab is initialized separately and checks for API key
@@ -156,20 +176,6 @@ function updateCWVCard(metric, value, element, goodThreshold, poorThreshold) {
 }
 
 /**
- * Render Meta Tab
- */
-function renderMetaTab(data) {
-    setText('meta-title', data.title || 'Missing');
-    setText('meta-desc', data.description || 'Missing');
-    setText('meta-keywords', data.keywords || 'Missing');
-    setText('meta-canonical', data.canonical || 'Missing');
-    setText('meta-robots', data.robots || 'Missing');
-
-    renderKeyValueList('og-data', data.og, 'Open Graph');
-    renderKeyValueList('twitter-data', data.twitter, 'Twitter Card');
-}
-
-/**
  * Render Headings Tab
  */
 function renderHeadingsTab(data) {
@@ -209,6 +215,14 @@ function renderHeadingsTab(data) {
  * Render Images Tab
  */
 function renderImagesTab(data) {
+    // Try new renderer first
+    const groupedContainer = document.getElementById('images-grouped-content');
+    if (groupedContainer) {
+        renderImagesTabNew(data);
+        return;
+    }
+
+    // Fallback to legacy
     const missingAlt = data.images.filter(i => !i.alt).length;
     setText('img-total', data.images.length);
     setText('img-missing-alt', missingAlt);

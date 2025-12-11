@@ -4,7 +4,7 @@
  */
 
 // Import extractors
-import { getMetaContent, getOGTags, getTwitterTags } from './content/extractors/meta.js';
+import { getMetaContent, getOGTags, getTwitterTags, getFavicon } from './content/extractors/meta.js';
 import { getHeadings } from './content/extractors/headings.js';
 import { getImages } from './content/extractors/images.js';
 import { getLinks, getHreflangs } from './content/extractors/links.js';
@@ -13,9 +13,11 @@ import { getSchema } from './content/extractors/schema.js';
 import { detectTechStack } from './content/extractors/tech-stack.js';
 import { getPAA } from './content/extractors/paa.js';
 import { getAccessibilityData } from './content/extractors/accessibility.js';
+import { detectTags, initTagDetector } from './content/extractors/tag-detector.js';
 
 // Import performance
 import { calculateReadability } from './content/performance/readability-advanced.js';
+import { analyzeEEAT } from './content/performance/eeat-analyzer.js';
 import { initCWV, getCWV, onCWVUpdate } from './content/performance/cwv.js';
 
 // Import highlighting
@@ -40,6 +42,7 @@ function extractSEOData() {
         keywords: safeExtract(() => getMetaContent('keywords')),
         canonical: safeExtract(() => document.querySelector('link[rel="canonical"]')?.href),
         robots: safeExtract(() => getMetaContent('robots')),
+        favicon: safeExtract(() => getFavicon()),
         og: safeExtract(() => getOGTags(), {}),
         twitter: safeExtract(() => getTwitterTags(), {}),
         headings: safeExtract(() => getHeadings(), []),
@@ -52,8 +55,10 @@ function extractSEOData() {
         techStack: safeExtract(() => detectTechStack(), {}),
         paa: safeExtract(() => getPAA(), []),
         readability: safeExtract(() => calculateReadability(), { score: 0, level: 'N/A' }),
+        eeat: safeExtract(() => analyzeEEAT(), { score: 0, experience: {}, expertise: {}, authoritativeness: {}, trustworthiness: {} }),
         cwv: getCWV(),
-        accessibility: safeExtract(() => getAccessibilityData(), { score: 0, issues: { critical: [], warnings: [], notices: [] }, checks: {} })
+        accessibility: safeExtract(() => getAccessibilityData(), { score: 0, issues: { critical: [], warnings: [], notices: [] }, checks: {} }),
+        tags: safeExtract(() => detectTags(), { analytics: {}, pixels: {}, privacy: {}, other: {} })
     };
 }
 
@@ -66,7 +71,10 @@ function init() {
     // 1. Inject highlight styles
     injectHighlightStyles();
 
-    // 2. Observer for DOM changes (SPA navigation, dynamic content)
+    // 2. Initialize Tag Detector (injects script for main world access)
+    initTagDetector();
+
+    // 3. Observer for DOM changes (SPA navigation, dynamic content)
     const observer = new MutationObserver(debounce(() => {
         const data = extractSEOData();
         sendUpdate(data);
@@ -81,7 +89,14 @@ function init() {
         });
     }
 
-    // 3. Initial send on load
+    // 4. Listen for tag detection updates from the injected script
+    window.addEventListener('seo-extension-tags-updated', () => {
+        console.log('[SEO Analyzer] Tags detected, sending update...');
+        const data = extractSEOData();
+        sendUpdate(data);
+    });
+
+    // 5. Initial send on load
     const data = extractSEOData();
     sendUpdate(data);
 

@@ -9,7 +9,7 @@ import { listenForUpdates } from './core/messaging.js';
 
 // UI modules
 import { renderStaticLayout } from './ui/layout.js';
-import { initTabSwitching } from './ui/tabs.js';
+import { initTabSwitching, switchToTab } from './ui/tabs.js';
 import { initThemeToggle } from './ui/theme.js';
 import { setupHighlightToggles, setupSidePanelToggle } from './ui/toggles.js';
 import { renderCWVChart } from './ui/charts.js';
@@ -17,6 +17,12 @@ import { initGeminiSettings } from './ui/gemini-settings.js';
 import { initAISummary } from './ui/ai-summary.js';
 import { initAIInsights } from './ui/ai-insights.js';
 import { initAIAnalysisTab } from './data/renderers/ai-analysis.js';
+import { initAdsTransparency, initMetaAds } from './ui/ads-transparency.js';
+import { renderKeywordsSettings } from './ui/keywords-settings.js';
+import { renderKeywordsPerformance } from './data/renderers/keywords-performance.js';
+import { renderKeywordsPlanner } from './ui/keywords-planner.js';
+import { renderKeywordsIdeas } from './ui/keywords-ideas.js';
+import { renderProfile } from './ui/profile.js';
 
 // Data modules
 import { renderData } from './data/renderer.js';
@@ -52,19 +58,47 @@ function init() {
     // 6. Setup Gemini Settings
     initGeminiSettings();
 
-    // 7. Setup AI Summary
+    // 7. Setup Keywords Settings
+    try {
+        const keywordsContainer = document.getElementById('keywords-api-settings');
+        if (keywordsContainer) {
+            renderKeywordsSettings(keywordsContainer);
+        }
+    } catch (error) {
+        console.error('[Popup] Error initializing Keywords Settings:', error);
+    }
+
+    // 8. Initialize Keywords Performance
+    updateKeywordsPerformance();
+
+    // 9. Initialize Keywords Planner
+    const keywordsPlannerContainer = document.getElementById('keywords-planner-container');
+    if (keywordsPlannerContainer) {
+        renderKeywordsPlanner(keywordsPlannerContainer);
+    }
+
+    // 9b. Initialize Keywords Ideas (BigQuery)
+    const keywordsIdeasContainer = document.getElementById('keywords-ideas-container');
+    if (keywordsIdeasContainer) {
+        renderKeywordsIdeas(keywordsIdeasContainer);
+    }
+
+    // 10. Setup Ads Transparency
+    initAdsTransparency();
+    initMetaAds();
+
+    // 11. Setup AI Summary
     initAISummary();
 
-    // 8. Setup AI Insights for all tabs
+    // 12. Setup AI Insights
     try {
         initAIInsights();
     } catch (error) {
         console.error('[Popup] Error initializing AI Insights:', error);
     }
 
-    // 9. Setup AI Analysis Tab (async, don't await to avoid blocking)
+    // 13. Setup AI Analysis Tab
     try {
-        // Call without await - it handles its own initialization timing
         initAIAnalysisTab().catch(error => {
             console.error('[Popup] Error initializing AI Analysis:', error);
         });
@@ -72,19 +106,49 @@ function init() {
         console.error('[Popup] Error calling initAIAnalysisTab:', error);
     }
 
-    // 10. Real-time Updates Listener
+    // 14. Real-time Updates Listener
     listenForUpdates(renderData, renderCWVChart);
 
-    // 11. Setup Export Buttons (with slight delay to ensure DOM is ready)
+    // 15. Setup Export Buttons
     setTimeout(() => {
         setupExportButtons();
     }, 100);
+
+    // 16. Profile Button Listener
+    document.getElementById('btn-profile')?.addEventListener('click', () => {
+        switchToTab('profile');
+    });
+
+    // 17. Profile Tab Activation Listener
+    const profileTabBtn = document.querySelector('.tab-btn[data-tab="profile"]');
+    if (profileTabBtn) {
+        profileTabBtn.addEventListener('click', () => {
+            const container = document.getElementById('profile-container');
+            if (container) {
+                renderProfile(container);
+            }
+        });
+    }
 }
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
     init();
+}
+
+/**
+ * Helper to update Keywords Performance tab
+ */
+function updateKeywordsPerformance() {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0] && tabs[0].url) {
+            const container = document.getElementById('keywords-performance-container');
+            if (container) {
+                renderKeywordsPerformance(container, tabs[0].url);
+            }
+        }
+    });
 }
 
 /**
@@ -147,8 +211,7 @@ function setupExportButtons() {
     }
 }
 
-// Store data globally for export buttons (temporary solution)
-// A better approach would be to pass it via Events or State management
+// Store data globally for export buttons
 const originalRenderData = renderData;
 window.renderData = function (data) {
     window.currentSEOData = data;
