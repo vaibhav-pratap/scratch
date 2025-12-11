@@ -88,7 +88,7 @@ export async function initSidePanel(renderCallback) {
         tabId = await chrome.sidePanel.getCurrentTabId();
     } catch (e) {
         // Fallback if getCurrentTabId is unavailable or fails
-        console.warn('[initSidePanel] chrome.sidePanel.getCurrentTabId failed. Falling back to chrome.tabs.query.');
+        // console.warn('[initSidePanel] chrome.sidePanel.getCurrentTabId failed. Falling back to chrome.tabs.query.');
         const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
         tabId = activeTab ? activeTab.id : null;
     }
@@ -96,7 +96,7 @@ export async function initSidePanel(renderCallback) {
     // Main Error Catch
     try {
         if (!tabId) {
-            console.warn('[initSidePanel] Could not determine active tab ID.');
+            // console.warn('[initSidePanel] Could not determine active tab ID.');
             showError("Could not find an active web page tab to analyze.");
             return;
         }
@@ -139,7 +139,8 @@ export async function initSidePanel(renderCallback) {
                 // Retry request after injection
                 data = await requestSEOData(tab.id, 2);
             } catch (e) {
-                console.warn('[initSidePanel] Script injection failed:', e.message);
+                // Silently fail or log debug only if needed
+                // console.warn('[initSidePanel] Script injection failed:', e.message);
             }
         }
 

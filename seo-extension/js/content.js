@@ -4,7 +4,6 @@
  */
 
 // Import extractors
-// Import extractors
 import { getMetaContent, getOGTags, getTwitterTags, getFavicon } from './content/extractors/meta.js';
 import { getHeadings } from './content/extractors/headings.js';
 import { getImages } from './content/extractors/images.js';
@@ -18,6 +17,7 @@ import { detectTags, initTagDetector } from './content/extractors/tag-detector.j
 
 // Import performance
 import { calculateReadability } from './content/performance/readability-advanced.js';
+import { analyzeEEAT } from './content/performance/eeat-analyzer.js';
 import { initCWV, getCWV, onCWVUpdate } from './content/performance/cwv.js';
 
 // Import highlighting
@@ -55,6 +55,7 @@ function extractSEOData() {
         techStack: safeExtract(() => detectTechStack(), {}),
         paa: safeExtract(() => getPAA(), []),
         readability: safeExtract(() => calculateReadability(), { score: 0, level: 'N/A' }),
+        eeat: safeExtract(() => analyzeEEAT(), { score: 0, experience: {}, expertise: {}, authoritativeness: {}, trustworthiness: {} }),
         cwv: getCWV(),
         accessibility: safeExtract(() => getAccessibilityData(), { score: 0, issues: { critical: [], warnings: [], notices: [] }, checks: {} }),
         tags: safeExtract(() => detectTags(), { analytics: {}, pixels: {}, privacy: {}, other: {} })

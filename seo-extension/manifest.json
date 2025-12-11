@@ -13,8 +13,7 @@
     "identity"
   ],
   "host_permissions": [
-    "https://generativelanguage.googleapis.com/*",
-    "https://www.googleapis.com/*"
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"

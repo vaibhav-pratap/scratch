@@ -68,22 +68,74 @@ export function renderStaticLayout() {
             
             <!-- Tabs -->
             <div class="tabs-container">
-                <button class="tab-btn active" data-tab="overview">Overview</button>
-                <button class="tab-btn" data-tab="meta">Meta</button>
-                <button class="tab-btn" data-tab="headings">Headings</button>
-                <button class="tab-btn" data-tab="images">Images</button>
-                <button class="tab-btn" data-tab="links">Links</button>
-                <button class="tab-btn" data-tab="accessibility">Accessibility</button>
-                <button class="tab-btn" data-tab="schema">Schema</button>
-                <button class="tab-btn" data-tab="ai-analysis">AI Analysis</button>
-                <button class="tab-btn" data-tab="keywords-insights">Keywords Insights</button>
-                <button class="tab-btn" data-tab="keywords-planner">Keywords Planner</button>
-                <button class="tab-btn" data-tab="keywords-ideas">Keywords Ideas</button>
-                <button class="tab-btn" data-tab="ad-transparency">Ad Transparency</button>
-                <button class="tab-btn" data-tab="tag-detector">Tag Detector</button>
-                <button class="tab-btn" data-tab="tracking-builder">Tracking Builder</button>
-                <button class="tab-btn" data-tab="settings">Settings</button>
-                <button class="tab-btn" data-tab="profile" style="display: none;">Profile</button>
+                <button class="tab-btn active" data-tab="overview">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Overview</span>
+                </button>
+                <button class="tab-btn" data-tab="meta">
+                    <i class="fa-solid fa-code"></i>
+                    <span>Meta</span>
+                </button>
+                <button class="tab-btn" data-tab="headings">
+                    <i class="fa-solid fa-heading"></i>
+                    <span>Headings</span>
+                </button>
+                <button class="tab-btn" data-tab="images">
+                    <i class="fa-solid fa-images"></i>
+                    <span>Images</span>
+                </button>
+                <button class="tab-btn" data-tab="links">
+                    <i class="fa-solid fa-link"></i>
+                    <span>Links</span>
+                </button>
+                <button class="tab-btn" data-tab="accessibility">
+                    <i class="fa-solid fa-universal-access"></i>
+                    <span>Accessibility</span>
+                </button>
+                <button class="tab-btn" data-tab="content-quality">
+                    <i class="fa-solid fa-file-contract"></i>
+                    <span>Content</span>
+                </button>
+                <button class="tab-btn" data-tab="schema">
+                    <i class="fa-solid fa-project-diagram"></i>
+                    <span>Schema</span>
+                </button>
+                <button class="tab-btn" data-tab="ai-analysis">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>AI Analysis</span>
+                </button>
+                <button class="tab-btn" data-tab="keywords-insights">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    <span>Keywords</span>
+                </button>
+                <button class="tab-btn" data-tab="keywords-planner">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <span>Planner</span>
+                </button>
+                <button class="tab-btn" data-tab="keywords-ideas">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>Ideas</span>
+                </button>
+                <button class="tab-btn" data-tab="ad-transparency">
+                    <i class="fa-solid fa-rectangle-ad"></i>
+                    <span>Ads</span>
+                </button>
+                <button class="tab-btn" data-tab="tag-detector">
+                    <i class="fa-solid fa-tags"></i>
+                    <span>Tags</span>
+                </button>
+                <button class="tab-btn" data-tab="tracking-builder">
+                    <i class="fa-solid fa-route"></i>
+                    <span>Tracking</span>
+                </button>
+                <button class="tab-btn" data-tab="settings">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </button>
+                <button class="tab-btn" data-tab="profile" style="display: none;">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Profile</span>
+                </button>
             </div>
         </header>
 
@@ -95,6 +147,7 @@ export function renderStaticLayout() {
             ${renderImagesTab()}
             ${renderLinksTab()}
             ${renderAccessibilityTab()}
+            ${renderContentQualityTab()}
             ${renderSchemaTab()}
             ${renderAIAnalysisTab()}
             ${renderKeywordsInsightsTab()}
@@ -365,6 +418,15 @@ function renderAccessibilityTab() {
         </div>
         
         ${createAIInsightsCard('accessibility')}
+    </div>
+    `;
+}
+
+function renderContentQualityTab() {
+    return `
+    <div id="content-quality" class="tab-content">
+        <div id="content-quality-grouped-content"></div>
+        ${createAIInsightsCard('content-quality')}
     </div>
     `;
 }

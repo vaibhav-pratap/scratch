@@ -10,9 +10,11 @@ import { renderMetaTab } from './renderers/meta.js';
 import { renderTagsTab } from './renderers/tags.js';
 import { renderTrackingBuilder } from './renderers/tracking-builder.js';
 import { renderImagesTab as renderImagesTabNew } from './renderers/images.js';
+import { renderContentQualityTab } from './renderers/content-quality.js';
 import { renderCWVSection } from '../ui/cwv-display.js';
 import { calculateSEOScore } from './calculators.js';
 import { copyToClipboard } from '../utils/clipboard.js';
+import { renderKeywordsTab } from './renderers/keywords.js';
 
 /**
  * Main function to render all SEO data
@@ -46,6 +48,9 @@ export function renderData(data) {
     if (data.accessibility) {
         renderAccessibilityTab(data.accessibility);
     }
+
+    // --- Content Quality Tab ---
+    renderContentQualityTab(data);
 
     // --- Schema Tab ---
     renderSchemaTab(data);

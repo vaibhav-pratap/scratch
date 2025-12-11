@@ -64,6 +64,78 @@ export function injectHighlightStyles() {
                 box-shadow: 0 0 30px rgba(255, 107, 0, 1);
             }
         }
+
+        /* Content Quality Highlighting */
+        .seo-ext-highlight-content {
+            position: relative !important;
+            z-index: 999998 !important;
+            transition: all 0.3s ease !important;
+        }
+
+        /* Passive Voice */
+        .seo-ext-highlight-passive-voice {
+            outline: 3px solid #9775fa !important;
+            outline-offset: 3px !important;
+            background-color: rgba(151, 117, 250, 0.08) !important;
+            animation: contentHighlightPulse 2s ease-in-out infinite !important;
+        }
+
+        /* Long Sentence */
+        .seo-ext-highlight-long-sentence {
+            outline: 3px solid #ff6b00 !important;
+            outline-offset: 3px !important;
+            background-color: rgba(255, 107, 0, 0.08) !important;
+            animation: contentHighlightPulse 2s ease-in-out infinite !important;
+        }
+
+        /* Long Paragraph */
+        .seo-ext-highlight-long-paragraph {
+            outline: 3px solid #ffd43b !important;
+            outline-offset: 3px !important;
+            background-color: rgba(255, 212, 59, 0.08) !important;
+            animation: contentHighlightPulse 2s ease-in-out infinite !important;
+        }
+
+        /* No Transition Words */
+        .seo-ext-highlight-no-transition {
+            outline: 3px solid #339af0 !important;
+            outline-offset: 3px !important;
+            background-color: rgba(51, 154, 240, 0.08) !important;
+            animation: contentHighlightPulse 2s ease-in-out infinite !important;
+        }
+
+        @keyframes contentHighlightPulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        /* Tooltip for highlighted content */
+        .seo-ext-highlight-content::before {
+            content: attr(data-seo-issue);
+            position: absolute;
+            top: -30px;
+            left: 0;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            z-index: 999999;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            text-transform: capitalize;
+        }
+
+        .seo-ext-highlight-content:hover::before {
+            opacity: 1;
+        }
     `;
     document.head.appendChild(style);
 }

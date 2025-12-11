@@ -15,7 +15,7 @@ export function sendUpdate(data) {
             data: data
         });
     } catch (e) {
-        console.warn('[SEO Analyzer] Failed to send update:', e);
+        // console.warn('[SEO Analyzer] Failed to send update:', e);
     }
 }
 
@@ -29,6 +29,6 @@ export function sendCWVUpdate() {
             cwv: getCWV()
         });
     } catch (e) {
-        console.warn('[SEO Analyzer] Failed to send CWV update:', e);
+        // console.warn('[SEO Analyzer] Failed to send CWV update:', e);
     }
 }

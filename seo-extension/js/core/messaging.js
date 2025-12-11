@@ -30,7 +30,7 @@ export async function requestSEOData(tabId, retries = 3) {
             const response = await sendMessageToTab(tabId, { action: "getSEOData" });
             if (response) return response;
         } catch (error) {
-            console.warn(`Attempt ${i + 1} failed:`, error.message);
+            // console.warn(`Attempt ${i + 1} failed:`, error.message); // Silenced to reduce noise
             if (i < retries - 1) {
                 await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms
             }
@@ -53,7 +53,7 @@ export function listenForUpdates(onDataUpdate, onCWVUpdate) {
         } else if (request.action === "cwvUpdated") {
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs[0] && sender.tab && tabs[0].id === sender.tab.id) {
-                    onCWVUpdate(request.data);
+                    onCWVUpdate(request.cwv);
                 }
             });
         }
