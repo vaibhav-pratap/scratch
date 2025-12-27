@@ -414,3 +414,69 @@ export async function testApiKey(apiKey, model = DEFAULT_MODEL) {
         };
     }
 }
+
+/**
+ * Generate subtasks for a todo item using AI
+ * @param {string} taskText - The main task to break down
+ * @returns {Promise<string[]>} - Array of subtask strings
+ */
+export async function generateSubtasks(taskText) {
+    try {
+        const apiKey = await getGeminiApiKey();
+        if (!apiKey) {
+            throw new Error('Gemini API key not configured.');
+        }
+
+        const model = await getGeminiModel();
+
+        const prompt = `
+            You are a helpful productivity assistant. Break down the following task into 3-5 actionable subtasks.
+            Task: "${taskText}"
+            
+            Rules:
+            1. Return ONLY a valid JSON array of strings.
+            2. Keep subtasks concise (under 10 words).
+            3. No markdown, no explanations. Just the JSON array.
+        `;
+
+        const requestBody = {
+            contents: [{
+                parts: [{
+                    text: prompt
+                }]
+            }],
+            generationConfig: {
+                temperature: 0.4,
+                maxOutputTokens: 200,
+                response_mime_type: "application/json"
+            }
+        };
+
+        const response = await fetch(
+            `${API_BASE_URL}/models/${model}:generateContent`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-goog-api-key': apiKey
+                },
+                body: JSON.stringify(requestBody)
+            }
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Gemini API Error: ${errorText}`);
+        }
+
+        const data = await response.json();
+        const text = data.candidates[0].content.parts[0].text;
+        const jsonStr = text.replace(/```json\n?|\n?```/g, '').trim();
+
+        return JSON.parse(jsonStr);
+
+    } catch (error) {
+        console.error('[Gemini] Error generating subtasks:', error);
+        throw error;
+    }
+}

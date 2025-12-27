@@ -4,6 +4,8 @@
  * This ensures a modular HTML approach without build steps.
  */
 
+// import { renderNotes } from './notes.js'; // Removed stale import
+
 // Helper function to create AI insights card HTML
 function createAIInsightsCard(tabId) {
     return `
@@ -58,17 +60,16 @@ export function renderStaticLayout() {
                         <!-- Moon Icon (Hidden by default via CSS) -->
                         <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
                     </button>
-                    <button id="btn-profile" class="icon-btn" title="Profile">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                        </svg>
-                    </button>
                 </div>
             </div>
             
             <!-- Tabs -->
             <div class="tabs-container">
-                <button class="tab-btn active" data-tab="overview">
+                <button class="tab-btn active" data-tab="notes">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>Notes</span>
+                </button>
+                <button class="tab-btn" data-tab="overview">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>Overview</span>
                 </button>
@@ -108,14 +109,6 @@ export function renderStaticLayout() {
                     <i class="fa-solid fa-magnifying-glass-chart"></i>
                     <span>Keywords</span>
                 </button>
-                <button class="tab-btn" data-tab="keywords-planner">
-                    <i class="fa-solid fa-lightbulb"></i>
-                    <span>Planner</span>
-                </button>
-                <button class="tab-btn" data-tab="keywords-ideas">
-                    <i class="fa-solid fa-brain"></i>
-                    <span>Ideas</span>
-                </button>
                 <button class="tab-btn" data-tab="ad-transparency">
                     <i class="fa-solid fa-rectangle-ad"></i>
                     <span>Ads</span>
@@ -141,6 +134,7 @@ export function renderStaticLayout() {
 
         <!-- Main Content -->
         <main class="content-area">
+            ${renderNotesTab()}
             ${renderOverviewTab()}
             ${renderMetaTab()}
             ${renderHeadingsTab()}
@@ -151,22 +145,97 @@ export function renderStaticLayout() {
             ${renderSchemaTab()}
             ${renderAIAnalysisTab()}
             ${renderKeywordsInsightsTab()}
-            ${renderKeywordsPlannerTab()}
-            ${renderKeywordsIdeasTab()}
             ${renderAdTransparencyTab()}
             ${renderTagDetectorTab()}
             ${renderTrackingBuilderTab()}
             ${renderSettingsTab()}
+            ${renderNotesTab()}
             ${renderProfileTab()}
         </main>
 
-        <!-- Footer -->
+        <!-- MD3 Bottom Navigation Footer -->
         <footer class="app-footer">
-            <button id="btn-copy" class="action-btn secondary small">Copy JSON</button>
-            <button id="btn-download-csv" class="action-btn secondary small">Sheet</button>
-            <button id="btn-download-pdf" class="action-btn secondary small">PDF</button>
-            <button id="btn-download" class="action-btn secondary small">JSON</button>
+            <button id="btn-notes-footer" class="nav-item" title="Notes & To-Do">
+                <div class="nav-icon-container">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                </div>
+                <span class="nav-label">Notes</span>
+            </button>
+            <button id="btn-profile" class="nav-item" title="Profile">
+                <div class="nav-icon-container">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <span class="nav-label">Profile</span>
+            </button>
+            <button id="btn-export" class="nav-item" title="Export Data">
+                <div class="nav-icon-container">
+                    <i class="fa-solid fa-file-export"></i>
+                </div>
+                <span class="nav-label">Export</span>
+            </button>
+            <button id="btn-menu" class="nav-item" title="More Menu">
+                <div class="nav-icon-container">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </div>
+                <span class="nav-label">Menu</span>
+            </button>
         </footer>
+
+        <!-- Bottom Sheet Menu Modal -->
+        <div id="menu-modal" class="modal-backdrop" style="display: none;">
+            <div class="bottom-sheet">
+                <div class="sheet-handle"></div>
+                <div class="sheet-content">
+                    <button class="menu-item" id="menu-settings">
+                        <i class="fa-solid fa-gear"></i>
+                        <span>Settings</span>
+                    </button>
+                    <a href="https://example.com/help" target="_blank" class="menu-item">
+                        <i class="fa-solid fa-circle-question"></i>
+                        <span>Help & Support</span>
+                    </a>
+                    <a href="https://example.com/contact" target="_blank" class="menu-item">
+                        <i class="fa-solid fa-envelope"></i>
+                        <span>Contact Us</span>
+                    </a>
+                    <a href="https://example.com/terms" target="_blank" class="menu-item">
+                        <i class="fa-solid fa-file-shield"></i>
+                        <span>Terms & Privacy</span>
+                    </a>
+                    <div class="menu-divider"></div>
+                    <div class="menu-version">
+                        <span>SEO Analyzer Pro</span>
+                        <small>v1.6.0</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Sheet Export Modal -->
+        <div id="export-modal" class="modal-backdrop" style="display: none;">
+            <div class="bottom-sheet">
+                <div class="sheet-handle"></div>
+                <div class="sheet-content">
+                    <h3 style="margin: 0 0 16px 16px; font-size: 16px;">Export Data</h3>
+                    <button class="menu-item" id="btn-download-csv">
+                        <i class="fa-solid fa-file-excel" style="color: #1e8e3e;"></i>
+                        <span>Export to Excel</span>
+                    </button>
+                    <button class="menu-item" id="btn-download-pdf">
+                        <i class="fa-solid fa-file-pdf" style="color: #d93025;"></i>
+                        <span>Export PDF Report</span>
+                    </button>
+                    <button class="menu-item" id="btn-download">
+                        <i class="fa-solid fa-file-code" style="color: #f9ab00;"></i>
+                        <span>Export JSON Data</span>
+                    </button>
+                    <button class="menu-item" id="btn-copy">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Copy JSON to Clipboard</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     `;
 }
 
@@ -564,6 +633,17 @@ function renderSettingsTab() {
                 </label>
             </div>
         </div>
+
+        <div class="data-group">
+            <div class="label-row">
+                <label>Open Notes & To-Do on Startup</label>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-default-notes">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <p class="text-xs text-secondary" style="margin-top: 4px;">If enabled, the extension will open the Notes tab by default instead of Overview.</p>
+        </div>
         
         <h3>Google Gemini AI</h3>
         <p class="text-xs text-secondary">Configure your Gemini API key to enable AI-powered SEO analysis.</p>
@@ -813,14 +893,10 @@ function renderToggle(label, id) {
     </div>`;
 }
 
-export function renderKeywordsPlannerTab() {
-    return `<div id="keywords-planner" class="tab-content"><div id="keywords-planner-container"></div></div>`;
-}
-
 export function renderProfileTab() {
     return `<div id="profile" class="tab-content"><div id="profile-container"></div></div>`;
 }
 
-export function renderKeywordsIdeasTab() {
-    return `<div id="keywords-ideas" class="tab-content"><div id="keywords-ideas-container"></div></div>`;
+export function renderNotesTab() {
+    return `<div id="notes" class="tab-content"><div id="notes-container"></div></div>`;
 }

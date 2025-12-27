@@ -8,16 +8,14 @@ import { getToken, signOut } from './auth.js';
 
 // API Base URLs
 const GSC_API_BASE = 'https://www.googleapis.com/webmasters/v3';
-const GOOGLE_ADS_API_BASE = 'https://googleads.googleapis.com/v14';
+
+let lastFetchedData = null;
 
 /**
- * Get Google Ads API credentials
+ * Get cached keywords data for export
  */
-export async function getGoogleAdsCredentials() {
-    const settings = await getSettings(['googleAdsApiKey']);
-    return {
-        apiKey: settings.googleAdsApiKey || null
-    };
+export function getKeywordsData() {
+    return lastFetchedData;
 }
 
 /**
@@ -92,7 +90,7 @@ export async function getSearchConsoleData(params = {}) {
             fetchData(['page'])
         ]);
 
-        return {
+        const result = {
             domain: params.domain,
             dateRange: { startDate, endDate },
             queries: queriesData.rows || [],
@@ -105,30 +103,11 @@ export async function getSearchConsoleData(params = {}) {
             }
         };
 
+        lastFetchedData = result;
+        return result;
+
     } catch (error) {
         console.error('[Keywords] Error fetching Search Console data:', error);
-        throw error;
-    }
-}
-
-/**
- * Generate Keyword Ideas using Google Ads Keyword Planner
- * @param {Object} params - { keywords, location, language }
- * @returns {Promise<Array>} Keyword ideas with metrics
- */
-export async function getKeywordIdeas(params = {}) {
-    try {
-        const { apiKey } = await getGoogleAdsCredentials();
-        // Note: Google Ads API still requires Customer ID, but we removed it from UI.
-        // We might need to restore it or find another way.
-        // For now, this function is broken until we restore Customer ID or use a different method.
-        // But the user priority is GSC.
-
-        // Placeholder error
-        throw new Error('Google Ads integration pending update.');
-
-    } catch (error) {
-        console.error('[Keywords] Error fetching keyword ideas:', error);
         throw error;
     }
 }
