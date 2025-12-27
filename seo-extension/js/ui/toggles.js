@@ -59,6 +59,21 @@ export function setupSidePanelToggle() {
         chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: isChecked })
             .catch((error) => console.error(error));
     });
+
+    // Setup Default Notes Toggle
+    const toggleNotes = document.getElementById('toggle-default-notes');
+    if (toggleNotes) {
+        // Load state
+        getSettings(['defaultToNotes']).then((result) => {
+            toggleNotes.checked = result.defaultToNotes === true;
+        });
+
+        // Change listener
+        toggleNotes.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            saveSettings({ defaultToNotes: isChecked });
+        });
+    }
 }
 
 /**

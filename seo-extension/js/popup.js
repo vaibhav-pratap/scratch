@@ -20,8 +20,6 @@ import { initAIAnalysisTab } from './data/renderers/ai-analysis.js';
 import { initAdsTransparency, initMetaAds } from './ui/ads-transparency.js';
 import { renderKeywordsSettings } from './ui/keywords-settings.js';
 import { renderKeywordsPerformance } from './data/renderers/keywords-performance.js';
-import { renderKeywordsPlanner } from './ui/keywords-planner.js';
-import { renderKeywordsIdeas } from './ui/keywords-ideas.js';
 import { renderProfile } from './ui/profile.js';
 
 // Data modules
@@ -70,18 +68,6 @@ function init() {
 
     // 8. Initialize Keywords Performance
     updateKeywordsPerformance();
-
-    // 9. Initialize Keywords Planner
-    const keywordsPlannerContainer = document.getElementById('keywords-planner-container');
-    if (keywordsPlannerContainer) {
-        renderKeywordsPlanner(keywordsPlannerContainer);
-    }
-
-    // 9b. Initialize Keywords Ideas (BigQuery)
-    const keywordsIdeasContainer = document.getElementById('keywords-ideas-container');
-    if (keywordsIdeasContainer) {
-        renderKeywordsIdeas(keywordsIdeasContainer);
-    }
 
     // 10. Setup Ads Transparency
     initAdsTransparency();
@@ -155,58 +141,74 @@ function updateKeywordsPerformance() {
  * Setup export button handlers
  */
 function setupExportButtons() {
+    const btnExport = document.getElementById('btn-export');
+    const exportModal = document.getElementById('export-modal');
+    
+    // Toggle Export Modal
+    if (btnExport && exportModal) {
+        btnExport.addEventListener('click', () => {
+            exportModal.style.display = 'flex';
+            // Animate sheet up
+            setTimeout(() => {
+                exportModal.querySelector('.bottom-sheet').classList.add('active');
+            }, 10);
+        });
+
+        // Close on backdrop click
+        exportModal.addEventListener('click', (e) => {
+            if (e.target === exportModal) {
+                exportModal.querySelector('.bottom-sheet').classList.remove('active');
+                setTimeout(() => {
+                    exportModal.style.display = 'none';
+                }, 300);
+            }
+        });
+    }
+
+    // Export Actions
     const btnDownload = document.getElementById('btn-download');
     const btnDownloadCsv = document.getElementById('btn-download-csv');
     const btnDownloadPdf = document.getElementById('btn-download-pdf');
     const btnCopy = document.getElementById('btn-copy');
 
-    console.log('Setting up export buttons:', { btnDownload, btnDownloadCsv, btnDownloadPdf, btnCopy });
+    const closeExportModal = () => {
+        if (exportModal) {
+            exportModal.querySelector('.bottom-sheet').classList.remove('active');
+            setTimeout(() => {
+                exportModal.style.display = 'none';
+            }, 300);
+        }
+    };
 
     if (btnDownload) {
-        btnDownload.addEventListener('click', (e) => {
-            console.log('Download JSON clicked');
+        btnDownload.addEventListener('click', () => {
             const data = window.currentSEOData;
-            if (data) {
-                downloadJSON(data);
-            } else {
-                console.warn('No data available for export');
-            }
+            if (data) downloadJSON(data);
+            closeExportModal();
         });
     }
 
     if (btnDownloadCsv) {
-        btnDownloadCsv.addEventListener('click', (e) => {
-            console.log('Download CSV clicked');
+        btnDownloadCsv.addEventListener('click', () => {
             const data = window.currentSEOData;
-            if (data) {
-                downloadExcel(data);
-            } else {
-                console.warn('No data available for export');
-            }
+            if (data) downloadExcel(data);
+            closeExportModal();
         });
     }
 
     if (btnDownloadPdf) {
-        btnDownloadPdf.addEventListener('click', (e) => {
-            console.log('Download PDF clicked');
+        btnDownloadPdf.addEventListener('click', () => {
             const data = window.currentSEOData;
-            if (data) {
-                downloadPDF(data);
-            } else {
-                console.warn('No data available for export');
-            }
+            if (data) downloadPDF(data);
+            closeExportModal();
         });
     }
 
     if (btnCopy) {
         btnCopy.addEventListener('click', (e) => {
-            console.log('Copy JSON clicked');
             const data = window.currentSEOData;
-            if (data) {
-                copyToClipboard(JSON.stringify(data, null, 2), e.target);
-            } else {
-                console.warn('No data available for export');
-            }
+            if (data) copyToClipboard(JSON.stringify(data, null, 2), e.target);
+            closeExportModal();
         });
     }
 }

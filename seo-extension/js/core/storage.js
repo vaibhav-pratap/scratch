@@ -20,7 +20,24 @@ export function saveToCache(url, data) {
         localStorage.setItem(key, JSON.stringify(cacheEntry));
         console.log('[Storage] Saved to localStorage cache:', url);
     } catch (e) {
-        console.warn('[Storage] Failed to save to localStorage:', e);
+        if (e.name === 'QuotaExceededError') {
+            console.warn('[Storage] Quota exceeded. Clearing old cache...');
+            // Simple LRU-ish: Clear all SEO cache items to make space
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith(CACHE_KEY_PREFIX)) {
+                    localStorage.removeItem(k);
+                }
+            });
+            // Try again
+            try {
+                localStorage.setItem(key, JSON.stringify(cacheEntry));
+                console.log('[Storage] Saved after clearing cache:', url);
+            } catch (retryError) {
+                console.error('[Storage] Failed to save even after clearing:', retryError);
+            }
+        } else {
+            console.warn('[Storage] Failed to save to localStorage:', e);
+        }
     }
 }
 

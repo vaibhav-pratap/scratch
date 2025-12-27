@@ -20,12 +20,12 @@ import { initAIAnalysisTab } from './data/renderers/ai-analysis.js';
 import { initAdsTransparency, initMetaAds } from './ui/ads-transparency.js';
 import { renderKeywordsSettings } from './ui/keywords-settings.js';
 import { renderKeywordsPerformance } from './data/renderers/keywords-performance.js';
-import { renderKeywordsPlanner } from './ui/keywords-planner.js';
-import { renderKeywordsIdeas } from './ui/keywords-ideas.js';
 import { renderProfile } from './ui/profile.js';
+import { renderNotes } from './ui/notes/index.js';
+import { initMenu } from './ui/menu.js';
 
 // Data modules
-import { renderData } from './data/renderer.js';
+import { renderData, updateCWVMetrics } from './data/renderer.js';
 import { downloadPDF, downloadExcel, downloadJSON, downloadCSV } from './data/exporters.js';
 
 // Utils
@@ -58,6 +58,9 @@ function init() {
     // 6. Setup Gemini Settings
     initGeminiSettings();
 
+    // 6b. Setup New Menu
+    initMenu();
+
     // 7. Setup Keywords Settings
     try {
         const keywordsContainer = document.getElementById('keywords-api-settings');
@@ -70,18 +73,6 @@ function init() {
 
     // 8. Initialize Keywords Performance
     updateKeywordsPerformance();
-
-    // 9. Initialize Keywords Planner
-    const keywordsPlannerContainer = document.getElementById('keywords-planner-container');
-    if (keywordsPlannerContainer) {
-        renderKeywordsPlanner(keywordsPlannerContainer);
-    }
-
-    // 9b. Initialize Keywords Ideas (BigQuery)
-    const keywordsIdeasContainer = document.getElementById('keywords-ideas-container');
-    if (keywordsIdeasContainer) {
-        renderKeywordsIdeas(keywordsIdeasContainer);
-    }
 
     // 10. Setup Ads Transparency
     initAdsTransparency();
@@ -117,10 +108,22 @@ function init() {
     listenForUpdates(data => {
         window.currentSEOData = data;
         renderData(data);
-    }, renderCWVChart);
+    }, (cwv) => {
+        renderCWVChart(cwv);
+        updateCWVMetrics(cwv);
+    });
 
     // 16. Listen for tab switching and navigation changes
     const handleTabChange = () => {
+        window.currentSEOData = null; // Flush stale data
+
+        // Refresh Notes if tab is active
+        const notesTabContent = document.getElementById('notes');
+        if (notesTabContent && notesTabContent.classList.contains('active')) {
+            const container = document.getElementById('notes-container');
+            if (container) renderNotes(container);
+        }
+
         initSidePanel((data) => {
             window.currentSEOData = data;
             renderData(data);
@@ -145,6 +148,16 @@ function init() {
         switchToTab('profile');
     });
 
+    // 17b. Notes Button Listener
+    document.getElementById('btn-notes-footer')?.addEventListener('click', () => {
+        switchToTab('notes');
+        // Hide footer when Notes is activated
+        const appFooter = document.querySelector('.app-footer');
+        if (appFooter) {
+            appFooter.style.display = 'none';
+        }
+    });
+
     // 18. Custom Tab Switch Listener
     document.addEventListener('switch-tab', (e) => {
         if (e.detail && e.detail.tab) {
@@ -157,12 +170,60 @@ function init() {
     if (profileTabBtn) {
         profileTabBtn.addEventListener('click', () => {
             const container = document.getElementById('profile-container');
-            if (container) {
-                renderProfile(container);
-            }
+            if (container) renderProfile(container);
         });
     }
-}
+
+    // 20. App Footer Visibility & State Persistence
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const appFooter = document.querySelector('.app-footer');
+
+    // Handle tab clicks
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabName = button.dataset.tab;
+
+            // Save state
+            chrome.storage.local.set({ activeTab: tabName });
+
+            // Manage Footer Visibility
+            if (appFooter) {
+                if (tabName === 'notes') {
+                    appFooter.style.display = 'none';
+                } else {
+                    appFooter.style.display = 'flex';
+                }
+            }
+        });
+    });
+
+    // Restore State on Load
+    chrome.storage.local.get(['activeTab'], (result) => {
+        const savedTab = result.activeTab || 'home';
+        if (savedTab !== 'home') {
+            switchToTab(savedTab);
+
+            // Trigger specific renders if needed
+            if (savedTab === 'notes') {
+                const container = document.getElementById('notes-container');
+                if (container) renderNotes(container);
+            } else if (savedTab === 'profile') {
+                const container = document.getElementById('profile-container');
+                if (container) renderProfile(container);
+            }
+        }
+
+        // Set initial footer state
+        if (appFooter) {
+            if (savedTab === 'notes') {
+                appFooter.style.display = 'none';
+            } else {
+                appFooter.style.display = 'flex';
+            }
+        }
+    });
+
+} // End of init()
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
@@ -188,58 +249,74 @@ function updateKeywordsPerformance() {
  * Setup export button handlers
  */
 function setupExportButtons() {
+    const btnExport = document.getElementById('btn-export');
+    const exportModal = document.getElementById('export-modal');
+
+    // Toggle Export Modal
+    if (btnExport && exportModal) {
+        btnExport.addEventListener('click', () => {
+            exportModal.style.display = 'flex';
+            // Animate sheet up
+            setTimeout(() => {
+                exportModal.querySelector('.bottom-sheet').classList.add('active');
+            }, 10);
+        });
+
+        // Close on backdrop click
+        exportModal.addEventListener('click', (e) => {
+            if (e.target === exportModal) {
+                exportModal.querySelector('.bottom-sheet').classList.remove('active');
+                setTimeout(() => {
+                    exportModal.style.display = 'none';
+                }, 300);
+            }
+        });
+    }
+
+    // Export Actions
     const btnDownload = document.getElementById('btn-download');
     const btnDownloadCsv = document.getElementById('btn-download-csv');
     const btnDownloadPdf = document.getElementById('btn-download-pdf');
     const btnCopy = document.getElementById('btn-copy');
 
-    console.log('Setting up export buttons:', { btnDownload, btnDownloadCsv, btnDownloadPdf, btnCopy });
+    const closeExportModal = () => {
+        if (exportModal) {
+            exportModal.querySelector('.bottom-sheet').classList.remove('active');
+            setTimeout(() => {
+                exportModal.style.display = 'none';
+            }, 300);
+        }
+    };
 
     if (btnDownload) {
         btnDownload.addEventListener('click', () => {
-            console.log('Download JSON clicked');
             const data = window.currentSEOData;
-            if (data) {
-                downloadJSON(data);
-            } else {
-                console.warn('No data available for export (JSON)');
-            }
+            if (data) downloadJSON(data);
+            closeExportModal();
         });
     }
 
     if (btnDownloadCsv) {
         btnDownloadCsv.addEventListener('click', () => {
-            console.log('Download CSV clicked');
             const data = window.currentSEOData;
-            if (data) {
-                downloadExcel(data);
-            } else {
-                console.warn('No data available for export (CSV)');
-            }
+            if (data) downloadExcel(data);
+            closeExportModal();
         });
     }
 
     if (btnDownloadPdf) {
         btnDownloadPdf.addEventListener('click', () => {
-            console.log('Download PDF clicked');
             const data = window.currentSEOData;
-            if (data) {
-                downloadPDF(data);
-            } else {
-                console.warn('No data available for export (PDF)');
-            }
+            if (data) downloadPDF(data);
+            closeExportModal();
         });
     }
 
     if (btnCopy) {
         btnCopy.addEventListener('click', (e) => {
-            console.log('Copy JSON clicked');
             const data = window.currentSEOData;
-            if (data) {
-                copyToClipboard(JSON.stringify(data, null, 2), e.target);
-            } else {
-                console.warn('No data available for copy');
-            }
+            if (data) copyToClipboard(JSON.stringify(data, null, 2), e.target);
+            closeExportModal();
         });
     }
 }

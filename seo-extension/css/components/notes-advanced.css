@@ -1,0 +1,333 @@
+/* Material Design 3 Notes & Todo Styles - Compact / App-like */
+
+/* --- Layout & Structure --- */
+.todo-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    /* Remove gap, use padding/margins deliberately */
+    font-family: 'Roboto', sans-serif;
+    height: 100%;
+}
+
+.card.todo-app {
+    border: none;
+    border-radius: 12px;
+    background-color: var(--md-sys-color-surface);
+    box-shadow: var(--md-sys-elevation-1);
+}
+
+/* --- Typography (Scaled Down) --- */
+.md3-headline {
+    font-size: 20px;
+    /* Was 24px */
+    line-height: 28px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+}
+
+.md3-title-medium {
+    font-size: 14px;
+    /* Was 16px */
+    line-height: 20px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.md3-body-medium {
+    font-size: 13px;
+    /* Was 14px */
+    line-height: 18px;
+    font-weight: 400;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* --- Input Area (Compact) --- */
+.todo-input-wrapper {
+    position: relative;
+    background-color: var(--md-sys-color-surface-container-highest);
+    border-radius: 8px;
+    /* More rounded */
+    margin: 0 0 12px 0;
+    /* Tight margins */
+    border: 1px solid transparent;
+    /* No bottom border style, full border */
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.todo-input-wrapper:focus-within {
+    background-color: var(--md-sys-color-surface);
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+}
+
+#new-todo-input {
+    flex: 1;
+    padding: 10px 12px;
+    /* Smaller padding */
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+#new-todo-input::placeholder {
+    color: var(--md-sys-color-on-surface-variant);
+    opacity: 0.7;
+}
+
+/* NLP Hint - Discreet Icon */
+.todo-nlp-hint {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary-container);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* Only show hint if user has typed something (handled via JS toggling class technically, 
+   but for now let's just show it on focus if we want, or hide it. 
+   User said "I see NLP Active when I hover button" which was annoying.
+   Let's make it visible only when purely focused. */
+.todo-input-wrapper:focus-within .todo-nlp-hint {
+    opacity: 1;
+}
+
+#btn-add-todo {
+    background: none;
+    color: var(--md-sys-color-primary);
+    border: none;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+    margin-right: 4px;
+}
+
+#btn-add-todo:hover {
+    background-color: var(--md-sys-color-primary-container);
+}
+
+/* --- Filters (Compact Chips) --- */
+.todo-filters {
+    display: flex;
+    gap: 6px;
+    /* Tighter gap */
+    padding-bottom: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.todo-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-chip {
+    height: 28px;
+    /* Compact height */
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background-color: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.filter-chip:hover {
+    background-color: var(--md-sys-color-surface-variant);
+    border-color: var(--md-sys-color-outline);
+}
+
+.filter-chip.active {
+    background-color: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border-color: transparent;
+}
+
+.filter-chip.active::before {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-right: 6px;
+    font-size: 10px;
+}
+
+/* --- Todo List --- */
+#todo-list {
+    padding: 0;
+    margin-top: 8px;
+    background-color: transparent;
+}
+
+.todo-item {
+    padding: 8px 12px;
+    /* Very compact */
+    margin-bottom: 4px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: background-color 0.2s;
+    background: var(--md-sys-color-surface);
+}
+
+.todo-item:hover {
+    background-color: var(--md-sys-color-surface-container-high);
+}
+
+.todo-item:hover .todo-actions {
+    opacity: 1;
+}
+
+/* Priority styling */
+.todo-item.priority-high {
+    border-left: 3px solid var(--md-sys-color-error);
+    background-color: var(--md-sys-color-surface-container-low);
+}
+
+.todo-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.todo-checkbox {
+    width: 16px;
+    /* Smaller checkbox */
+    height: 16px;
+    margin-top: 3px;
+    accent-color: var(--md-sys-color-primary);
+    cursor: pointer;
+}
+
+.todo-text {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.todo-completed .todo-text {
+    text-decoration: line-through;
+    color: var(--md-sys-color-on-surface-variant);
+    opacity: 0.7;
+}
+
+/* Meta Data */
+.todo-meta {
+    margin-top: 4px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.meta-badge {
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 500;
+    background-color: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.meta-badge.due-today {
+    background-color: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+}
+
+.meta-badge.tag {
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+/* --- Actions (Hidden by default, show on hover) --- */
+.todo-actions {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.4;
+    /* Dimmed by default */
+    transition: opacity 0.2s;
+}
+
+/* AI Button (Small text link style) */
+.btn-ai-assist {
+    background: none;
+    border: none;
+    padding: 2px 6px;
+    color: var(--md-sys-color-primary);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-ai-assist:hover {
+    background-color: var(--md-sys-color-primary-container);
+}
+
+.delete-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: auto;
+    /* Push to right */
+}
+
+.delete-btn:hover {
+    background-color: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-error);
+}
+
+/* --- Subtasks --- */
+.subtasks-container {
+    margin-top: 6px;
+    padding-left: 4px;
+    border-left: 2px solid var(--md-sys-color-outline-variant);
+    margin-left: 4px;
+}
+
+.subtask-item {
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.subtask-checkbox {
+    width: 14px;
+    height: 14px;
+}
+
+.subtask-text {
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface-variant);
+}

@@ -631,3 +631,16 @@ function renderTechStack(techStack, container) {
     html += '</div>';
     container.innerHTML = html;
 }
+
+/**
+ * Update CWV metrics in the UI without full re-render
+ */
+export function updateCWVMetrics(cwv) {
+    if (!cwv) return;
+
+    updateCWVCard('lcp', cwv.lcp, cwv.lcpElement, 2500, 4000);
+    updateCWVCard('cls', cwv.cls, cwv.clsElement, 0.1, 0.25);
+    updateCWVCard('inp', cwv.inp, null, 200, 500);
+    updateCWVCard('fcp', cwv.fcp, null, 1800, 3000);
+    updateCWVCard('ttfb', cwv.ttfb, null, 800, 1800);
+}
