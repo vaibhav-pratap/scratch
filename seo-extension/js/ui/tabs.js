@@ -53,8 +53,14 @@ export async function initTabSwitching() {
             savedTabContent.classList.add('active');
 
             // Scroll to saved tab immediately
+            // Use 'start' for first tab to prevent cutoff
             setTimeout(() => {
-                savedTabBtn.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
+                const isFirstTab = savedTabBtn.previousElementSibling === null;
+                savedTabBtn.scrollIntoView({
+                    behavior: 'instant',
+                    block: 'nearest',
+                    inline: isFirstTab ? 'start' : 'center'
+                });
             }, 0);
         } else {
             // Fallback to default if saved tab not found
@@ -92,8 +98,13 @@ export async function initTabSwitching() {
             // 2. Save state
             localStorage.setItem('activeTab', targetId);
 
-            // 3. Auto-scroll to center
-            tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            // 3. Auto-scroll - use 'start' for first tab to prevent cutoff
+            const isFirstTab = tab.previousElementSibling === null;
+            tab.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: isFirstTab ? 'start' : 'center'
+            });
         });
     });
 
