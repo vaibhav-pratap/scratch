@@ -11,7 +11,8 @@
     "storage",
     "sidePanel",
     "identity",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "downloads"
   ],
   "host_permissions": [
     "<all_urls>"

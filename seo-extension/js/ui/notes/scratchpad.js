@@ -14,6 +14,8 @@ const NOTE_COLORS = [
     '#C7FFED', // Mint
     '#FFC9A0', // Peach
     '#E7C6FF', // Purple
+    '#d0ff77ff', // Green
+    '#6f7dffff', // Blue
 ];
 
 // Selection State
