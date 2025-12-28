@@ -132,7 +132,7 @@ export function renderLayout(container, initialState = { mode: 'todo', categorie
                         <input type="date" id="input-date-native" class="date-picker-input" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
                     </div>
 
-                    <input type="text" id="chat-input-field" class="chat-input" placeholder="Add a new task..." autocomplete="off">
+                    <div id="chat-input-field" class="chat-input" contenteditable="true" data-placeholder="Add a new task..." role="textbox"></div>
                     <button id="btn-input-send" class="send-btn"><i class="fa-solid fa-arrow-up"></i></button>
                 </div>
             </div>

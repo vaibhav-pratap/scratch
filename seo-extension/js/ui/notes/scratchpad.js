@@ -75,8 +75,8 @@ export async function renderScratchpad(container, domain) {
 function createNoteCardHTML(note) {
     const isSelected = selectedNotes.has(note.id);
     return `
-        <div class="note-card ${isSelectionMode ? 'selection-mode' : ''} ${isSelected ? 'selected' : ''}" 
-             data-note-id="${note.id}" 
+        <div class="note-card ${isSelectionMode ? 'selection-mode' : ''} ${isSelected ? 'selected' : ''}"
+             data-note-id="${note.id}"
              style="background-color: ${note.color};">
             <div class="selection-overlay">
                 <div class="selection-check">
@@ -94,30 +94,57 @@ function createNoteCardHTML(note) {
                     <button class="tool-btn" data-cmd="underline" title="Underline">
                         <i class="fa-solid fa-underline"></i>
                     </button>
+                    <div class="v-separator" style="width:1px; height:16px; background:rgba(0,0,0,0.1); margin:0 4px;"></div>
                     <button class="tool-btn" data-cmd="insertUnorderedList" title="Bullet List">
                         <i class="fa-solid fa-list-ul"></i>
                     </button>
                     <button class="tool-btn" data-cmd="insertOrderedList" title="Numbered List">
                         <i class="fa-solid fa-list-ol"></i>
                     </button>
-                    <button class="tool-btn" data-cmd="createLink" title="Add Link">
-                        <i class="fa-solid fa-link"></i>
+                    <div class="v-separator" style="width:1px; height:16px; background:rgba(0,0,0,0.1); margin:0 4px;"></div>
+                    <button class="tool-btn more-btn" title="More Formatting">
+                        <i class="fa-solid fa-ellipsis"></i>
                     </button>
                     <div class="color-picker-wrapper">
                         <button class="tool-btn color-btn" title="Note Color">
                             <i class="fa-solid fa-palette"></i>
                         </button>
-                        <div class="note-color-palette">
-                            ${NOTE_COLORS.map(color => `
-                                <div class="note-color-option" style="background-color: ${color};" data-color="${color}"></div>
-                            `).join('')}
-                        </div>
                     </div>
                 </div>
                 <button class="delete-note-btn" title="Delete Note">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </div>
+            
+            <!-- Inline Color Palette -->
+            <div class="note-color-palette">
+                ${NOTE_COLORS.map(color => `
+                    <div class="note-color-option" style="background-color: ${color};" data-color="${color}"></div>
+                `).join('')}
+            </div>
+
+            <!-- Inline More Tools -->
+            <div class="note-more-tools">
+                <button class="tool-btn" data-cmd="fontSize" data-action="increase" title="Increase Font Size">
+                    <i class="fa-solid fa-text-height"></i>
+                    <i class="fa-solid fa-plus" style="font-size: 7px; position: absolute; top: 4px; right: 4px;"></i>
+                </button>
+                <button class="tool-btn" data-cmd="fontSize" data-action="decrease" title="Decrease Font Size">
+                    <i class="fa-solid fa-text-height"></i>
+                    <i class="fa-solid fa-minus" style="font-size: 7px; position: absolute; bottom: 4px; right: 4px;"></i>
+                </button>
+                <div class="v-separator" style="width:1px; height:16px; background:rgba(0,0,0,0.1); margin:0 8px;"></div>
+                <button class="tool-btn" data-cmd="createLink" title="Add Link">
+                    <i class="fa-solid fa-link"></i>
+                </button>
+                <button class="tool-btn" data-cmd="formatBlock" data-val="blockquote" title="Quote">
+                    <i class="fa-solid fa-quote-left"></i>
+                </button>
+                <button class="tool-btn" data-cmd="formatBlock" data-val="pre" title="Code">
+                    <i class="fa-solid fa-code"></i>
+                </button>
+            </div>
+
             <div class="note-content" contenteditable="true" data-placeholder="Write your note...">${note.content}</div>
             <div class="note-footer">
                 <div class="note-meta">
@@ -145,7 +172,7 @@ export async function triggerNoteCreation(container, domain) {
         // After re-render, find the new card to scroll to it
         const newGrid = container.querySelector('#notes-grid');
         if (newGrid) {
-            const newCard = newGrid.querySelector(`[data-note-id="${newNote.id}"]`);
+            const newCard = newGrid.querySelector(`[data - note - id="${newNote.id}"]`);
             if (newCard) {
                 const contentArea = newCard.querySelector('.note-content');
                 contentArea.focus();
@@ -221,6 +248,8 @@ function attachCardEventListeners(card, domain) {
     const deleteBtn = card.querySelector('.delete-note-btn');
     const colorBtn = card.querySelector('.color-btn');
     const colorPalette = card.querySelector('.note-color-palette');
+    const moreBtn = card.querySelector('.more-btn');
+    const moreTools = card.querySelector('.note-more-tools');
     const downloadBtn = card.querySelector('.note-download-btn');
 
     // Auto-save on content change
@@ -263,28 +292,113 @@ function attachCardEventListeners(card, domain) {
         }, 1000);
     });
 
-    // Formatting toolbar
-    toolbar.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+    // Formatting Toolbar & More Tools
+    // Important: Query buttons from the CARD, not just the toolbar, to include '.note-more-tools' buttons
+    card.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+        // Prevent focus loss on click
+        btn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+        });
+
         btn.addEventListener('click', (e) => {
             e.preventDefault();
+
             const cmd = btn.dataset.cmd;
 
-            if (cmd === 'createLink') {
+            if (cmd === 'fontSize') {
+                const action = btn.dataset.action;
+                // Find the note content - it's a sibling of note-more-tools
+                const noteCard = card; // We already have card from the parent scope
+                const noteContent = noteCard.querySelector('.note-content');
+
+                if (noteContent) {
+                    // Get current font size (or use default 14px)
+                    const currentStyle = window.getComputedStyle(noteContent);
+                    const currentSizePx = parseFloat(currentStyle.fontSize) || 14;
+
+                    // Calculate new size
+                    let newSize;
+                    if (action === 'increase') {
+                        newSize = Math.min(currentSizePx + 2, 72); // Max 72px
+                    } else if (action === 'decrease') {
+                        newSize = Math.max(currentSizePx - 2, 2); // Min 2px
+                    }
+
+                    // Apply new size with important to override CSS
+                    noteContent.style.setProperty('font-size', `${newSize}px`, 'important');
+                    // Also adjust line-height proportionally (1.5x font size is standard)
+                    noteContent.style.setProperty('line-height', `${newSize * 1.5}px`, 'important');
+
+                    // Fix for old notes: remove font-size from all child elements (font tags, spans, etc.)
+                    noteContent.querySelectorAll('*').forEach(el => {
+                        el.style.removeProperty('font-size');
+                        // Also remove old font tags that might have size attributes
+                        if (el.tagName === 'FONT') {
+                            el.removeAttribute('size');
+                        }
+                    });
+                }
+            } else if (cmd === 'createLink') {
                 const url = prompt('Enter URL:');
                 if (url) {
                     document.execCommand(cmd, false, url);
                 }
+            } else if (cmd === 'formatBlock') {
+                const val = btn.dataset.val;
+                document.execCommand(cmd, false, val);
             } else {
                 document.execCommand(cmd, false, null);
             }
 
-            content.focus();
+            updateToolbarState(toolbar);
         });
     });
+
+    // Content Interaction Handlers for Toolbar State
+    const updateState = () => {
+        // Small timeout to allow selection to settle/browser to apply command
+        requestAnimationFrame(() => updateToolbarState(toolbar));
+    };
+
+    content.addEventListener('keyup', updateState);
+    content.addEventListener('mouseup', updateState);
+    content.addEventListener('click', updateState);
+
+    // Optimized selection change: only distinct handler per focused note
+    content.addEventListener('focus', () => {
+        document.addEventListener('selectionchange', updateState);
+        updateState(); // Update immediately on focus
+    });
+
+    content.addEventListener('blur', () => {
+        document.removeEventListener('selectionchange', updateState);
+    });
+
+    // More Button Toggle
+    if (moreBtn && moreTools) {
+        moreBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // prevent outside click logic immediate trigger
+
+            // Close color palette if open
+            if (colorPalette.classList.contains('show')) {
+                colorPalette.classList.remove('show');
+            }
+
+            moreTools.classList.toggle('show');
+            moreBtn.classList.toggle('active');
+        });
+    }
 
     // Color picker
     colorBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+
+        // Close more tools if open
+        if (moreTools && moreTools.classList.contains('show')) {
+            moreTools.classList.remove('show');
+            if (moreBtn) moreBtn.classList.remove('active');
+        }
+
         colorPalette.classList.toggle('show');
     });
 
@@ -297,10 +411,19 @@ function attachCardEventListeners(card, domain) {
         });
     });
 
-    // Close color picker on outside click
+    // Close Expandables on outside click
     document.addEventListener('click', (e) => {
+        // Close Color Palette
         if (!colorBtn.contains(e.target) && !colorPalette.contains(e.target)) {
             colorPalette.classList.remove('show');
+        }
+
+        // Close More Tools
+        if (moreTools && moreBtn) {
+            if (!moreBtn.contains(e.target) && !moreTools.contains(e.target)) {
+                moreTools.classList.remove('show');
+                moreBtn.classList.remove('active');
+            }
         }
     });
 
@@ -400,7 +523,7 @@ async function downloadSelectedNotesAsZip(container) {
     const htmlToImageMissing = typeof htmlToImage === 'undefined';
 
     if (jszipMissing || htmlToImageMissing) {
-        console.error(`[Scratchpad] Missing libraries: ${jszipMissing ? 'JSZip ' : ''}${htmlToImageMissing ? 'htmlToImage' : ''}`);
+        console.error(`[Scratchpad] Missing libraries: ${jszipMissing ? 'JSZip ' : ''}${htmlToImageMissing ? 'htmlToImage' : ''} `);
         alert(`Export libraries not loaded: ${jszipMissing ? 'JSZip ' : ''}${htmlToImageMissing ? 'html-to-image' : ''}. Please refresh.`);
         return;
     }
@@ -435,7 +558,7 @@ async function downloadSelectedNotesAsZip(container) {
         await new Promise(r => setTimeout(r, 150));
 
         for (const noteId of selectedNotes) {
-            const card = grid.querySelector(`.note-card[data-note-id="${noteId}"]`);
+            const card = grid.querySelector(`.note - card[data - note - id="${noteId}"]`);
             if (card) {
                 // Ensure no toolbars or overlays are visible on this specific card
                 const overlays = card.querySelectorAll('.selection-overlay');
@@ -451,7 +574,7 @@ async function downloadSelectedNotesAsZip(container) {
 
                 // Add to ZIP (remove data:image/png;base64, prefix)
                 const hexId = noteId.substring(0, 6).toUpperCase();
-                zip.file(`Note-${hexId}.png`, dataUrl.split(',')[1], { base64: true });
+                zip.file(`Note - ${hexId}.png`, dataUrl.split(',')[1], { base64: true });
 
                 // Restore individual overlays
                 overlays.forEach(o => o.style.removeProperty('display'));
@@ -505,7 +628,7 @@ async function downloadSelectedNotesAsZip(container) {
 }
 
 async function deleteSelectedNotes(container, domain) {
-    if (confirm(`Delete ${selectedNotes.size} selected note(s)?`)) {
+    if (confirm(`Delete ${selectedNotes.size} selected note(s) ? `)) {
         for (const noteId of selectedNotes) {
             await NoteModel.delete(noteId, domain);
         }
@@ -581,7 +704,7 @@ async function downloadNotesAsImage(container) {
 
         // 4. Download Trigger
         const link = document.createElement('a');
-        link.download = `scratchbook-${new Date().toISOString().slice(0, 10)}.png`;
+        link.download = `scratchbook - ${new Date().toISOString().slice(0, 10)}.png`;
         link.href = dataUrl;
         document.body.appendChild(link);
         link.click();
@@ -645,7 +768,7 @@ async function downloadNoteAsImage(card) {
         // Download
         const link = document.createElement('a');
         const hexId = card.dataset.noteId ? card.dataset.noteId.substring(0, 6).toUpperCase() : 'EXPORT';
-        link.download = `Note-${hexId}.png`;
+        link.download = `Note - ${hexId}.png`;
         link.href = dataUrl;
         document.body.appendChild(link);
         link.click();
@@ -664,4 +787,46 @@ async function downloadNoteAsImage(card) {
             if (downloadBtn) downloadBtn.innerHTML = '<i class="fa-solid fa-download"></i>';
         }, 2000);
     }
+}
+
+export function updateToolbarState(toolbar) {
+    if (!toolbar) return;
+
+    // 1. Safety Check: Only update if the relevant content area is focused
+    // This prevents "wrong button" activation from other notes or loose focus
+    const card = toolbar.closest('.note-card');
+    const content = card ? card.querySelector('.note-content') : null;
+
+    if (!content || document.activeElement !== content) {
+        // If we heavily enforce this, buttons might visually "turn off" when we click them 
+        // (if focus momentarily leaves). But we used mousedown.preventDefault(), so focus SHOULD stay.
+        // Let's rely on that.
+        // Optional: clear all active states if not focused?
+        // toolbar.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        return;
+    }
+
+    toolbar.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+        const cmd = btn.dataset.cmd;
+        try {
+            let isActive = false;
+
+            if (cmd === 'formatBlock') {
+                const val = btn.dataset.val;
+                const currentVal = document.queryCommandValue(cmd);
+                // headings, blockquote, pre
+                isActive = (currentVal === val) || (val === 'pre' && currentVal === 'pre');
+            } else {
+                isActive = document.queryCommandState(cmd);
+            }
+
+            if (isActive) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        } catch (e) {
+            btn.classList.remove('active');
+        }
+    });
 }

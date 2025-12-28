@@ -1,32 +1,26 @@
-/**
- * Todo Model
- * Factory and helpers for Todo objects with storage
- */
-
-import { parseTodoInput } from '../../utils/nlp-date.js';
-import { getSettings, saveSettings } from '../../core/storage.js';
+import { getDatabase } from '../../core/db.js';
+import { parseTodoInput } from '../../utils/todo-parser.js';
 
 export class TodoModel {
     /**
-     * Create a new Todo Item from raw text or explicit params
+     * Create a new Todo Item
      */
-    static create(text, dueDate = null, priority = 'medium', tags = [], domain = 'global', categories = [], color = null) {
-        // If text has NLP markers, parse it
+    static create(text, dueDate = null, priority = null, tags = [], domain = 'global', categories = [], color = null) {
         const parsed = parseTodoInput(text);
 
-        // Ensure categories is an array
-        let categoryList = [];
-        if (Array.isArray(categories)) {
-            categoryList = categories;
-        } else if (categories) {
-            categoryList = [categories];
-        }
+        let categoryList = Array.isArray(categories) ? categories : (categories ? [categories] : []);
+        const id = crypto.randomUUID();
+
+        // Resolve Priority: Explicit > Parsed > Default
+        const finalPriority = priority || parsed.priority || 'medium';
 
         return {
-            id: crypto.randomUUID(),
-            text: text || parsed.text, // Prefer passed text if available (already cleaned)
+            _id: `todo:${id}`,
+            id: id, // Legacy/UI ID
+            type: 'todo',
+            text: parsed.text || text, // Prefer parsed (clean) text
             completed: false,
-            priority: priority || parsed.priority,
+            priority: finalPriority,
             dueDate: dueDate || parsed.dueDate,
             tags: (tags && tags.length > 0) ? tags : parsed.tags,
             categories: categoryList,
@@ -43,94 +37,125 @@ export class TodoModel {
      * Get all todos for a domain
      */
     static async getAll(domain = 'global') {
-        const storageKey = `todos_${domain}`;
-        const settings = await getSettings([storageKey]);
-        return settings[storageKey] || [];
+        const db = await getDatabase();
+        try {
+            const result = await db.allDocs({
+                include_docs: true,
+                startkey: 'todo:',
+                endkey: 'todo:\uffff'
+            });
+
+            return result.rows
+                .map(row => row.doc)
+                .filter(doc => doc.domain === domain)
+                .sort((a, b) => b.createdAt - a.createdAt);
+        } catch (err) {
+            console.error('[TodoModel] Failed to getAll:', err);
+            return [];
+        }
     }
 
     /**
      * Add a new todo
      */
     static async add(todo, domain = 'global') {
-        const todos = await TodoModel.getAll(domain);
-        todos.push(todo);
-        const storageKey = `todos_${domain}`;
-        await saveSettings({ [storageKey]: todos });
-    }
+        console.log('[TodoModel.add] Adding todo:', todo);
+        const db = await getDatabase();
+        const todoData = {
+            ...todo,
+            _id: todo._id || `todo:${crypto.randomUUID()}`,
+            type: 'todo',
+            domain,
+            categories: todo.categories || [],
+            tags: todo.tags || [],
+            subtasks: todo.subtasks || [],
+            createdAt: todo.createdAt || Date.now(),
+            updatedAt: Date.now()
+        };
 
-    /**
-     * Delete a todo by ID
-     */
-    static async delete(id, domain = 'global') {
-        const todos = await TodoModel.getAll(domain);
-        const filtered = todos.filter(t => t.id !== id);
-        const storageKey = `todos_${domain}`;
-        await saveSettings({ [storageKey]: filtered });
-    }
+        // Populate legacy id
+        if (!todoData.id) todoData.id = todoData._id.replace('todo:', '');
 
-    /**
-     * Delete all todos in a category (Cascading)
-     */
-    static async deleteByCategory(categoryName, domain = 'global') {
-        const todos = await TodoModel.getAll(domain);
-        const filtered = todos.filter(t => {
-            if (t.categories && Array.isArray(t.categories)) {
-                return !t.categories.includes(categoryName);
-            }
-            return t.category !== categoryName; // Backward compatibility
-        });
-        const storageKey = `todos_${domain}`;
-        await saveSettings({ [storageKey]: filtered });
-    }
-
-    /**
-     * Toggle completion status
-     */
-    static async toggleComplete(id, domain = 'global') {
-        const todos = await TodoModel.getAll(domain);
-        const todo = todos.find(t => t.id === id);
-        if (todo) {
-            todo.completed = !todo.completed;
-            todo.updatedAt = Date.now();
-            const storageKey = `todos_${domain}`;
-            await saveSettings({ [storageKey]: todos });
-        }
+        await db.put(todoData);
+        return todoData;
     }
 
     /**
      * Update a todo
      */
     static async update(id, updates, domain = 'global') {
-        const todos = await TodoModel.getAll(domain);
-        const todo = todos.find(t => t.id === id);
-        if (todo) {
-            Object.assign(todo, updates);
-            todo.updatedAt = Date.now();
-            const storageKey = `todos_${domain}`;
-            await saveSettings({ [storageKey]: todos });
+        const db = await getDatabase();
+        const docId = id.startsWith('todo:') ? id : `todo:${id}`;
+
+        try {
+            const doc = await db.get(docId);
+            const updatedDoc = {
+                ...doc,
+                ...updates,
+                updatedAt: Date.now()
+            };
+            await db.put(updatedDoc);
+        } catch (err) {
+            console.error(`[TodoModel] Failed to update todo ${docId}:`, err);
         }
     }
 
     /**
-     * Add a subtask to a todo
+     * Toggle completion status
      */
-    static addSubtask(todo, text) {
-        const subtask = {
-            id: crypto.randomUUID(),
-            text: text,
-            completed: false
-        };
-        todo.subtasks.push(subtask);
-        todo.updatedAt = Date.now();
-        return todo;
+    static async toggleComplete(id) {
+        const db = await getDatabase();
+        const docId = id.startsWith('todo:') ? id : `todo:${id}`;
+
+        try {
+            const doc = await db.get(docId);
+            doc.completed = !doc.completed;
+            doc.updatedAt = Date.now();
+            await db.put(doc);
+        } catch (err) {
+            console.error(`[TodoModel] Failed to toggle complete ${docId}:`, err);
+        }
     }
 
     /**
-     * Toggle completion status (in-memory, for legacy support)
+     * Delete a todo
      */
-    static toggle(todo) {
-        todo.completed = !todo.completed;
-        todo.updatedAt = Date.now();
-        return todo;
+    static async delete(id) {
+        const db = await getDatabase();
+        const docId = id.startsWith('todo:') ? id : `todo:${id}`;
+
+        try {
+            const doc = await db.get(docId);
+            await db.remove(doc);
+        } catch (err) {
+            if (err.status !== 404) console.error(`[TodoModel] Failed to delete todo ${docId}:`, err);
+        }
+    }
+
+    /**
+     * Get incomplete todos
+     */
+    static async getIncomplete(domain = 'global') {
+        const all = await this.getAll(domain);
+        return all.filter(t => !t.completed);
+    }
+
+    /**
+     * Get todos by priority
+     */
+    static async getByPriority(priority, domain = 'global') {
+        const all = await this.getAll(domain);
+        return all.filter(t => t.priority === priority);
+    }
+
+    /**
+     * Delete all todos in a category
+     */
+    static async deleteByCategory(categoryName, domain = 'global') {
+        const db = await getDatabase();
+        const all = await this.getAll(domain);
+        const toDelete = all.filter(t => t.categories && t.categories.includes(categoryName));
+
+        await Promise.all(toDelete.map(doc => db.remove(doc)));
     }
 }

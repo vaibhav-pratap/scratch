@@ -7,52 +7,7 @@
 const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
 
-export function parseTodoInput(text) {
-    let cleanText = text;
-    let dueDate = null;
-    let priority = 'medium';
-    let tags = [];
-
-    const lowerText = text.toLowerCase();
-
-    // --- Priority Parsing ---
-    if (lowerText.includes('!high') || lowerText.includes('!urgent')) {
-        priority = 'high';
-        cleanText = cleanText.replace(/!(high|urgent)/gi, '');
-    } else if (lowerText.includes('!low')) {
-        priority = 'low';
-        cleanText = cleanText.replace(/!low/gi, '');
-    } else if (lowerText.includes('!medium')) {
-        priority = 'medium';
-        cleanText = cleanText.replace(/!medium/gi, '');
-    }
-
-    // --- Date Parsing ---
-    const dateResult = parseDate(cleanText);
-    if (dateResult.date) {
-        dueDate = dateResult.date;
-        cleanText = dateResult.cleanText;
-    }
-
-    // --- Tag Parsing (#tag) ---
-    const tagMatch = cleanText.match(/#(\w+)/g);
-    if (tagMatch) {
-        tags = tagMatch.map(t => t.substring(1)); // Remove #
-        cleanText = cleanText.replace(/#(\w+)/g, '');
-    }
-
-    // Cleanup extra spaces
-    cleanText = cleanText.replace(/\s+/g, ' ').trim();
-
-    return {
-        text: cleanText,
-        dueDate,
-        priority,
-        tags
-    };
-}
-
-function parseDate(text) {
+export function parseDateNaturalLanguage(text) {
     const today = new Date();
     let targetDate = null;
     let cleanText = text;
@@ -79,7 +34,8 @@ function parseDate(text) {
             handler: (match) => {
                 const days = parseInt(match[1]);
                 const d = new Date();
-                d.setDate(d.getDate() + days);
+                const now = new Date();
+                d.setDate(now.getDate() + days);
                 return d;
             }
         },
@@ -92,9 +48,7 @@ function parseDate(text) {
                 const currentDayIndex = d.getDay();
                 let daysUntil = targetDayIndex - currentDayIndex;
                 if (daysUntil <= 0) daysUntil += 7; // If today or passed, go to next week's instance
-                daysUntil += 7; // "Next" usually implies the week after the coming one, but loosely means "upcoming". 
-                // Let's standardise: "Monday" = upcoming Monday. "Next Monday" = Monday of next week.
-                // For simplicity in this v1, let's treat "Next Monday" as just 7 + days until.
+                daysUntil += 7; // "Next" usually implies the week after the coming one
                 d.setDate(d.getDate() + daysUntil);
                 return d;
             }
@@ -118,15 +72,25 @@ function parseDate(text) {
         const match = cleanText.match(p.regex);
         if (match) {
             targetDate = p.handler(match);
-            // Set to end of day? Or keep time? Let's default to today's time or 9am?
-            // User just cares about the date usually.
             cleanText = cleanText.replace(p.regex, '');
             break; // Only parse one date
         }
     }
 
-    return {
-        date: targetDate ? targetDate.getTime() : null, // Store as timestamp
-        cleanText
-    };
+    // Attempt to parse standard date string if NLP failed but looks like date
+    if (!targetDate) {
+        // Very basic check, mainly relies on new Date() parsing
+        // Improvements: Add specific format regex if needed
+    }
+
+    if (targetDate) {
+        // Reset time to start of day or specific time?
+        // Let's keep it simple: date objects with current time preserved or reset?
+        // Usually due dates are date-based.
+        targetDate.setHours(23, 59, 59, 999); // End of day
+        return targetDate;
+    }
+
+    return null;
 }
+

@@ -1,17 +1,15 @@
-/**
- * Note Model
- * Manages sticky notes with rich text content
- */
-
-import { getSettings, saveSettings } from '../../core/storage.js';
+import { getDatabase } from '../../core/db.js';
 
 export class NoteModel {
     /**
-     * Create a new note
+     * Create a new note object (does not save to DB)
      */
     static create(content = '', color = '#FFD95A', domain = 'global', categories = []) {
+        const id = crypto.randomUUID();
         return {
-            id: crypto.randomUUID(),
+            _id: `note:${id}`, // PouchDB ID
+            id: id,            // Legacy/UI ID
+            type: 'note',
             content: content,
             color: color,
             categories: categories,
@@ -25,63 +23,113 @@ export class NoteModel {
      * Get all notes for a domain
      */
     static async getAll(domain = 'global') {
-        const storageKey = `sticky_notes_${domain}`;
-        const settings = await getSettings([storageKey]);
-        const result = settings[storageKey];
+        const db = await getDatabase();
+        try {
+            // Fetch all docs with 'note:' prefix
+            const result = await db.allDocs({
+                include_docs: true,
+                startkey: 'note:',
+                endkey: 'note:\uffff'
+            });
 
-        // Ensure we always return an array
-        if (!result || !Array.isArray(result)) {
+            const notes = result.rows
+                .map(row => row.doc)
+                .filter(doc => doc.domain === domain)
+                .sort((a, b) => b.updatedAt - a.updatedAt); // Descending sort
+
+            console.log(`[NoteModel] Retrieved ${notes.length} notes for domain: ${domain}`);
+            return notes;
+        } catch (err) {
+            console.error('[NoteModel] Failed to getAll:', err);
             return [];
         }
-        return result;
     }
 
     /**
      * Add a new note
      */
     static async add(note, domain = 'global') {
-        const notes = await NoteModel.getAll(domain);
-        notes.push(note);
-        const storageKey = `sticky_notes_${domain}`;
-        await saveSettings({ [storageKey]: notes });
+        const db = await getDatabase();
+
+        // Ensure structure
+        const noteData = {
+            ...note,
+            _id: note._id || `note:${note.id || crypto.randomUUID()}`,
+            type: 'note',
+            domain,
+            categories: note.categories || [],
+            createdAt: note.createdAt || Date.now(),
+            updatedAt: Date.now()
+        };
+
+        // Remove legacy 'id' if present to avoid confusion
+        if (!noteData.id) noteData.id = noteData._id.replace('note:', '');
+
+        try {
+            await db.put(noteData);
+            console.log(`[NoteModel] Note saved to database - ID: ${noteData._id}, Domain: ${domain}`);
+            return noteData;
+        } catch (err) {
+            console.error('[NoteModel] Failed to add note:', err);
+            throw err;
+        }
     }
 
     /**
-     * Update a note's content or color
+     * Update a note
      */
     static async update(id, updates, domain = 'global') {
-        const notes = await NoteModel.getAll(domain);
-        const note = notes.find(n => n.id === id);
-        if (note) {
-            Object.assign(note, updates);
-            note.updatedAt = Date.now();
-            const storageKey = `sticky_notes_${domain}`;
-            await saveSettings({ [storageKey]: notes });
+        const db = await getDatabase();
+        const docId = id.startsWith('note:') ? id : `note:${id}`;
+
+        try {
+            const doc = await db.get(docId);
+
+            const updatedDoc = {
+                ...doc,
+                ...updates,
+                updatedAt: Date.now()
+            };
+
+            await db.put(updatedDoc);
+            console.log(`[NoteModel] Note updated: ${docId}`);
+        } catch (err) {
+            console.error(`[NoteModel] Failed to update note ${docId}:`, err);
         }
     }
 
     /**
      * Delete a note
      */
-    static async delete(id, domain = 'global') {
-        const notes = await NoteModel.getAll(domain);
-        const filtered = notes.filter(n => n.id !== id);
-        const storageKey = `sticky_notes_${domain}`;
-        await saveSettings({ [storageKey]: filtered });
+    static async delete(id) {
+        const db = await getDatabase();
+        const docId = id.startsWith('note:') ? id : `note:${id}`;
+
+        try {
+            const doc = await db.get(docId);
+            await db.remove(doc);
+            console.log(`[NoteModel] Note deleted: ${docId}`);
+        } catch (err) {
+            if (err.status !== 404) {
+                console.error(`[NoteModel] Failed to delete note ${docId}:`, err);
+            }
+        }
     }
 
     /**
      * Delete all notes in a category
      */
     static async deleteByCategory(categoryName, domain = 'global') {
-        const notes = await NoteModel.getAll(domain);
-        const filtered = notes.filter(n => {
-            if (n.categories && Array.isArray(n.categories)) {
-                return !n.categories.includes(categoryName);
-            }
-            return true;
-        });
-        const storageKey = `sticky_notes_${domain}`;
-        await saveSettings({ [storageKey]: filtered });
+        const db = await getDatabase();
+
+        try {
+            const allNotes = await this.getAll(domain);
+            const notesToDelete = allNotes.filter(n => n.categories && n.categories.includes(categoryName));
+
+            await Promise.all(notesToDelete.map(doc => db.remove(doc)));
+            console.log(`[NoteModel] Deleted ${notesToDelete.length} notes from category: ${categoryName}`);
+        } catch (err) {
+            console.error('[NoteModel] Failed to delete by category:', err);
+        }
     }
 }

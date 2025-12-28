@@ -4,7 +4,7 @@
 
 import { TodoModel } from '../../data/models/todo.js';
 import { getSettings, saveSettings } from '../../core/storage.js';
-import { parseTodoInput } from '../../utils/nlp-date.js';
+import { parseTodoInput } from '../../utils/todo-parser.js';
 
 export async function renderTodoList(container, domain, categoryFilter = null, dateFilter = null) {
     const todos = await TodoModel.getAll(domain);
@@ -129,8 +129,15 @@ function createTodoCard(todo, domain, container) {
             <div class="task-details">
                 <div class="task-text">${todo.text}</div>
                 
-                ${(todo.category || todo.dueDate || todo.tags?.length > 0) ? `
+                ${(todo.category || todo.dueDate || todo.tags?.length > 0 || (todo.priority && todo.priority !== 'medium')) ? `
                     <div class="task-meta">
+                        ${(todo.priority && todo.priority !== 'medium') ? `
+                            <span class="meta-chip priority-chip ${todo.priority}" style="color: ${priorityColors[todo.priority]}; border-color: ${priorityColors[todo.priority]}20; background-color: ${priorityColors[todo.priority]}10;">
+                                <i class="fa-solid fa-flag"></i>
+                                ${todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}
+                            </span>
+                        ` : ''}
+
                         ${(todo.categories && todo.categories.length > 0) ? todo.categories.map(cat => `
                             <span class="meta-chip category-chip">
                                 <i class="fa-solid fa-folder"></i>
@@ -191,6 +198,7 @@ function createTodoCard(todo, domain, container) {
 
 export async function handleTodoInput(inputData, domain) {
     // inputData is { text, priority, dueDate, color, category }
+    console.log('[handleTodoInput] Received input:', inputData);
 
     // 1. NLP Parse (still useful for tags)
     const nlpResult = parseTodoInput(inputData.text);
