@@ -29,12 +29,12 @@ export async function renderScratchpad(container, domain) {
     // Default: Show Empty State if no notes
     if (notes.length === 0) {
         container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="fa-solid fa-note-sticky"></i>
+            <div class="notes-grid-container">
+                <div class="empty-state" style="text-align: center; padding: 60px 20px; color: var(--md-sys-color-on-surface-variant);">
+                    <i class="fa-solid fa-note-sticky" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+                    <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px; color: var(--md-sys-color-on-surface);">No sticky notes yet</div>
+                    <div style="font-size: 14px; margin-bottom: 24px;">Create your first note to get started</div>
                 </div>
-                <div class="empty-message">No Notes Yet</div>
-                <div class="empty-hint">Click "Add Note" to get started</div>
             </div>
             <div class="scratchpad-button-wrapper">
                 <button class="add-note-pill" id="add-note-btn">
