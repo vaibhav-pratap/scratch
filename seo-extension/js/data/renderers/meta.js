@@ -119,9 +119,6 @@ function getSerpPreviewHtml(data) {
     return `
         <div class="preview-card serp-card">
             <div class="serp-header">
-                <div class="serp-icon">
-                    <img src="https://www.google.com/s2/favicons?domain=${data.url || 'google.com'}" alt="Favicon">
-                </div>
                 <div class="serp-site-info">
                     <div class="serp-site-name">${new URL(data.url || 'https://example.com').hostname}</div>
                     <div class="serp-url">${displayUrl}</div>

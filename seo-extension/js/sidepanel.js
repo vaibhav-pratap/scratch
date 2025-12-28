@@ -5,6 +5,7 @@
 
 // Core modules
 import { initSidePanel } from './core/init.js';
+import { subscribeToChanges } from './core/db.js';
 import { listenForUpdates } from './core/messaging.js';
 
 // UI modules
@@ -219,6 +220,39 @@ function init() {
                 appFooter.style.display = 'none';
             } else {
                 appFooter.style.display = 'flex';
+            }
+        }
+    });
+
+    // Listen for category changes from other modules (e.g. scratchpad)
+    document.addEventListener('categoriesUpdated', async () => {
+        await refreshCategories();
+    });
+
+    // 21. Setup PouchDB Reactivity
+    subscribeToChanges((change) => {
+        if (!change.doc) return;
+        const type = change.doc.type;
+
+        // Refresh Notes/Todos UI if active and relevant
+        if (type === 'note' || type === 'todo' || type === 'category') {
+            const notesTabContent = document.getElementById('notes');
+            if (notesTabContent && notesTabContent.classList.contains('active')) {
+                const container = document.getElementById('notes-container');
+
+                // Smart Re-render: Don't blow away DOM if user is typing in a note
+                // This prevents focus loss and flickering during autosave
+                if (type === 'note') {
+                    const activeEl = document.activeElement;
+                    if (activeEl && activeEl.classList.contains('note-content')) {
+                        console.log('[Sidepanel] Skipping re-render due to active editing');
+                        return;
+                    }
+                }
+
+                if (container) {
+                    renderNotes(container);
+                }
             }
         }
     });

@@ -254,13 +254,52 @@ export function initInputHandler(elements, onSend, domain, onCategoryUpdate) {
 
 
     // --- Category Modal Logic (Insert # in input) ---
-    addCategoryBtn.addEventListener('click', () => {
-        // Insert # in the input field
-        inputField.value = '#';
-        inputField.focus();
-        // Move cursor to end
-        inputField.setSelectionRange(1, 1);
-    });
+    // --- Category Modal Logic (Insert # in input) ---
+    // 4. Add Category Button
+    if (addCategoryBtn) {
+        // Prevent focus loss when clicking the button
+        addCategoryBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+        });
+
+        addCategoryBtn.addEventListener('click', () => {
+            // Check if we need a leading space
+            const selection = window.getSelection();
+            let needsSpace = false;
+
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                // Simple heuristic: check character before cursor if possible, 
+                // or just verify if text exists and doesn't end in space.
+                // However, accessing context around cursor in contenteditable is tricky.
+                // Simpler: If the input has text and it's not empty, prepend space just in case,
+                // or rely on user. 
+                // Let's try to match the "smart spacing" from before but based on innerText generally
+                // if we assume appending to end, but here we insert at cursor.
+                // Safest: Just insert '#'. User can type space. 
+                // BUT user said "written after the text", implying flow.
+                // Let's check the last char of textContent to see if we should space.
+                const text = inputField.innerText;
+                if (text.length > 0 && !text.endsWith(' ') && !text.endsWith('\n')) {
+                    // CAUTION: This assumes cursor is at the end. 
+                    // If cursor is in middle "Hell|o", inserting " #" -> "Hell #o".
+                    // Ideally we just insert "#".
+                    needsSpace = false;
+                }
+            }
+
+            // For now, simple insertion of "#" is most predictable.
+            // If the user wants a space, they usually type it.
+            // But if they just finished typing a word and click +, "Word#" is ugly. "Word #" is better.
+            // Let's insert " #" (space hash) if appropriate? 
+            // Let's stick to appending pure '#' but ensuring focus wasn't lost.
+            // Or better: Insert "#" and let user manage space?
+            // User requirement: "written after the text".
+
+            const textToInsert = '#';
+            document.execCommand('insertText', false, textToInsert);
+        });
+    }
 
     categoryModalCancel.addEventListener('click', () => {
         categoryModal.classList.remove('show');
@@ -338,11 +377,20 @@ export function initInputHandler(elements, onSend, domain, onCategoryUpdate) {
 
     // --- Send Logic with Hashtag Detection ---
     const handleSend = async () => {
-        const rawText = inputField.value.trim();
+        // Use innerHTML to capture formatting, but we might want innerText for hashtags
+        const rawContent = inputField.innerHTML;
+        const rawText = inputField.innerText.trim();
+
         if (rawText) {
-            // Process hashtags
+            // Process hashtags from PLAIN text
             const { cleanedText, hashtags } = processHashtags(rawText);
-            state.text = cleanedText;
+
+            // For the final saved text, we prefer the HTML content.
+            // However, processHashtags strips tags from 'cleanedText'.
+            // If we want rich text support, we typically save HTML.
+            // Todos: Save rawContent (HTML).
+            // Hashtags are metadata.
+            state.text = rawContent; // Save HTML
 
             // Treat ALL hashtags as categories
             if (hashtags.length > 0) {
@@ -352,7 +400,7 @@ export function initInputHandler(elements, onSend, domain, onCategoryUpdate) {
                     const existingCat = existingCategories.find(c => c.toLowerCase() === lowerHashtag);
 
                     if (!existingCat) {
-                        await CategoryModel.add(hashtag, domain);
+                        await CategoryModel.addOrUpdate(hashtag, domain);
                         if (!state.categories.includes(hashtag)) {
                             state.categories.push(hashtag);
                         }
@@ -368,7 +416,7 @@ export function initInputHandler(elements, onSend, domain, onCategoryUpdate) {
             state.tags = hashtags;
 
             onSend({ ...state });
-            inputField.value = '';
+            inputField.innerHTML = '';
             resetState();
         }
     };
@@ -400,10 +448,13 @@ export function initInputHandler(elements, onSend, domain, onCategoryUpdate) {
 
     sendBtn.addEventListener('click', handleSend);
 
-    inputField.addEventListener('keypress', async (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            await handleSend();
+    inputField.addEventListener('keydown', async (e) => { // keydown handles Enter better than keypress
+        if (e.key === 'Enter') {
+            if (!e.shiftKey) {
+                e.preventDefault(); // Send
+                await handleSend();
+            }
+            // If Shift+Enter, allow default (new line)
         }
     });
 

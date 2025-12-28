@@ -145,63 +145,42 @@ export async function renderNotes(container) {
     const dateFilterBar = container.querySelector('.date-filter-bar');
     if (dateFilterBar) {
         const btns = dateFilterBar.querySelectorAll('.date-filter-btn');
-        const customTrigger = dateFilterBar.querySelector('.custom-range-trigger');
-        const applyBtn = dateFilterBar.querySelector('#btn-apply-range');
-        const startInput = dateFilterBar.querySelector('#filter-start-date');
-        const endInput = dateFilterBar.querySelector('#filter-end-date');
+        import('./calendar-modal.js').then(({ CalendarModal }) => {
+            btns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const type = btn.dataset.dateFilter;
 
-        btns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const type = btn.dataset.dateFilter;
+                    if (type === 'custom') {
+                        // Open the Apple-style Calendar Modal
+                        const start = (currentDateFilter && currentDateFilter.start) ? currentDateFilter.start : null;
+                        const end = (currentDateFilter && currentDateFilter.end) ? currentDateFilter.end : null;
 
-                if (type === 'custom') {
-                    customTrigger.classList.toggle('show');
-                    return;
-                }
+                        CalendarModal.open(start, end, ({ start, end }) => {
+                            currentDateFilter = { start, end };
 
-                customTrigger.classList.remove('show');
-                currentDateFilter = type;
+                            // Update UI
+                            btns.forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
 
-                btns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                updateContent(elements.contentArea);
-            });
-        });
+                            // Optional: Update button text to show range
+                            // const txt = btn.querySelector('span') || btn;
+                            // txt.textContent = `${start.substring(5)} - ${end.substring(5)}`;
 
-        // Close popover on outside click
-        document.addEventListener('click', (e) => {
-            if (customTrigger && !customTrigger.contains(e.target)) {
-                customTrigger.classList.remove('show');
-            }
-        });
+                            updateContent(elements.contentArea);
+                        });
+                        return;
+                    }
 
-        // Prevent closing when clicking inside popover
-        if (customTrigger) {
-            const popover = customTrigger.querySelector('.range-inputs-popover');
-            if (popover) {
-                popover.addEventListener('click', (e) => e.stopPropagation());
-            }
-        }
-
-        if (applyBtn) {
-            applyBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const start = startInput.value;
-                const end = endInput.value;
-                if (start && end) {
-                    currentDateFilter = { start, end };
-                    customTrigger.classList.remove('show');
+                    // Standard Filters (Today, Upcoming)
+                    currentDateFilter = type;
 
                     btns.forEach(b => b.classList.remove('active'));
-                    dateFilterBar.querySelector('[data-date-filter="custom"]').classList.add('active');
-
+                    btn.classList.add('active');
                     updateContent(elements.contentArea);
-                } else {
-                    alert('Please select both start and end dates');
-                }
+                });
             });
-        }
+        });
     }
 
     // 5. Setup Input

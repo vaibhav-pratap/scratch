@@ -1,59 +1,92 @@
-/**
- * Category Model
- * Manages categories for tasks
- */
-
-import { getSettings, saveSettings } from '../../core/storage.js';
+import { getDatabase } from '../../core/db.js';
 
 export class CategoryModel {
     /**
      * Get all categories for a domain
      */
     static async getAll(domain = 'global') {
-        const storageKey = `categories_${domain}`;
-        const settings = await getSettings([storageKey]);
-        return settings[storageKey] || [];
+        const db = await getDatabase();
+        try {
+            const result = await db.allDocs({
+                include_docs: true,
+                startkey: 'category:',
+                endkey: 'category:\uffff'
+            });
+
+            return result.rows
+                .map(row => row.doc)
+                .filter(doc => doc.domain === domain)
+                .sort((a, b) => b.usageCount - a.usageCount)
+                .map(doc => doc.name); // Return names only to match legacy string[] interface
+        } catch (err) {
+            console.error('[CategoryModel] Failed to getAll:', err);
+            return [];
+        }
     }
 
     /**
-     * Add a new category
+     * Add or update a category (Legacy Compatibility: aliased as 'add')
      */
-    static async add(categoryName, domain = 'global') {
-        const categories = await CategoryModel.getAll(domain);
+    static async add(name, domain = 'global') {
+        return this.addOrUpdate(name, domain);
+    }
 
-        // Check if already exists
-        if (categories.includes(categoryName)) {
-            return false;
+    /**
+     * Add or update a category
+     */
+    static async addOrUpdate(name, domain = 'global') {
+        const db = await getDatabase();
+        const id = `category:${name}`; // Using name as part of ID for uniqueness
+
+        try {
+            try {
+                const existing = await db.get(id);
+                // Update existing
+                existing.usageCount += 1;
+                await db.put(existing);
+            } catch (err) {
+                if (err.status === 404) {
+                    // Create new
+                    await db.put({
+                        _id: id,
+                        type: 'category',
+                        name: name,
+                        domain: domain,
+                        usageCount: 1
+                    });
+                } else {
+                    throw err;
+                }
+            }
+        } catch (err) {
+            console.error('[CategoryModel] Failed to addOrUpdate:', err);
         }
-
-        categories.push(categoryName);
-        const storageKey = `categories_${domain}`;
-        await saveSettings({ [storageKey]: categories });
-        return true;
     }
 
     /**
      * Delete a category
      */
-    static async delete(categoryName, domain = 'global') {
-        const categories = await CategoryModel.getAll(domain);
-        const filtered = categories.filter(c => c !== categoryName);
-        const storageKey = `categories_${domain}`;
-        await saveSettings({ [storageKey]: filtered });
+    static async delete(name) {
+        const db = await getDatabase();
+        const id = `category:${name}`;
+        try {
+            const doc = await db.get(id);
+            await db.remove(doc);
+        } catch (err) {
+            if (err.status !== 404) console.error('[CategoryModel] Failed to delete:', err);
+        }
     }
 
     /**
-     * Rename a category
+     * Get category by name
      */
-    static async rename(oldName, newName, domain = 'global') {
-        const categories = await CategoryModel.getAll(domain);
-        const index = categories.indexOf(oldName);
-        if (index !== -1) {
-            categories[index] = newName;
-            const storageKey = `categories_${domain}`;
-            await saveSettings({ [storageKey]: categories });
-            return true;
+    static async get(name) {
+        const db = await getDatabase();
+        const id = `category:${name}`;
+        try {
+            return await db.get(id);
+        } catch (err) {
+            return null;
         }
-        return false;
     }
 }

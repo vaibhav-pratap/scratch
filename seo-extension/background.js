@@ -46,6 +46,57 @@ chrome.runtime.onStartup.addListener(() => {
 // Create menus immediately when service worker starts  
 createContextMenus();
 
+// Favicon proxy cache (survives for service worker lifetime)
+const faviconCache = new Map();
+
+// Listen for favicon requests from frontend
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'getFavicon') {
+        handleFaviconRequest(request.domain).then(sendResponse);
+        return true; // Keep channel open for async response
+    }
+});
+
+// Fetch favicon and convert to data URL
+async function handleFaviconRequest(domain) {
+    // Check cache first
+    if (faviconCache.has(domain)) {
+        return { dataUrl: faviconCache.get(domain) };
+    }
+
+    try {
+        const url = `https://www.google.com/s2/favicons?domain=${domain}`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const dataUrl = await blobToDataURL(blob);
+
+        // Cache it
+        faviconCache.set(domain, dataUrl);
+
+        return { dataUrl };
+    } catch (error) {
+        console.error('[Favicon Proxy] Error fetching favicon:', error);
+        // Return a default transparent 1x1 gif
+        return { dataUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' };
+    }
+}
+
+// Helper to convert Blob to Data URL
+function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+
 chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === "seo-site-search") {
         const url = new URL(tab.url);

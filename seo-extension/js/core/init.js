@@ -1,17 +1,34 @@
-/**
- * Initialization module for popup and sidepanel
- * Handles initial data loading and error states
- */
-
-// Core modules
-import { saveToCache, loadFromCache, saveToSession, loadFromSession } from './storage.js';
+import { saveToCache, loadFromCache, saveToSession, loadFromSession, getSettings, saveSettings } from './storage.js';
 import { requestSEOData } from './messaging.js';
+import { migrateAllToDB } from './migration.js';
+import { initDatabase } from './db.js';
+
+/**
+ * Perform one-time migration if needed
+ */
+async function checkMigration() {
+    const { rxdb_migrated } = await getSettings(['rxdb_migrated']);
+    if (!rxdb_migrated) {
+        console.log('[Init] First run with RxDB. Starting migration...');
+        // Initialize DB first
+        await initDatabase();
+        // Migrate global
+        await migrateAllToDB('global');
+
+        // Mark as migrated
+        await saveSettings({ rxdb_migrated: true });
+        console.log('[Init] RxDB migration complete.');
+    }
+}
 
 /**
  * Initialize the popup extension interface
  */
 export async function initPopup(renderCallback) {
     try {
+        // Run migration check
+        await checkMigration();
+
         // Popups reliably get the active tab using query
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
@@ -81,6 +98,10 @@ export async function initPopup(renderCallback) {
  */
 export async function initSidePanel(renderCallback) {
     console.log('[initSidePanel] Starting initialization...');
+
+    // Run migration check
+    await checkMigration().catch(e => console.error('Migration failed:', e));
+
     let tabId;
 
     try {
