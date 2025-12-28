@@ -37,6 +37,17 @@ function getCurrentDomain() {
 
 export async function renderNotes(container) {
     currentContainer = container;
+
+    // Show loading state immediately
+    container.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: var(--md-sys-color-on-surface-variant);">
+            <div style="text-align: center;">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i>
+                <div style="font-size: 14px;">Loading notes...</div>
+            </div>
+        </div>
+    `;
+
     currentDomain = await getCurrentDomain();
 
     // IMPORTANT: Hide app footer when Notes is active
