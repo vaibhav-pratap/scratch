@@ -55,12 +55,19 @@ export async function initTabSwitching() {
             // Scroll to saved tab immediately
             // Use 'start' for first tab to prevent cutoff
             setTimeout(() => {
+                const tabsContainer = document.querySelector('.tabs-container');
                 const isFirstTab = savedTabBtn.previousElementSibling === null;
-                savedTabBtn.scrollIntoView({
-                    behavior: 'instant',
-                    block: 'nearest',
-                    inline: isFirstTab ? 'start' : 'center'
-                });
+
+                // Reset scroll to 0 for first tab to show margin
+                if (isFirstTab && tabsContainer) {
+                    tabsContainer.scrollLeft = 0;
+                } else {
+                    savedTabBtn.scrollIntoView({
+                        behavior: 'instant',
+                        block: 'nearest',
+                        inline: 'center'
+                    });
+                }
             }, 0);
         } else {
             // Fallback to default if saved tab not found
@@ -79,6 +86,14 @@ export async function initTabSwitching() {
         if (defaultTab) defaultTab.classList.add('active');
         const defaultContent = document.getElementById(defaultTabId);
         if (defaultContent) defaultContent.classList.add('active');
+
+        // Reset scroll for default tab if it's first
+        setTimeout(() => {
+            const tabsContainer = document.querySelector('.tabs-container');
+            if (tabsContainer && defaultTab && defaultTab.previousElementSibling === null) {
+                tabsContainer.scrollLeft = 0;
+            }
+        }, 0);
     }
 
     tabs.forEach(tab => {

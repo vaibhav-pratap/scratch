@@ -9,8 +9,8 @@
     width: 100%;
     overflow-x: auto;
     white-space: nowrap;
-    padding: 12px 8px 16px 16px;
-    /* Left padding 16px for spacing, right 8px to allow scroll */
+    padding: 12px 8px 8px 8px;
+    /* Reduced bottom padding from 16px to 8px */
     gap: 8px;
     /* MD3 spacing between items */
 
@@ -75,6 +75,11 @@
     line-height: 20px;
 
     transition: all 0.2s ease;
+}
+
+/* Add left margin to first tab for proper spacing */
+.tab-btn:first-child {
+    margin-left: 8px;
 }
 
 /* Icon Styling */
