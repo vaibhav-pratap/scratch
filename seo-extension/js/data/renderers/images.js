@@ -107,6 +107,19 @@ function extractFilename(url) {
 /**
  * Create an image card with copy and download functionality
  */
+// Helper to handle image load errors
+function handleImageError(img) {
+    img.style.display = 'none';
+    const fallback = document.createElement('div');
+    fallback.style.color = 'var(--md-sys-color-error)';
+    fallback.style.fontSize = '12px';
+    fallback.textContent = 'Failed to load';
+    img.parentElement.appendChild(fallback);
+}
+
+/**
+ * Create an image card with copy and download functionality
+ */
 function createImageCard(img, index) {
     const hasAlt = !!img.alt;
     const hasTitle = !!img.title;
@@ -114,14 +127,14 @@ function createImageCard(img, index) {
     const truncatedSrc = img.src.length > 50 ? img.src.substring(0, 50) + '...' : img.src;
 
     return `
-        <div class="image-card" style="
+        <div class="image-card" data-card-index="${index}" style="
             background: var(--md-sys-color-surface);
             border: 1px solid ${hasAlt ? 'var(--md-sys-color-outline-variant)' : 'var(--md-sys-color-error)'};
             border-radius: var(--radius-sm);
             overflow: hidden;
             transition: all 0.2s;
             ${!hasAlt ? 'border-left: 4px solid var(--md-sys-color-error);' : ''}
-        " onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow=''">
+        ">
             <!-- Image Preview -->
             <div style="
                 width: 100%;
@@ -137,8 +150,8 @@ function createImageCard(img, index) {
                     src="${escapeHtml(img.src)}" 
                     alt="${escapeHtml(img.alt || 'No alt text')}"
                     loading="lazy"
+                    class="seo-image-preview"
                     style="max-width: 100%; max-height: 100%; object-fit: contain;"
-                    onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'color: var(--md-sys-color-error); font-size: 12px;\\'>Failed to load</div>'"
                 >
                 ${!hasAlt ? `
                     <div style="
@@ -162,7 +175,7 @@ function createImageCard(img, index) {
                 <div style="margin-bottom: 12px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
                         <span style="font-size: 11px; color: var(--md-sys-color-on-surface-variant); font-weight: 500; text-transform: uppercase;">Filename</span>
-                        <button class="img-copy-btn" data-copy-text="${escapeHtml(filename)}" title="Copy Filename" style="
+                        <button class="img-copy-btn action-icon-btn" data-copy-text="${escapeHtml(filename)}" title="Copy Filename" style="
                             background: none;
                             border: none;
                             cursor: pointer;
@@ -196,7 +209,7 @@ function createImageCard(img, index) {
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
                         <span style="font-size: 11px; color: var(--md-sys-color-on-surface-variant); font-weight: 500; text-transform: uppercase;">Alt Text</span>
                         ${hasAlt ? `
-                            <button class="img-copy-btn" data-copy-text="${escapeHtml(img.alt)}" title="Copy Alt Text" style="
+                            <button class="img-copy-btn action-icon-btn" data-copy-text="${escapeHtml(img.alt)}" title="Copy Alt Text" style="
                                 background: none;
                                 border: none;
                                 cursor: pointer;
@@ -233,7 +246,7 @@ function createImageCard(img, index) {
                     <div style="margin-bottom: 8px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
                             <span style="font-size: 11px; color: var(--md-sys-color-on-surface-variant); font-weight: 500; text-transform: uppercase;">Title Attribute</span>
-                            <button class="img-copy-btn" data-copy-text="${escapeHtml(img.title)}" title="Copy Title" style="
+                            <button class="img-copy-btn action-icon-btn" data-copy-text="${escapeHtml(img.title)}" title="Copy Title" style="
                                 background: none;
                                 border: none;
                                 cursor: pointer;
@@ -265,7 +278,7 @@ function createImageCard(img, index) {
                 <div style="margin-bottom: 12px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
                         <span style="font-size: 11px; color: var(--md-sys-color-on-surface-variant); font-weight: 500; text-transform: uppercase;">Image URL</span>
-                        <button class="img-copy-btn" data-copy-text="${escapeHtml(img.src)}" title="Copy Image URL" style="
+                        <button class="img-copy-btn action-icon-btn" data-copy-text="${escapeHtml(img.src)}" title="Copy Image URL" style="
                             background: none;
                             border: none;
                             cursor: pointer;
@@ -307,7 +320,7 @@ function createImageCard(img, index) {
 
                 <!-- Action Buttons -->
                 <div style="display: flex; gap: 8px;">
-                    <button class="img-download-btn" data-img-src="${escapeHtml(img.src)}" data-img-filename="${escapeHtml(filename)}" style="
+                    <button class="img-download-btn action-text-btn" data-img-src="${escapeHtml(img.src)}" data-img-filename="${escapeHtml(filename)}" style="
                         flex: 1;
                         padding: 8px 12px;
                         background: var(--md-sys-color-primary);
@@ -322,14 +335,14 @@ function createImageCard(img, index) {
                         justify-content: center;
                         gap: 6px;
                         transition: all 0.2s;
-                    " onmouseover="this.style.background='var(--md-sys-color-primary-container)'" onmouseout="this.style.background='var(--md-sys-color-primary)'">
+                    ">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
                         </svg>
                         Download
                     </button>
                     
-                    <a href="${escapeHtml(img.src)}" target="_blank" style="
+                    <a href="${escapeHtml(img.src)}" target="_blank" class="action-text-btn" style="
                         padding: 8px 12px;
                         background: var(--md-sys-color-secondary-container);
                         color: var(--md-sys-color-on-secondary-container);
@@ -343,13 +356,13 @@ function createImageCard(img, index) {
                         justify-content: center;
                         text-decoration: none;
                         transition: all 0.2s;
-                    " title="Open in new tab" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                    " title="Open in new tab">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
                         </svg>
                     </a>
                     
-                    <button class="img-highlight-btn" data-img-src="${escapeHtml(img.src)}" title="Highlight on page" style="
+                    <button class="img-highlight-btn action-text-btn" data-img-src="${escapeHtml(img.src)}" title="Highlight on page" style="
                         padding: 8px 12px;
                         background: var(--md-sys-color-tertiary-container);
                         color: var(--md-sys-color-on-tertiary-container);
@@ -363,7 +376,7 @@ function createImageCard(img, index) {
                         justify-content: center;
                         text-decoration: none;
                         transition: all 0.2s;
-                    " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                    ">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                         </svg>
@@ -375,9 +388,42 @@ function createImageCard(img, index) {
 }
 
 /**
- * Attach event listeners for copy and download buttons
+ * Attach event listeners for buttons and interactions (fixing CSP issues)
  */
 function attachImageListeners(container) {
+    // 1. Image Load Error Handling
+    container.querySelectorAll('img.seo-image-preview').forEach(img => {
+        img.addEventListener('error', () => handleImageError(img));
+    });
+
+    // 2. Card Hover Effects (Shadow)
+    container.querySelectorAll('.image-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.boxShadow = '';
+        });
+    });
+
+    // 3. Button Hover Effects (Opacity/Background)
+    // Download Button
+    container.querySelectorAll('.img-download-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+            if (!btn.disabled) btn.style.background = 'var(--md-sys-color-primary-container)';
+        });
+        btn.addEventListener('mouseleave', () => {
+            if (!btn.disabled) btn.style.background = 'var(--md-sys-color-primary)';
+        });
+    });
+
+    // Other Action Buttons (Open/Highlight)
+    container.querySelectorAll('.action-text-btn:not(.img-download-btn)').forEach(btn => {
+        btn.addEventListener('mouseenter', () => btn.style.opacity = '0.8');
+        btn.addEventListener('mouseleave', () => btn.style.opacity = '1');
+    });
+
+
     // Copy buttons
     container.querySelectorAll('.img-copy-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -397,6 +443,8 @@ function attachImageListeners(container) {
             try {
                 // Show loading state
                 const originalText = btn.innerHTML;
+                const originalBg = btn.style.background;
+
                 btn.innerHTML = `
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="animation: spin 1s linear infinite;">
                         <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
@@ -418,6 +466,7 @@ function attachImageListeners(container) {
                 // Reset after 2 seconds
                 setTimeout(() => {
                     btn.innerHTML = originalText;
+                    btn.style.background = originalBg;
                     btn.disabled = false;
                 }, 2000);
 
@@ -453,14 +502,46 @@ function attachImageListeners(container) {
 /**
  * Download an image
  */
+/**
+ * Download an image using chrome.downloads API
+ */
 async function downloadImage(url, filename) {
+    return new Promise((resolve, reject) => {
+        try {
+            chrome.downloads.download({
+                url: url,
+                filename: 'seo-images/' + filename, // Organize in a subfolder
+                saveAs: false,
+                conflictAction: 'uniquify'
+            }, (downloadId) => {
+                if (chrome.runtime.lastError) {
+                    // Fallback for data URIs if API fails or other errors
+                    console.warn('chrome.downloads failed, trying fallback:', chrome.runtime.lastError);
+                    fallbackDownload(url, filename).then(resolve).catch(reject);
+                } else {
+                    resolve(downloadId);
+                }
+            });
+        } catch (e) {
+            // permissions might not be active yet or other API issues
+            fallbackDownload(url, filename).then(resolve).catch(reject);
+        }
+    });
+}
+
+/**
+ * Fallback download method using anchor tag
+ */
+async function fallbackDownload(url, filename) {
     try {
         // For data URIs, download directly
         if (url.startsWith('data:')) {
             const link = document.createElement('a');
             link.href = url;
             link.download = filename;
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
             return;
         }
 
@@ -472,12 +553,14 @@ async function downloadImage(url, filename) {
         const link = document.createElement('a');
         link.href = blobUrl;
         link.download = filename;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
 
         // Clean up
-        URL.revokeObjectURL(blobUrl);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
     } catch (error) {
-        throw new Error('Failed to download image: ' + error.message);
+        throw new Error('Fallback download failed: ' + error.message);
     }
 }
 
