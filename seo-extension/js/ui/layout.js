@@ -53,6 +53,9 @@ export function renderStaticLayout() {
                     </div>
                 </div>
                 <div class="header-actions">
+                    <button id="btn-header-donate" class="icon-btn" title="Buy me a coffee" style="color: var(--md-sys-color-warning);">
+                        <i class="fa-solid fa-mug-hot" style="font-size: 18px;"></i>
+                    </button>
                     <button id="theme-toggle" class="icon-btn" title="Toggle Dark Mode">
                         <!-- Sun Icon -->
                         <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>
@@ -253,8 +256,11 @@ export function renderStaticLayout() {
         </div>
 
         <!-- Donation Modal -->
-        <div id="donate-modal" class="modal-backdrop">
-            <div class="bottom-sheet" style="max-height: 90vh;">
+        <div id="donate-modal" class="modal-backdrop" style="display: none;">
+            <div class="bottom-sheet" style="max-height: 90vh; position: relative;">
+                <button id="btn-close-donate-modal" class="icon-btn" style="position: absolute; right: 12px; top: 12px; z-index: 10;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
                 <div class="sheet-handle"></div>
                 <div class="sheet-content" style="padding: 24px;">
                     <div style="text-align: center; margin-bottom: 24px;">
@@ -265,10 +271,15 @@ export function renderStaticLayout() {
                         <p style="color: var(--md-sys-color-on-surface-variant); font-size: 13px; line-height: 1.5;">Your support helps me keep this extension free and updated!</p>
                     </div>
 
+
+
                     <div id="donation-options" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
                         <button class="donation-preset-btn" data-amount="5">$5</button>
-                        <button class="donation-preset-btn" data-amount="10">$10</button>
-                        <button class="donation-preset-btn" data-amount="20">$20</button>
+                        <button class="donation-preset-btn" data-amount="25">$25</button>
+                        <button class="donation-preset-btn" data-amount="50">$50</button>
+                        <button class="donation-preset-btn" data-amount="100">$100</button>
+                        <button class="donation-preset-btn" data-amount="250">$250</button>
+                        <button class="donation-preset-btn" data-amount="500">$500</button>
                     </div>
 
                     <div style="margin-bottom: 24px;">

@@ -22,6 +22,64 @@
     padding: var(--spacing-md) var(--spacing-lg);
 }
 
+/* Frequency Toggle Buttons */
+.frequency-group {
+    display: flex;
+    background: var(--md-sys-color-surface-variant);
+    padding: 4px;
+    border-radius: 24px;
+    margin-bottom: 24px;
+    gap: 4px;
+}
+
+.frequency-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 20px;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.frequency-btn.active {
+    background: var(--md-sys-color-primary) !important;
+    color: var(--md-sys-color-on-primary) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.frequency-btn:hover:not(.active) {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    height: 48px; /* Standardize height for centering */
+}
+
+/* Ensure icons are perfectly centered within their buttons */
+.icon-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.icon-btn i, .icon-btn svg {
+    font-size: 18px;
+    line-height: normal;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .logo-area {
     display: flex;
     align-items: center;
