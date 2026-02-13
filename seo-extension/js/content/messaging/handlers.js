@@ -42,6 +42,5 @@ export function setupMessageListener(extractDataFn) {
         } else if (request.action === "clearContentHighlights") {
             clearContentHighlights();
         }
-        return true; // Keep channel open for async response
     });
 }
