@@ -123,7 +123,7 @@ function renderTree(nodes) {
                 <li class="heading-node level-${node.level}">
                     <div class="heading-content">
                         ${hasChildren ? 
-                            `<button class="toggle-btn" aria-expanded="true">
+                            `<button class="tree-toggle-btn" aria-expanded="true">
                                 <svg class="chevron" viewBox="0 0 24 24" width="16" height="16"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" fill="currentColor"/></svg>
                              </button>` 
                             : '<span class="spacer"></span>'}
@@ -171,7 +171,7 @@ function attachEventListeners(container) {
     });
 
     // Toggle buttons
-    container.querySelectorAll('.toggle-btn').forEach(btn => {
+    container.querySelectorAll('.tree-toggle-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const li = btn.closest('li');

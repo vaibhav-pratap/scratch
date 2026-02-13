@@ -12,7 +12,7 @@ export function renderLayout(container, initialState = { mode: 'todo', categorie
             <div class="notes-header">
                 <div class="mode-toggle">
                     <button class="toggle-btn ${initialState.mode === 'todo' ? 'active' : ''}" data-mode="todo">Tasks</button>
-                    <button class="toggle-btn ${initialState.mode === 'scratchpad' ? 'active' : ''}" data-mode="scratchpad">Scratchbook</button>
+                    <button class="toggle-btn ${initialState.mode === 'scratchpad' ? 'active' : ''}" data-mode="scratchpad">Sketchbook</button>
                 </div>
                 <div class="md3-body-medium" style="font-size: 11px; opacity: 0.7;">${initialState.domain || 'Global'}</div>
             </div>

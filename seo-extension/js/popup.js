@@ -32,6 +32,9 @@ import { downloadPDF, downloadExcel, downloadJSON, downloadCSV } from './data/ex
 // Utils
 import { setupStaticCopyButtons, copyToClipboard } from './utils/clipboard.js';
 
+// Expose to global for HTML onclick handlers
+window.copyToClipboard = copyToClipboard;
+
 // Initialize when DOM is ready
 function init() {
     // 0. Render Static Layout (Modular HTML)

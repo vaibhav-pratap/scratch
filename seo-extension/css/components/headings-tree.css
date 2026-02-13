@@ -160,7 +160,7 @@
 }
 
 /* Toggle Button */
-.toggle-btn {
+.tree-toggle-btn {
     background: none;
     border: none;
     padding: 0;
@@ -175,7 +175,7 @@
     border-radius: 50%;
 }
 
-.toggle-btn:hover {
+.tree-toggle-btn:hover {
     background-color: rgba(0,0,0, 0.1);
 }
 
