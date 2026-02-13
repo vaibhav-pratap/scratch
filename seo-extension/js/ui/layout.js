@@ -51,7 +51,7 @@ export function renderStaticLayout() {
                         <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="var(--md-sys-color-primary)"/>
                         <path d="M7 12L12 7L17 12H14V16H10V12H7Z" fill="var(--md-sys-color-primary)"/>
                     </svg>
-                    <h1>SEO Analyzer</h1>
+                    <h1>SEO Analyzer Pro <span class="beta-tag">BETA</span></h1>
                 </div>
                 <div class="header-actions">
                     <button id="theme-toggle" class="icon-btn" title="Toggle Dark Mode">
@@ -158,24 +158,25 @@ export function renderStaticLayout() {
                 <div class="nav-icon-container">
                     <i class="fa-solid fa-clipboard-list"></i>
                 </div>
-                <span class="nav-label">Notes</span>
             </button>            <button id="btn-profile" class="nav-item" title="Profile">
                 <div class="nav-icon-container">
                     <i class="fa-solid fa-user"></i>
                 </div>
-                <span class="nav-label">Profile</span>
+            </button>
+            <button id="btn-tracking" class="nav-item" title="UTM Builder">
+                <div class="nav-icon-container">
+                    <i class="fa-solid fa-route"></i>
+                </div>
             </button>
             <button id="btn-export" class="nav-item" title="Export Data">
                 <div class="nav-icon-container">
                     <i class="fa-solid fa-file-export"></i>
                 </div>
-                <span class="nav-label">Export</span>
             </button>
             <button id="btn-menu" class="nav-item" title="More Menu">
                 <div class="nav-icon-container">
                     <i class="fa-solid fa-ellipsis-vertical"></i>
                 </div>
-                <span class="nav-label">Menu</span>
             </button>
         </footer>
 
@@ -382,9 +383,7 @@ function renderMetaTab() {
 function renderHeadingsTab() {
     return `
     <div id="headings" class="tab-content">
-        <div class="chart-container">
-            <canvas id="headings-chart"></canvas>
-        </div>
+
         <div id="headings-list" class="headings-tree"></div>
         ${createAIInsightsCard('headings')}
     </div>`;

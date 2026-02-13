@@ -21,6 +21,7 @@
     --md-sys-color-background: #ffffff;
     --md-sys-color-on-background: #1f1f1f;
     --md-sys-color-surface: #f0f4f9;
+    --md-sys-color-surface-rgb: 240, 244, 249;
     --md-sys-color-on-surface: #1f1f1f;
     --md-sys-color-surface-variant: #dfe3e7;
     --md-sys-color-on-surface-variant: #444746;
@@ -71,6 +72,7 @@
     --md-sys-color-background: #1f1f1f;
     --md-sys-color-on-background: #e3e3e3;
     --md-sys-color-surface: #2d2d2d;
+    --md-sys-color-surface-rgb: 45, 45, 45;
     --md-sys-color-on-surface: #e3e3e3;
     --md-sys-color-surface-variant: #444746;
     --md-sys-color-on-surface-variant: #c4c7c5;

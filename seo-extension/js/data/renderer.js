@@ -11,6 +11,7 @@ import { renderTagsTab } from './renderers/tags.js';
 import { renderTrackingBuilder } from './renderers/tracking-builder.js';
 import { renderImagesTab as renderImagesTabNew } from './renderers/images.js';
 import { renderContentQualityTab } from './renderers/content-quality.js';
+import { renderHeadingsTab } from './renderers/headings.js';
 import { renderCWVSection } from '../ui/cwv-display.js';
 import { calculateAllScores } from './calculators.js';
 import { copyToClipboard } from '../utils/clipboard.js';
@@ -436,38 +437,7 @@ function updateCWVCard(metric, value, element, goodThreshold, poorThreshold) {
 /**
  * Render Headings Tab
  */
-function renderHeadingsTab(data) {
-    const headingsContainer = document.getElementById('headings-list');
-    if (!headingsContainer) return;
-
-    if (!data.headings.length) {
-        headingsContainer.innerHTML = '<div class="data-value">No headings found.</div>';
-        return;
-    }
-
-    headingsContainer.innerHTML = '';
-    data.headings.forEach(h => {
-        const level = parseInt(h.tag.replace('h', '')) || 1;
-        const indent = (level - 1) * 20; // 20px per level
-
-        const div = document.createElement('div');
-        div.className = 'heading-item';
-        div.style.marginLeft = `${indent}px`;
-        div.style.borderLeft = `3px solid var(--primary-color)`;
-        if (level > 1) div.style.borderLeft = `3px solid var(--border-color)`;
-
-        div.innerHTML = `
-            <span class="${h.tag}" style="font-weight: ${level === 1 ? '700' : '500'}">${h.tag.toUpperCase()}: ${h.text}</span>
-            <button class="copy-icon-btn" title="Copy">
-                <svg viewBox="0 0 24 24" width="12" height="12"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-            </button>
-        `;
-        div.querySelector('button').addEventListener('click', (e) => copyToClipboard(h.text, e.currentTarget));
-        headingsContainer.appendChild(div);
-    });
-
-    renderHeadingsChart(data.headings);
-}
+// Headings tab is now rendered by renderers/headings.js
 
 /**
  * Render Images Tab
