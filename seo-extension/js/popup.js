@@ -21,6 +21,9 @@ import { initAdsTransparency, initMetaAds } from './ui/ads-transparency.js';
 import { renderKeywordsSettings } from './ui/keywords-settings.js';
 import { renderKeywordsPerformance } from './data/renderers/keywords-performance.js';
 import { renderProfile } from './ui/profile.js';
+import { renderNotes } from './ui/notes/index.js';
+import { initMenu } from './ui/menu.js';
+import { subscribeToChanges } from './core/db.js';
 
 // Data modules
 import { renderData } from './data/renderer.js';
@@ -56,6 +59,9 @@ function init() {
     // 6. Setup Gemini Settings
     initAISettings(); // Initialize all AI provider settings
     initAISummary();
+
+    // 6b. Setup New Menu
+    initMenu();
 
     // 7. Setup Keywords Settings
     try {
@@ -101,21 +107,83 @@ function init() {
         setupExportButtons();
     }, 100);
 
-    // 16. Profile Button Listener
+    // 16. Profile Button Listener (Handled by footer now, but kept for safety)
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         switchToTab('profile');
     });
 
-    // 17. Profile Tab Activation Listener
-    const profileTabBtn = document.querySelector('.tab-btn[data-tab="profile"]');
-    if (profileTabBtn) {
-        profileTabBtn.addEventListener('click', () => {
-            const container = document.getElementById('profile-container');
-            if (container) {
-                renderProfile(container);
+    // Tracking Button Listener (Handled by footer now, but kept for safety)
+    document.getElementById('btn-tracking')?.addEventListener('click', () => {
+        switchToTab('tracking-builder');
+    });
+
+    // 17. Handle Active Tab Content Rendering & Footer Visibility
+    document.addEventListener('tabActivated', (e) => {
+        const tabId = e.detail.tabId;
+
+        // Manage Footer Visibility
+        const appFooter = document.querySelector('.app-footer');
+        if (appFooter) {
+            if (tabId === 'notes') {
+                appFooter.style.display = 'none';
+            } else {
+                appFooter.style.display = 'flex';
             }
-        });
-    }
+        }
+
+        // Trigger Content Renders
+        if (tabId === 'notes') {
+            const container = document.getElementById('notes-container');
+            if (container) renderNotes(container);
+        } else if (tabId === 'profile') {
+            const container = document.getElementById('profile-container');
+            if (container) renderProfile(container);
+        }
+    });
+
+    // 18. Setup PouchDB Reactivity for Notes
+    subscribeToChanges((change) => {
+        if (!change.doc) return;
+        const type = change.doc.type;
+
+        // Refresh Notes/Todos UI if active and relevant
+        if (type === 'note' || type === 'todo' || type === 'category') {
+            const notesTabContent = document.getElementById('notes');
+            if (notesTabContent && notesTabContent.classList.contains('active')) {
+                const container = document.getElementById('notes-container');
+
+                // Smart Re-render: Don't blow away DOM if user is typing in a note
+                if (type === 'note') {
+                    const activeEl = document.activeElement;
+                    if (activeEl && activeEl.classList.contains('note-content')) {
+                        return;
+                    }
+                }
+
+                if (container) {
+                    renderNotes(container);
+                }
+            }
+        }
+    });
+
+    // 19. Initial Tab State Check (Wait for tab system to settle)
+    setTimeout(() => {
+        const activeTabId = localStorage.getItem('activeTab') || 'home';
+        
+        // Trigger initial renders
+        if (activeTabId === 'notes') {
+            const container = document.getElementById('notes-container');
+            if (container) renderNotes(container);
+            
+            // Hide footer for notes
+            const appFooter = document.querySelector('.app-footer');
+            if (appFooter) appFooter.style.display = 'none';
+        } else if (activeTabId === 'profile') {
+            const container = document.getElementById('profile-container');
+            if (container) renderProfile(container);
+        }
+    }, 50);
 }
 
 if (document.readyState === 'loading') {

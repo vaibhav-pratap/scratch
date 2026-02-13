@@ -41,25 +41,19 @@
 .tab-btn {
     background: none;
     border: none;
-    padding: 8px 16px;
-    /* Pill shape padding for the whole button if active */
+    padding: 8px 12px; /* Reduced side padding */
     margin: 0;
 
     display: flex;
     flex-direction: row;
-    /* Horizontal alignment */
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    /* Space between icon and text */
+    gap: 0; /* Remove gap, handle via margin on span */
 
-    border-radius: 100px;
-    /* Full pill shape */
+    border-radius: 100px; /* Full pill shape */
 
-    min-width: auto;
-    /* Allow natural width */
-    height: 36px;
-    /* Fixed height for consistency */
+    min-width: 40px; /* Width for icon only */
+    height: 40px; /* Increased height slightly */
     color: var(--md-sys-color-on-surface-variant);
 
     cursor: pointer;
@@ -69,49 +63,52 @@
     /* Text Styles */
     font-family: var(--md-sys-typescale-body-large-font, 'Google Sans', sans-serif);
     font-size: 14px;
-    /* Increased slightly for better legibility */
     font-weight: 500;
     letter-spacing: 0.1px;
     line-height: 20px;
 
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.2, 0.0, 0, 1.0); /* Smooth easing */
 }
 
-/* Add left margin to first tab for proper spacing */
-.tab-btn:first-child {
-    margin-left: 8px;
-}
-
-/* Icon Styling */
 /* Icon Styling */
 .tab-btn i {
-    font-size: 18px;
+    font-size: 20px; /* Slightly larger icons */
     display: flex;
-    /* Ensure proper veertical alignment */
+    transition: color 0.3s ease;
 }
 
+/* Text Handling - Hidden by default (Inactive) */
 .tab-btn span {
     white-space: nowrap;
-    transition: font-weight 0.2s ease;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.2, 0.0, 0, 1.0);
+    margin-left: 0;
 }
 
 /* Hover State */
 .tab-btn:hover {
     background-color: var(--md-sys-color-surface-variant);
-    /* Hover on the whole button */
     color: var(--md-sys-color-on-surface);
 }
 
 .tab-btn:hover i {
-    background-color: transparent;
-    color: inherit;
+    color: var(--md-sys-color-on-surface);
 }
 
 /* Active State */
 .tab-btn.active {
     background-color: var(--md-sys-color-secondary-container);
-    /* Active background on the whole button */
     color: var(--md-sys-color-on-secondary-container);
+    padding-right: 16px; /* Add padding for text */
+}
+
+/* Show Text on Active */
+.tab-btn.active span {
+    max-width: 150px; /* Allow expansion */
+    opacity: 1;
+    margin-left: 8px; /* Add spacing */
 }
 
 /* Reset Icon Active State (since parent handles it now) */

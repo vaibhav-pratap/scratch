@@ -1,0 +1,272 @@
+/* Headings Tree Component */
+/* -------------------------------------------------------------------------- */
+
+/* Stats Header */
+.headings-stats-card {
+    background-color: var(--md-sys-color-surface-variant);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 0px; /* Zero margin to hug the tree */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--md-sys-color-surface);
+    padding: 6px 8px;
+    border-radius: 6px;
+    flex: 1;
+    border: 1px solid transparent;
+}
+
+.stat-item.inactive {
+    opacity: 0.5;
+    background: transparent;
+    border: 1px dashed var(--md-sys-color-outline-variant);
+}
+
+.stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface-variant);
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--md-sys-color-primary);
+}
+
+/* Validation Messages */
+.structure-warnings {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.validation-msg {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background-color: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+.validation-msg:last-child {
+    border-bottom: none;
+}
+
+.validation-msg.error .icon { color: var(--md-sys-color-error); }
+.validation-msg.warning .icon { color: var(--md-sys-color-warning); }
+
+/* Tree Container - wraps the whole list */
+.headings-tree-container {
+    padding-bottom: 24px;
+    background-color: var(--md-sys-color-surface-variant); /* match card background for seamless look? Or separate? */
+    /* Let's try separating cleanly but utilizing the space */
+    background: transparent;
+    padding-top: 0;
+}
+
+/* Base List Style */
+.headings-group {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* 
+   ROOT LEVEL (H1 usually) 
+   Direct children of container should not have indentation/lines
+*/
+.headings-tree-container > .headings-group {
+    margin-left: 0;
+    padding-left: 0;
+    border: none;
+}
+.headings-tree-container > .headings-group::before {
+    display: none; /* No vertical line for root */
+}
+
+/* 
+   NESTED LEVELS (H2, H3...) 
+   Ul inside li
+*/
+.heading-node .headings-group {
+    margin-left: 22px; /* Indentation for children */
+    padding-left: 0;
+    position: relative;
+    border-left: 1px solid var(--md-sys-color-outline-variant); /* Vertical line */
+}
+
+/* Node Item */
+.heading-node {
+    margin-bottom: 2px;
+    position: relative;
+}
+
+/* Horizontal Connector Line */
+/* Only for items inside a nested group (not root items) */
+.heading-node .headings-group .heading-node::before {
+    content: '';
+    position: absolute;
+    top: 15px; /* Half height of row (30px) */
+    left: 0; 
+    width: 8px; /* Link vertical line to content */
+    height: 1px;
+    background-color: var(--md-sys-color-outline-variant);
+}
+
+/* Adjust content padding to accommodate connector */
+.heading-node .headings-group .heading-node .heading-content {
+    margin-left: 8px;
+}
+
+/* Content Row */
+.heading-content {
+    display: flex;
+    align-items: center; 
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 4px; /* Sharper corners for tree look */
+    transition: all 0.2s;
+    background-color: transparent; /* Clean look */
+    /* border: 1px solid transparent; */
+    min-height: 30px;
+    position: relative; 
+}
+
+.heading-content:hover {
+    background-color: var(--md-sys-color-surface); /* Highlight on surface variant bg? OR surface on white */
+    background-color: rgba(0,0,0, 0.04);
+}
+
+/* Toggle Button */
+.toggle-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--md-sys-color-on-surface-variant);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    border-radius: 50%;
+}
+
+.toggle-btn:hover {
+    background-color: rgba(0,0,0, 0.1);
+}
+
+.chevron {
+    transition: transform 0.2s ease;
+    width: 14px;
+    height: 14px;
+}
+
+/* Spacer */
+.spacer {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Tag Badge */
+.tag-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 0;
+    border-radius: 4px;
+    width: 24px;
+    text-align: center;
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface-variant);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    flex-shrink: 0;
+}
+
+.tag-badge.h1 { background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border: none; }
+.tag-badge.h2 { background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); border: none; }
+/* .tag-badge.h3 { background-color: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); border: none; } */
+
+/* Text Content */
+.heading-text {
+    flex: 1;
+    font-family: 'Roboto', sans-serif; /* Switch to cleaner font vs monospace */
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--md-sys-color-on-surface);
+    cursor: default;
+    line-height: 20px;
+}
+
+/* Expand text on hover */
+.heading-content:hover .heading-text {
+    /* white-space: normal; */
+    /* overflow: visible; */
+    /* word-break: break-word; */
+    /* Only expand if truncated? Hard to detect in CSS. 
+       Tooltip (native title attribute) is safer for layout stability. 
+       Or absolute positioning popup. 
+       User asked for hover reading. CSS-only expansion shifts layout. 
+       Let's stick to title attribute I added in JS, plus maybe a slight transform?
+       No, let's trust the 'title' attribute for full read, and maybe un-truncate if it's short?
+    */
+    white-space: normal;
+    overflow: visible; 
+}
+/* Ensure z-index wraps above */
+.heading-content:hover {
+    z-index: 10;
+    position: relative;
+    background-color: var(--md-sys-color-surface);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: auto; /* Allow growth */
+    align-items: flex-start; /* Align top when expanded */
+}
+
+
+/* Copy Button */
+.copy-btn-mini {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--md-sys-color-outline);
+    opacity: 0;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.heading-content:hover .copy-btn-mini {
+    opacity: 1;
+}
+
+.copy-btn-mini:hover {
+    color: var(--md-sys-color-primary);
+}
