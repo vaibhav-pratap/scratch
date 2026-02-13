@@ -3,6 +3,11 @@
   "name": "SEO Analyzer Pro",
   "version": "1.6.0",
   "description": "Advanced SEO tool with Google-inspired UI to view, copy, and download SEO data.",
+  "icons": {
+    "16": "assets/logo/logo.svg",
+    "48": "assets/logo/logo.svg",
+    "128": "assets/logo/logo.svg"
+  },
   "permissions": [
     "activeTab",
     "tabs",
@@ -24,7 +29,12 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/logo/logo.svg",
+      "24": "assets/logo/logo.svg",
+      "32": "assets/logo/logo.svg"
+    }
   },
   "side_panel": {
     "default_path": "sidepanel.html"

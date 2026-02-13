@@ -3,7 +3,7 @@
  * Handles the "Buy me a coffee" modal logic and PayPal integration.
  */
 
-export function setupDonationListeners() {
+export async function setupDonationListeners() {
     const donationBar = document.getElementById('donation-bar');
     const closeBarBtn = document.getElementById('btn-close-donation');
     const donateModal = document.getElementById('donate-modal');
@@ -11,6 +11,28 @@ export function setupDonationListeners() {
     const customInput = document.getElementById('custom-donation-amount');
 
     if (!donationBar || !donateModal) return;
+
+    // --- Frequency Limit Logic ---
+    const today = new Date().toISOString().split('T')[0];
+    const storage = await chrome.storage.local.get(['lastDonationBarDate', 'donationBarCount']);
+    
+    let count = storage.donationBarCount || 0;
+    if (storage.lastDonationBarDate !== today) {
+        count = 0; // Reset for a new day
+    }
+
+    if (count >= 2) {
+        donationBar.style.display = 'none';
+        return;
+    }
+
+    // Show the bar and increment the count
+    donationBar.style.display = 'flex';
+    chrome.storage.local.set({
+        lastDonationBarDate: today,
+        donationBarCount: count + 1
+    });
+    // --- End Frequency Limit Logic ---
 
     // Open Modal from Bar
     donationBar.addEventListener('click', (e) => {
