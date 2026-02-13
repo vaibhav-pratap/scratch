@@ -409,21 +409,7 @@ function renderImagesTab() {
 function renderLinksTab() {
     return `
     <div id="links" class="tab-content">
-        <div class="flex-between mb-2">
-            <span>Internal: <b id="link-internal-count">0</b></span>
-            <span>External: <b id="link-external-count">0</b></span>
-        </div>
-        <div class="chart-container">
-            <canvas id="links-chart"></canvas>
-        </div>
-        <h3>External Links</h3>
-        <div id="external-links-list" class="scrollable-list"></div>
-        <h3>Internal Links</h3>
-        <div id="internal-links-list" class="scrollable-list"></div>
-        <h3>Email Addresses</h3>
-        <div id="emails-list"></div>
-        <h3>Phone Numbers</h3>
-        <div id="phones-list"></div>
+        <div id="links-list-container"></div>
         ${createAIInsightsCard('links')}
     </div>`;
 }

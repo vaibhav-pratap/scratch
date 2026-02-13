@@ -12,6 +12,7 @@ import { renderTrackingBuilder } from './renderers/tracking-builder.js';
 import { renderImagesTab as renderImagesTabNew } from './renderers/images.js';
 import { renderContentQualityTab } from './renderers/content-quality.js';
 import { renderHeadingsTab } from './renderers/headings.js';
+import { renderLinksTab } from './renderers/links.js';
 import { renderCWVSection } from '../ui/cwv-display.js';
 import { calculateAllScores } from './calculators.js';
 import { copyToClipboard } from '../utils/clipboard.js';
@@ -477,16 +478,7 @@ function renderImagesTab(data) {
 /**
  * Render Links Tab
  */
-function renderLinksTab(data) {
-    if (!data.links) return;
-
-    setText('link-internal-count', data.links.internal.length);
-    setText('link-external-count', data.links.external.length);
-
-    renderLinkList('external-links-list', data.links.external);
-    renderLinkList('internal-links-list', data.links.internal);
-    renderLinksChart(data.links);
-}
+// Links tab is now rendered by renderers/links.js
 
 /**
  * Render Schema Tab
@@ -604,15 +596,6 @@ function renderKeyValueList(containerId, obj, title) {
     container.appendChild(groupDiv);
 }
 
-function renderLinkList(containerId, links) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    container.innerHTML = '';
-    links.slice(0, 100).forEach(l => {
-        container.innerHTML += `<div class="link-item"><a href="${l.href}" target="_blank">${l.text || l.href}</a></div>`;
-    });
-}
 
 function renderSimpleList(containerId, items, prefix = '') {
     const container = document.getElementById(containerId);
