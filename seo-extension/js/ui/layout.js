@@ -47,11 +47,13 @@ export function renderStaticLayout() {
         <header class="app-header">
             <div class="header-top">
                 <div class="logo-area">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="var(--md-sys-color-primary)"/>
-                        <path d="M7 12L12 7L17 12H14V16H10V12H7Z" fill="var(--md-sys-color-primary)"/>
-                    </svg>
-                    <h1>SEO Analyzer Pro <span class="beta-tag">BETA</span></h1>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="var(--md-sys-color-primary)"/>
+                            <path d="M7 12L12 7L17 12H14V16H10V12H7Z" fill="var(--md-sys-color-primary)"/>
+                        </svg>
+                        <h1 style="margin: 0;">SEO Analyzer Pro <span class="beta-tag">BETA</span></h1>
+                    </div>
                 </div>
                 <div class="header-actions">
                     <button id="theme-toggle" class="icon-btn" title="Toggle Dark Mode">
@@ -158,6 +160,17 @@ export function renderStaticLayout() {
             ${renderSupportTab()}
         </main>
 
+        <!-- Sticky Donation Bar -->
+        <div id="donation-bar" class="donation-bar">
+            <div class="donation-bar-content">
+                <i class="fa-solid fa-gift"></i>
+                <span>Buy me a coffee, tea or maybe wine? ☕</span>
+            </div>
+            <button id="btn-close-donation" class="close-bar-btn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
         <!-- MD3 Bottom Navigation Footer -->
         <footer class="app-footer">
             <button id="btn-notes-footer" class="nav-item" title="Notes & To-Do">
@@ -238,6 +251,42 @@ export function renderStaticLayout() {
                         <i class="fa-solid fa-copy"></i>
                         <span>Copy JSON to Clipboard</span>
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Donation Modal -->
+        <div id="donate-modal" class="modal-backdrop">
+            <div class="bottom-sheet" style="max-height: 90vh;">
+                <div class="sheet-handle"></div>
+                <div class="sheet-content" style="padding: 24px;">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <div style="width: 56px; height: 56px; background: var(--md-sys-color-warning-container); color: var(--md-sys-color-on-warning-container); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                            <i class="fa-solid fa-mug-hot" style="font-size: 24px;"></i>
+                        </div>
+                        <h2 style="margin: 0 0 8px 0; font-size: 20px;">Buy me a coffee</h2>
+                        <p style="color: var(--md-sys-color-on-surface-variant); font-size: 13px; line-height: 1.5;">Your support helps me keep this extension free and updated!</p>
+                    </div>
+
+                    <div id="donation-options" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                        <button class="donation-preset-btn" data-amount="5">$5</button>
+                        <button class="donation-preset-btn" data-amount="10">$10</button>
+                        <button class="donation-preset-btn" data-amount="20">$20</button>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--md-sys-color-on-surface-variant); margin-bottom: 8px;">Custom Amount (USD)</label>
+                        <div style="position: relative;">
+                            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--md-sys-color-on-surface-variant);">$</span>
+                            <input type="number" id="custom-donation-amount" placeholder="Enter amount" min="1" step="1" style="width: 100%; padding: 12px 12px 12px 28px; border: 1px solid var(--md-sys-color-outline-variant); border-radius: 8px; outline: none; font-size: 14px; background: var(--md-sys-color-surface);">
+                        </div>
+                    </div>
+
+                    <div id="paypal-button-container" style="min-height: 45px;"></div>
+                    
+                    <p style="text-align: center; font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-top: 16px;">
+                        Secure payment via PayPal
+                    </p>
                 </div>
             </div>
         </div>
