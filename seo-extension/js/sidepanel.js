@@ -32,6 +32,8 @@ import { downloadPDF, downloadExcel, downloadJSON, downloadCSV } from './data/ex
 
 
 // Utils
+import { setupDonationListeners } from './ui/donate.js';
+import { setupMessageListener } from './content/messaging/handlers.js';
 import { setupStaticCopyButtons, copyToClipboard } from './utils/clipboard.js';
 
 // Expose to global for HTML onclick handlers
@@ -50,6 +52,9 @@ function init() {
 
     // 2. Theme Toggle
     initThemeToggle();
+
+    // Add setupDonationListeners
+    setupDonationListeners();
 
     // 3. Setup Copy Buttons
     setupStaticCopyButtons();

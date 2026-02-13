@@ -30,6 +30,8 @@ import { renderData } from './data/renderer.js';
 import { downloadPDF, downloadExcel, downloadJSON, downloadCSV } from './data/exporters.js';
 
 // Utils
+import { setupDonationListeners } from './ui/donate.js';
+import { setupMessageListener } from './content/messaging/handlers.js';
 import { setupStaticCopyButtons, copyToClipboard } from './utils/clipboard.js';
 
 // Expose to global for HTML onclick handlers
@@ -51,6 +53,9 @@ function init() {
         window.currentSEOData = data;
         renderData(data);
     });
+
+    // Add setupDonationListeners
+    setupDonationListeners();
 
     // 4. Setup Copy Buttons
     setupStaticCopyButtons();

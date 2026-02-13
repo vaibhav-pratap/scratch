@@ -54,7 +54,7 @@
     padding: var(--spacing-lg);
     scroll-behavior: smooth;
     position: relative;
-    padding-bottom: 100px; /* Space for floating footer */
+    padding-bottom: 160px; /* Space for floating footer + Donation Bar */
 }
 
 /* Remove padding when chat tab is active */
