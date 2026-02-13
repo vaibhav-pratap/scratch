@@ -5,6 +5,7 @@
   "description": "Advanced SEO tool with Google-inspired UI to view, copy, and download SEO data.",
   "icons": {
     "16": "assets/logo/logo.svg",
+    "32": "assets/logo/logo.svg",
     "48": "assets/logo/logo.svg",
     "128": "assets/logo/logo.svg"
   },
@@ -60,7 +61,8 @@
         "js/content/performance/*.js",
         "js/content/highlighting/*.js",
         "js/content/messaging/*.js",
-        "js/content/utils/*.js"
+        "js/content/utils/*.js",
+        "assets/logo/logo.svg"
       ],
       "matches": [
         "<all_urls>"

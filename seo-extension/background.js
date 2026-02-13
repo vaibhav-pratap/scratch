@@ -36,6 +36,11 @@ function createContextMenus() {
 // Create menus on install
 chrome.runtime.onInstalled.addListener(() => {
     createContextMenus();
+    
+    // Set sidepanel to open on icon click
+    chrome.sidePanel
+        .setPanelBehavior({ openPanelOnActionClick: true })
+        .catch((error) => console.error('[SidePanel] Error setting behavior:', error));
 });
 
 // Recreate menus on startup

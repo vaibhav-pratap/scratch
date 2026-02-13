@@ -18,10 +18,8 @@ export async function renderProfile(container) {
                     <h2 style="margin: 0; font-size: 24px;">${user.name}</h2>
                     <p style="margin: 4px 0 0 0; color: var(--md-sys-color-secondary);">${user.email}</p>
                 ` : `
-                    <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--md-sys-color-surface-variant); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="var(--md-sys-color-on-surface-variant)">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                        </svg>
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: #FFFFFF; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--md-sys-color-outline-variant); box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden;">
+                        <img src="assets/logo/logo.svg" alt="Guest User" style="width: 50px; height: 50px; object-fit: contain;">
                     </div>
                     <h2 style="margin: 0; font-size: 24px;">Guest User</h2>
                     <p style="margin: 4px 0 0 0; color: var(--md-sys-color-secondary);">Sign in to access advanced features</p>
