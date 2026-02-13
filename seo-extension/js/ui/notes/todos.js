@@ -5,6 +5,7 @@
 import { TodoModel } from '../../data/models/todo.js';
 import { getSettings, saveSettings } from '../../core/storage.js';
 import { parseTodoInput } from '../../utils/todo-parser.js';
+import { ConfirmModal } from '../components/confirm-modal.js';
 
 export async function renderTodoList(container, domain, categoryFilter = null, dateFilter = null) {
     const todos = await TodoModel.getAll(domain);
@@ -189,8 +190,15 @@ function createTodoCard(todo, domain, container) {
 
     const deleteBtn = card.querySelector('.delete-btn');
     deleteBtn.addEventListener('click', async () => {
-        await TodoModel.delete(todo.id, domain);
-        renderTodoList(container, domain, container.dataset.categoryFilter);
+        if (await ConfirmModal.show({
+            title: 'Delete Task',
+            message: 'Are you sure you want to delete this task?',
+            confirmText: 'Delete',
+            variant: 'destructive'
+        })) {
+            await TodoModel.delete(todo.id, domain);
+            renderTodoList(container, domain, container.dataset.categoryFilter);
+        }
     });
 
     return card;

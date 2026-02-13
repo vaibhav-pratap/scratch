@@ -18,7 +18,7 @@
     "<all_urls>"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; connect-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; object-src 'self'"
+    "extension_pages": "script-src 'self'; connect-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://generativelanguage.googleapis.com; object-src 'self'"
   },
   "background": {
     "service_worker": "background.js"

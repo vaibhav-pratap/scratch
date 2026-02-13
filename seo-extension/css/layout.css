@@ -43,6 +43,11 @@
     position: relative;
 }
 
+/* Remove padding when chat tab is active */
+.content-area:has(#chat.active) {
+    padding: 0 !important;
+}
+
 /* Footer */
 .app-footer {
     padding: var(--spacing-md) var(--spacing-lg);

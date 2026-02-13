@@ -342,7 +342,7 @@ const TRUSTWORTHINESS_SIGNALS = {
  */
 function analyzeExperience(content) {
     const signals = {
-        score: 0,
+        score: 20, // Start with baseline score for any content
         details: {},
         found: []
     };
@@ -357,7 +357,8 @@ function analyzeExperience(content) {
         }
     });
     signals.details.firstPerson = firstPersonCount;
-    signals.score += Math.min(firstPersonCount * 4, 25); // Max 25 points
+    // More generous scoring: 3 points per match, max 20
+    signals.score += Math.min(firstPersonCount * 3, 20);
 
     // Check for case studies
     let caseStudyCount = 0;
@@ -366,7 +367,8 @@ function analyzeExperience(content) {
         caseStudyCount += matches.length;
     });
     signals.details.caseStudies = caseStudyCount;
-    signals.score += Math.min(caseStudyCount * 8, 25); // Max 25 points
+    // Generous scoring: 10 points per case study, max 20
+    signals.score += Math.min(caseStudyCount * 10, 20);
 
     // Check for examples
     let exampleCount = 0;
@@ -375,22 +377,23 @@ function analyzeExperience(content) {
         exampleCount += matches.length;
     });
     signals.details.examples = exampleCount;
-    signals.score += Math.min(exampleCount * 2, 20); // Max 20 points
+    // More generous: 2 points per example, max 20
+    signals.score += Math.min(exampleCount * 2, 20);
 
-    // Check for practical experience (NEW)
+    // Check for practical experience
     let practicalCount = 0;
     EXPERIENCE_PATTERNS.practical.forEach(pattern => {
         const matches = content.match(pattern) || [];
         practicalCount += matches.length;
     });
     signals.details.practical = practicalCount;
-    signals.score += Math.min(practicalCount * 3, 15); // Max 15 points
+    signals.score += Math.min(practicalCount * 4, 15);
 
     // Personal anecdotes (paragraphs starting with "I" or "My")
     const paragraphs = content.split(/\n\n+/);
     const personalParagraphs = paragraphs.filter(p => /^(I|My)\s/i.test(p.trim()));
     signals.details.personalParagraphs = personalParagraphs.length;
-    signals.score += Math.min(personalParagraphs.length * 3, 15); // Max 15 points
+    signals.score += Math.min(personalParagraphs.length * 2, 5);
 
     signals.score = Math.min(signals.score, 100);
     return signals;
@@ -401,7 +404,7 @@ function analyzeExperience(content) {
  */
 function analyzeExpertise(content) {
     const signals = {
-        score: 0,
+        score: 25, // Baseline score for structured content
         details: {},
         found: []
     };
@@ -416,7 +419,8 @@ function analyzeExpertise(content) {
         }
     });
     signals.details.credentials = credentialCount;
-    signals.score += Math.min(credentialCount * 8, 25); // Max 25 points
+    // More generous: 10 points per credential, max 25
+    signals.score += Math.min(credentialCount * 10, 25);
 
     // Check for technical depth
     let technicalCount = 0;
@@ -425,7 +429,8 @@ function analyzeExpertise(content) {
         technicalCount += matches.length;
     });
     signals.details.technicalTerms = technicalCount;
-    signals.score += Math.min(technicalCount * 1.5, 25); // Max 25 points
+    // Adjusted: 1 point per term, max 20 (easier to achieve)
+    signals.score += Math.min(technicalCount * 1, 20);
 
     // Check for citations/references
     let citationCount = 0;
@@ -434,23 +439,24 @@ function analyzeExpertise(content) {
         citationCount += matches.length;
     });
     signals.details.citations = citationCount;
-    signals.score += Math.min(citationCount * 4, 20); // Max 20 points
+    // More generous: 5 points per citation, max 15
+    signals.score += Math.min(citationCount * 5, 15);
 
-    // Check for publications (NEW)
+    // Check for publications
     let publicationCount = 0;
     EXPERTISE_PATTERNS.publications.forEach(pattern => {
         const matches = content.match(pattern) || [];
         publicationCount += matches.length;
     });
     signals.details.publications = publicationCount;
-    signals.score += Math.min(publicationCount * 5, 15); // Max 15 points
+    signals.score += Math.min(publicationCount * 8, 10);
 
     // Check for author bio
     const hasBio = AUTHORITATIVENESS_SIGNALS.bioSelectors.some(selector => {
         return document.querySelector(selector) !== null;
     });
     signals.details.authorBio = hasBio;
-    signals.score += hasBio ? 15 : 0;
+    signals.score += hasBio ? 5 : 0; // Reduced from 15 to 5
 
     signals.score = Math.min(signals.score, 100);
     return signals;
@@ -461,7 +467,7 @@ function analyzeExpertise(content) {
  */
 function analyzeAuthoritativeness() {
     const signals = {
-        score: 0,
+        score: 30, // Baseline score for published content
         details: {},
         found: []
     };
@@ -475,7 +481,7 @@ function analyzeAuthoritativeness() {
     if (authorElements.length > 0) {
         const authorName = authorElements[0].textContent || authorElements[0].content || 'Found';
         signals.found.push(`Author: ${authorName.trim().substring(0, 50)}`);
-        signals.score += 25;
+        signals.score += 20; // Reduced from 25
     }
 
     // Check for published date
@@ -487,7 +493,7 @@ function analyzeAuthoritativeness() {
     if (dateElements.length > 0) {
         const date = dateElements[0].getAttribute('datetime') || dateElements[0].content || dateElements[0].textContent;
         signals.found.push(`Published: ${date.substring(0, 20)}`);
-        signals.score += 20;
+        signals.score += 15; // Reduced from 20
     }
 
     // Check for updated date
@@ -496,7 +502,7 @@ function analyzeAuthoritativeness() {
         document.querySelector('[class*="updated"]');
     signals.details.hasUpdatedDate = updatedElement !== null;
     if (updatedElement) {
-        signals.score += 15;
+        signals.score += 10; // Reduced from 15
     }
 
     // Check for author bio/profile
@@ -505,12 +511,12 @@ function analyzeAuthoritativeness() {
     ).filter(el => el !== null);
 
     signals.details.hasAuthorBio = bioElements.length > 0;
-    signals.score += bioElements.length > 0 ? 20 : 0;
+    signals.score += bioElements.length > 0 ? 15 : 0; // Reduced from 20
 
     // Check for external mentions/social proof
     const socialLinks = document.querySelectorAll('a[href*="twitter.com"], a[href*="linkedin.com"], a[href*="facebook.com"]');
     signals.details.socialPresence = socialLinks.length;
-    signals.score += Math.min(socialLinks.length * 4, 20);
+    signals.score += Math.min(socialLinks.length * 2, 10); // Reduced multiplier
 
     signals.score = Math.min(signals.score, 100);
     return signals;
@@ -521,7 +527,7 @@ function analyzeAuthoritativeness() {
  */
 function analyzeTrustworthiness() {
     const signals = {
-        score: 0,
+        score: 35, // Baseline score for any website
         details: {},
         found: []
     };
@@ -529,7 +535,7 @@ function analyzeTrustworthiness() {
     // Check for HTTPS
     const isSecure = window.location.protocol === 'https:';
     signals.details.https = isSecure;
-    signals.score += isSecure ? 10 : 0;
+    signals.score += isSecure ? 15 : -10; // Penalty for no HTTPS
     if (isSecure) signals.found.push('HTTPS Enabled');
 
     // Check for contact information
@@ -538,7 +544,7 @@ function analyzeTrustworthiness() {
     ).reduce((acc, nodelist) => acc + nodelist.length, 0);
 
     signals.details.hasContact = contactLinks > 0;
-    signals.score += contactLinks > 0 ? 12 : 0;
+    signals.score += contactLinks > 0 ? 10 : 0; // Reduced from 12
     if (contactLinks > 0) signals.found.push(`Contact Info Found (${contactLinks} links)`);
 
     // Check for privacy policy
@@ -547,31 +553,31 @@ function analyzeTrustworthiness() {
     ).reduce((acc, nodelist) => acc + nodelist.length, 0);
 
     signals.details.hasPrivacyPolicy = policyLinks > 0;
-    signals.score += policyLinks > 0 ? 12 : 0;
+    signals.score += policyLinks > 0 ? 8 : 0; // Reduced from 12
     if (policyLinks > 0) signals.found.push('Privacy Policy Found');
 
     // Check for about page
     const aboutLink = document.querySelector('a[href*="/about"]');
     signals.details.hasAboutPage = aboutLink !== null;
-    signals.score += aboutLink ? 8 : 0;
+    signals.score += aboutLink ? 5 : 0; // Reduced from 8
     if (aboutLink) signals.found.push('About Page Found');
 
-    // Check for trust badges (NEW)
+    // Check for trust badges
     const trustBadges = TRUSTWORTHINESS_SIGNALS.trustBadges.map(s =>
         document.querySelectorAll(s)
     ).reduce((acc, nodelist) => acc + nodelist.length, 0);
 
     signals.details.trustBadges = trustBadges;
-    signals.score += Math.min(trustBadges * 5, 15);
+    signals.score += Math.min(trustBadges * 3, 10); // Reduced multiplier
     if (trustBadges > 0) signals.found.push(`Trust Badges: ${trustBadges} found`);
 
-    // Check for social proof (NEW)
+    // Check for social proof
     const socialProofElements = TRUSTWORTHINESS_SIGNALS.socialProof.map(s =>
         document.querySelectorAll(s)
     ).reduce((acc, nodelist) => acc + nodelist.length, 0);
 
     signals.details.socialProof = socialProofElements;
-    signals.score += Math.min(socialProofElements * 2, 13);
+    signals.score += Math.min(socialProofElements * 1, 7); // Reduced
     if (socialProofElements > 5) signals.found.push(`Social Proof: ${socialProofElements} elements`);
 
     // Check for external authoritative sources
@@ -595,8 +601,8 @@ function analyzeTrustworthiness() {
 
     signals.details.externalSources = externalLinks.length;
     signals.details.authoritativeSources = authoritativeCount;
-    signals.score += Math.min(externalLinks.length * 1.5, 15);
-    signals.score += Math.min(authoritativeCount * 4, 15);
+    signals.score += Math.min(externalLinks.length * 0.5, 10); // Reduced
+    signals.score += Math.min(authoritativeCount * 3, 10); // Reduced
 
     if (externalLinks.length > 0) {
         signals.found.push(`External Links: ${externalLinks.length} (${authoritativeCount} authoritative)`);
@@ -639,10 +645,11 @@ export function analyzeEEAT() {
     try {
         const content = getMainContent();
 
-        if (!content || content.length < 100) {
+        // Reduced minimum content requirement from 100 to 50 words
+        if (!content || content.trim().split(/\s+/).length < 50) {
             return {
                 score: 0,
-                error: 'Insufficient content for E-E-A-T analysis',
+                error: 'Insufficient content for E-E-A-T analysis (minimum 50 words required)',
                 experience: { score: 0, details: {}, found: [] },
                 expertise: { score: 0, details: {}, found: [] },
                 authoritativeness: { score: 0, details: {}, found: [] },
@@ -655,12 +662,13 @@ export function analyzeEEAT() {
         const authoritativeness = analyzeAuthoritativeness();
         const trustworthiness = analyzeTrustworthiness();
 
-        // Calculate overall E-E-A-T score (weighted average)
+        // Calculate overall E-E-A-T score with adjusted weights
+        // Experience and Expertise are slightly more important
         const overallScore = Math.round(
-            (experience.score * 0.25) +
-            (expertise.score * 0.25) +
-            (authoritativeness.score * 0.25) +
-            (trustworthiness.score * 0.25)
+            (experience.score * 0.28) +      // Increased from 0.25
+            (expertise.score * 0.28) +        // Increased from 0.25
+            (authoritativeness.score * 0.22) + // Decreased from 0.25
+            (trustworthiness.score * 0.22)    // Decreased from 0.25
         );
 
         return {
@@ -687,13 +695,13 @@ export function analyzeEEAT() {
 }
 
 /**
- * Get letter grade from score
+ * Get letter grade from score - ADJUSTED for more realistic grading
  */
 function getGrade(score) {
-    if (score >= 90) return 'A+';
-    if (score >= 80) return 'A';
-    if (score >= 70) return 'B';
-    if (score >= 60) return 'C';
-    if (score >= 50) return 'D';
+    if (score >= 85) return 'A+';  // Lowered from 90
+    if (score >= 75) return 'A';   // Lowered from 80
+    if (score >= 65) return 'B';   // Lowered from 70
+    if (score >= 55) return 'C';   // Lowered from 60
+    if (score >= 45) return 'D';   // Lowered from 50
     return 'F';
 }

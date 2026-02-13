@@ -134,8 +134,7 @@ export function renderStaticLayout() {
 
         <!-- Main Content -->
         <main class="content-area">
-            ${renderNotesTab()}
-            ${renderOverviewTab()}
+            ${renderNotesTab()}            ${renderOverviewTab()}
             ${renderMetaTab()}
             ${renderHeadingsTab()}
             ${renderImagesTab()}
@@ -160,8 +159,7 @@ export function renderStaticLayout() {
                     <i class="fa-solid fa-clipboard-list"></i>
                 </div>
                 <span class="nav-label">Notes</span>
-            </button>
-            <button id="btn-profile" class="nav-item" title="Profile">
+            </button>            <button id="btn-profile" class="nav-item" title="Profile">
                 <div class="nav-icon-container">
                     <i class="fa-solid fa-user"></i>
                 </div>
@@ -238,6 +236,7 @@ export function renderStaticLayout() {
         </div>
     `;
 }
+
 
 function renderOverviewTab() {
     return `
@@ -674,7 +673,7 @@ function renderSettingsTab() {
         </div>
         <div id="gemini-status" style="margin-top: 8px; padding: 8px; border-radius: 4px; display: none;"></div>
         
-        
+
         <h3>Keywords Research APIs</h3>
         <p class="text-xs text-secondary">Configure Google Search Console and Google Ads API access for keyword insights.</p>
         <div id="keywords-api-settings"></div>

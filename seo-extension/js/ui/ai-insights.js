@@ -1,9 +1,10 @@
 /**
  * AI Insights UI Module
  * Reusable component for displaying AI insights on any tab
+ * Supports AI insights using Gemini
  */
 
-import { 
+import {
     generateOverviewSummary,
     generateMetaInsights,
     generateHeadingsInsights,
@@ -11,8 +12,10 @@ import {
     generateLinksInsights,
     generateAccessibilityInsights,
     generateSchemaInsights
-} from '../services/gemini-tab-specific.js';
-import { getGeminiApiKey } from '../services/gemini.js';
+} from '../services/ai-prompts.js';
+import { hasApiKey } from '../services/ai-router.js';
+import { getSettings } from '../core/storage.js';
+import { AI_MODELS, DEFAULT_MODEL, getModelById } from '../services/ai-models.js';
 
 /**
  * Create AI insights card HTML
@@ -85,9 +88,19 @@ async function handleAIInsightsClick(tabId) {
         return;
     }
 
-    // Check if API key is configured
-    const apiKey = await getGeminiApiKey();
-    if (!apiKey) {
+    // Get selected model or use default
+    const settings = await getSettings(['selectedModel']);
+    const modelId = settings.selectedModel || DEFAULT_MODEL;
+    const model = getModelById(modelId);
+
+    if (!model) {
+        showError(tabId, 'Invalid model selected. Please check settings.');
+        return;
+    }
+
+    // Check if API key is configured for the selected provider
+    const hasKey = await hasApiKey(model.provider);
+    if (!hasKey) {
         showError(tabId, 'Please configure your Gemini API key in Settings first.');
         return;
     }
@@ -96,7 +109,7 @@ async function handleAIInsightsClick(tabId) {
 
     try {
         let insights;
-        
+
         switch (tabId) {
             case 'overview':
                 insights = await generateOverviewSummary(data);

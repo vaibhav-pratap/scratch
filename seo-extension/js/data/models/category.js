@@ -19,7 +19,6 @@ export class CategoryModel {
                 .sort((a, b) => b.usageCount - a.usageCount)
                 .map(doc => doc.name); // Return names only to match legacy string[] interface
         } catch (err) {
-            console.error('[CategoryModel] Failed to getAll:', err);
             return [];
         }
     }
@@ -59,7 +58,7 @@ export class CategoryModel {
                 }
             }
         } catch (err) {
-            console.error('[CategoryModel] Failed to addOrUpdate:', err);
+            // silent fail
         }
     }
 
@@ -73,7 +72,7 @@ export class CategoryModel {
             const doc = await db.get(id);
             await db.remove(doc);
         } catch (err) {
-            if (err.status !== 404) console.error('[CategoryModel] Failed to delete:', err);
+            // silent fail
         }
     }
 

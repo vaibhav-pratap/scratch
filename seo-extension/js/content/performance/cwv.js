@@ -4,6 +4,7 @@
  */
 
 // Global CWV data
+// Global CWV data
 export const cwvData = {
     lcp: 0,
     lcpElement: '',
@@ -11,7 +12,8 @@ export const cwvData = {
     clsElement: '',
     inp: 0,
     fcp: 0,
-    ttfb: 0
+    ttfb: 0,
+    history: []
 };
 
 let cwvUpdateCallback = null;
@@ -27,20 +29,64 @@ export function onCWVUpdate(callback) {
 /**
  * Send CWV update (debounced)
  */
+// Optimization to fix flickering: Send ONE immediate update, then debounce
+let isFirstUpdate = true;
+
 function sendCWVUpdate() {
+    // If it's the very first update, send immediately
+    if (isFirstUpdate) {
+        updateCWVState();
+        isFirstUpdate = false;
+        return;
+    }
+
+    // Debounce subsequent updates
     clearTimeout(cwvUpdateTimeout);
-    cwvUpdateTimeout = setTimeout(() => {
-        if (cwvUpdateCallback) {
-            cwvUpdateCallback(cwvData);
-        }
-        // Cache the data
-        try {
-            const cacheKey = 'seo_cwv_cache_' + window.location.pathname;
-            localStorage.setItem(cacheKey, JSON.stringify(cwvData));
-        } catch (e) {
-            // console.warn('[CWV] Cache error:', e);
-        }
-    }, 300);
+    cwvUpdateTimeout = setTimeout(updateCWVState, 300);
+}
+
+function updateCWVState() {
+    if (!cwvData.history) cwvData.history = [];
+
+    const now = Date.now();
+    const lastEntry = cwvData.history[cwvData.history.length - 1];
+
+    // Optimization: If last update was less than 3 seconds ago, update existing entry
+    // This prevents chart from scrolling too fast (1 point per 3 seconds max)
+    if (lastEntry && (now - lastEntry.timestamp < 3000)) {
+        lastEntry.lcp = cwvData.lcp;
+        lastEntry.cls = cwvData.cls;
+        lastEntry.inp = cwvData.inp;
+        lastEntry.fcp = cwvData.fcp;
+        lastEntry.ttfb = cwvData.ttfb;
+        // Keep original timestamp to maintain stable x-axis
+    } else {
+        // Add new entry
+        cwvData.history.push({
+            timestamp: now,
+            lcp: cwvData.lcp,
+            cls: cwvData.cls,
+            inp: cwvData.inp,
+            fcp: cwvData.fcp,
+            ttfb: cwvData.ttfb
+        });
+    }
+
+    // Optimization: Limit history to last 30 points (approx 90 seconds window at 1 update/3sec)
+    if (cwvData.history.length > 30) {
+        cwvData.history = cwvData.history.slice(-30);
+    }
+
+    if (cwvUpdateCallback) {
+        cwvUpdateCallback(cwvData);
+    }
+    // Cache the data
+    try {
+        const cacheKey = 'seo_cwv_cache_' + window.location.pathname;
+        localStorage.setItem(cacheKey, JSON.stringify(cwvData));
+    } catch (e) {
+        // console.warn('[CWV] Cache error:', e);
+    }
 }
 
 /**

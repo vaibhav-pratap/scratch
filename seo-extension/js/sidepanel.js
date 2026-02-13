@@ -14,7 +14,7 @@ import { initTabSwitching, switchToTab } from './ui/tabs.js';
 import { initThemeToggle } from './ui/theme.js';
 import { setupHighlightToggles, setupSidePanelToggle } from './ui/toggles.js';
 import { renderCWVChart } from './ui/charts.js';
-import { initGeminiSettings } from './ui/gemini-settings.js';
+import { initAISettings } from './ui/ai-settings.js'; // Unified AI settings (Gemini + OpenAI + Grok)
 import { initAISummary } from './ui/ai-summary.js';
 import { initAIInsights } from './ui/ai-insights.js';
 import { initAIAnalysisTab } from './data/renderers/ai-analysis.js';
@@ -26,8 +26,10 @@ import { renderNotes } from './ui/notes/index.js';
 import { initMenu } from './ui/menu.js';
 
 // Data modules
+// Data modules
 import { renderData, updateCWVMetrics } from './data/renderer.js';
 import { downloadPDF, downloadExcel, downloadJSON, downloadCSV } from './data/exporters.js';
+
 
 // Utils
 import { setupStaticCopyButtons, copyToClipboard } from './utils/clipboard.js';
@@ -56,8 +58,8 @@ function init() {
     setupHighlightToggles();
     setupSidePanelToggle();
 
-    // 6. Setup Gemini Settings
-    initGeminiSettings();
+    // 6. Setup AI Settings (Gemini, OpenAI, Grok)
+    initAISettings();
 
     // 6b. Setup New Menu
     initMenu();
@@ -125,6 +127,8 @@ function init() {
             if (container) renderNotes(container);
         }
 
+
+
         initSidePanel((data) => {
             window.currentSEOData = data;
             renderData(data);
@@ -152,17 +156,41 @@ function init() {
     // 17b. Notes Button Listener
     document.getElementById('btn-notes-footer')?.addEventListener('click', () => {
         switchToTab('notes');
-        // Hide footer when Notes is activated
         const appFooter = document.querySelector('.app-footer');
-        if (appFooter) {
-            appFooter.style.display = 'none';
-        }
+        if (appFooter) appFooter.style.display = 'none';
     });
+
+    // 17c. Chat Button Listener
+
 
     // 18. Custom Tab Switch Listener
     document.addEventListener('switch-tab', (e) => {
         if (e.detail && e.detail.tab) {
             switchToTab(e.detail.tab);
+        }
+    });
+
+    // 18b. Handle Active Tab Content Rendering
+    document.addEventListener('tabActivated', (e) => {
+        const tabId = e.detail.tabId;
+
+        // Manage Footer Visibility
+        const appFooter = document.querySelector('.app-footer');
+        if (appFooter) {
+            if (tabId === 'notes') {
+                appFooter.style.display = 'none';
+            } else {
+                appFooter.style.display = 'flex';
+            }
+        }
+
+        // Trigger Content Renders
+        if (tabId === 'notes') {
+            const container = document.getElementById('notes-container');
+            if (container) renderNotes(container);
+        } else if (tabId === 'profile') {
+            const container = document.getElementById('profile-container');
+            if (container) renderProfile(container);
         }
     });
 

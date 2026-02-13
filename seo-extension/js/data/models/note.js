@@ -37,10 +37,8 @@ export class NoteModel {
                 .filter(doc => doc.domain === domain)
                 .sort((a, b) => b.updatedAt - a.updatedAt); // Descending sort
 
-            console.log(`[NoteModel] Retrieved ${notes.length} notes for domain: ${domain}`);
             return notes;
         } catch (err) {
-            console.error('[NoteModel] Failed to getAll:', err);
             return [];
         }
     }
@@ -67,10 +65,8 @@ export class NoteModel {
 
         try {
             await db.put(noteData);
-            console.log(`[NoteModel] Note saved to database - ID: ${noteData._id}, Domain: ${domain}`);
             return noteData;
         } catch (err) {
-            console.error('[NoteModel] Failed to add note:', err);
             throw err;
         }
     }
@@ -92,9 +88,8 @@ export class NoteModel {
             };
 
             await db.put(updatedDoc);
-            console.log(`[NoteModel] Note updated: ${docId}`);
         } catch (err) {
-            console.error(`[NoteModel] Failed to update note ${docId}:`, err);
+            // silent fail
         }
     }
 
@@ -108,11 +103,8 @@ export class NoteModel {
         try {
             const doc = await db.get(docId);
             await db.remove(doc);
-            console.log(`[NoteModel] Note deleted: ${docId}`);
         } catch (err) {
-            if (err.status !== 404) {
-                console.error(`[NoteModel] Failed to delete note ${docId}:`, err);
-            }
+            // silent fail
         }
     }
 
@@ -127,9 +119,8 @@ export class NoteModel {
             const notesToDelete = allNotes.filter(n => n.categories && n.categories.includes(categoryName));
 
             await Promise.all(notesToDelete.map(doc => db.remove(doc)));
-            console.log(`[NoteModel] Deleted ${notesToDelete.length} notes from category: ${categoryName}`);
         } catch (err) {
-            console.error('[NoteModel] Failed to delete by category:', err);
+            // silent fail
         }
     }
 }

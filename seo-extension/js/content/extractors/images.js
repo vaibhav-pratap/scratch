@@ -62,7 +62,10 @@ export function getImages() {
             title: title || '',
             type: type,
             width: element.width || 0,
-            height: element.height || 0
+            height: element.height || 0,
+            naturalWidth: element.naturalWidth || 0,
+            naturalHeight: element.naturalHeight || 0,
+            loading: element.getAttribute('loading') || 'eager'
         });
     };
 

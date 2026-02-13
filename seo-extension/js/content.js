@@ -37,11 +37,17 @@ import { safeExtract, debounce } from './content/utils/helpers.js';
 function extractSEOData() {
     return {
         url: window.location.href,
+        doctype: document.doctype ? `<!DOCTYPE ${document.doctype.name}>` : null,
         title: document.title,
         description: safeExtract(() => getMetaContent('description')),
         keywords: safeExtract(() => getMetaContent('keywords')),
         canonical: safeExtract(() => document.querySelector('link[rel="canonical"]')?.href),
         robots: safeExtract(() => getMetaContent('robots')),
+        viewport: safeExtract(() => getMetaContent('viewport')),
+        charset: document.characterSet,
+        lang: document.documentElement.lang,
+        author: safeExtract(() => getMetaContent('author')),
+        publisher: safeExtract(() => getMetaContent('publisher') || document.querySelector('link[rel="publisher"]')?.href),
         favicon: safeExtract(() => getFavicon()),
         og: safeExtract(() => getOGTags(), {}),
         twitter: safeExtract(() => getTwitterTags(), {}),

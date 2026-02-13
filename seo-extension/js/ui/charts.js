@@ -18,83 +18,234 @@ export function renderCWVChart(cwv) {
     const ctx = document.getElementById('cwv-chart');
     if (!ctx || !cwv) return;
 
-    const labels = ['LCP', 'CLS', 'INP', 'FCP', 'TTFB'];
-    const values = [
-        cwv.lcp || 0,
-        cwv.cls || 0,
-        cwv.inp || 0,
-        cwv.fcp || 0,
-        cwv.ttfb || 0
-    ];
+    // Process Data
+    let labels = [];
+    let lcpData = [];
+    let clsData = [];
+    let fcpData = [];
+    let ttfbData = [];
+    let inpData = [];
 
-    // Prepare data array (scale CLS)
-    const chartData = values.map((v, i) => i === 1 ? v * 1000 : v);
+    // Use consolidated history if available
+    let history = cwv.history || cwv.clsHistory || [];
 
-    if (cwvChartInstance) {
-        // Update existing chart to prevent flickering
-        cwvChartInstance.data.datasets[0].data = chartData;
-        cwvChartInstance.update('none'); // 'none' mode prevents animation jitter
+    if (history.length > 0) {
+        labels = history.map(h => {
+             const date = new Date(h.timestamp);
+             return date.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second:'2-digit' }); // shorter label
+        });
+        lcpData = history.map(h => h.lcp || 0);
+        clsData = history.map(h => h.cls || (h.value || 0));
+        fcpData = history.map(h => h.fcp || 0);
+        ttfbData = history.map(h => h.ttfb || 0);
+        inpData = history.map(h => h.inp || 0);
     } else {
-        // Create new chart
-        cwvChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Metric Value',
-                    data: chartData,
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.5)',
-                        'rgba(54, 162, 235, 0.5)',
-                        'rgba(255, 206, 86, 0.5)',
-                        'rgba(75, 192, 192, 0.5)',
-                        'rgba(153, 102, 255, 0.5)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                let label = context.dataset.label || '';
-                                if (label) label += ': ';
+        // Fallback for initial load
+        const now = new Date().toLocaleTimeString();
+        labels = [now];
+        lcpData = [cwv.lcp || 0];
+        clsData = [cwv.cls || 0];
+        fcpData = [cwv.fcp || 0];
+        ttfbData = [cwv.ttfb || 0];
+        inpData = [cwv.inp || 0];
+    }
 
-                                let value = context.raw;
-                                if (context.dataIndex === 1) { // CLS
-                                    value = value / 1000;
-                                    label += value.toFixed(3);
-                                } else {
-                                    label += Math.round(value) + ' ms';
-                                }
-                                return label;
-                            }
-                        }
-                    },
-                    legend: { display: false }
+    // Optimization: Update existing chart if it exists
+    if (cwvChartInstance) {
+        cwvChartInstance.data.labels = labels;
+        cwvChartInstance.data.datasets[0].data = lcpData; // LCP
+        cwvChartInstance.data.datasets[1].data = clsData; // CLS
+        cwvChartInstance.data.datasets[2].data = fcpData; // FCP
+        cwvChartInstance.data.datasets[3].data = ttfbData; // TTFB
+        if (cwvChartInstance.data.datasets[4]) {
+            cwvChartInstance.data.datasets[4].data = inpData; // INP if exists
+        } else {
+            // Hot-add INP if not present in old instance
+             cwvChartInstance.data.datasets.push({
+                label: 'INP (ms)',
+                data: inpData,
+                borderColor: 'rgba(255, 206, 86, 1)', // Yellow
+                backgroundColor: 'rgba(255, 206, 86, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                yAxisID: 'y',
+                fill: false,
+                pointRadius: 0,
+                pointHoverRadius: 4
+            });
+        }
+        cwvChartInstance.update('none'); // 'none' for performance (no animation on every tick)
+        return;
+    }
+
+    // Modern Gradient
+    const chartCtx = ctx.getContext('2d');
+    const gradientCLS = chartCtx.createLinearGradient(0, 0, 0, 400);
+    gradientCLS.addColorStop(0, 'rgba(54, 162, 235, 0.4)');
+    gradientCLS.addColorStop(1, 'rgba(54, 162, 235, 0.0)');
+
+    cwvChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'LCP (ms)',
+                    data: lcpData,
+                    borderColor: 'rgba(255, 99, 132, 1)', // Red
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    yAxisID: 'y',
+                    fill: false,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Value (ms) / CLS (*1000)'
+                {
+                    label: 'CLS',
+                    data: clsData,
+                    borderColor: 'rgba(54, 162, 235, 1)', // Blue
+                    backgroundColor: gradientCLS,
+                    borderWidth: 2,
+                    tension: 0.4,
+                    yAxisID: 'y1', // Separate axis
+                    fill: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                },
+                {
+                    label: 'FCP (ms)',
+                    data: fcpData,
+                    borderColor: 'rgba(75, 192, 192, 1)', // Green
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    yAxisID: 'y',
+                    fill: false,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                },
+                {
+                    label: 'TTFB (ms)',
+                    data: ttfbData,
+                    borderColor: 'rgba(153, 102, 255, 1)', // Purple
+                    backgroundColor: 'rgba(153, 102, 255, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    yAxisID: 'y',
+                    fill: false,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                },
+                {
+                    label: 'INP (ms)',
+                    data: inpData,
+                    borderColor: 'rgba(255, 206, 86, 1)', // Yellow
+                    backgroundColor: 'rgba(255, 206, 86, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    yAxisID: 'y',
+                    fill: false,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 0 // Disable initial animation for snappiness
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index',
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 8,
+                        usePointStyle: true,
+                        font: { size: 9 },
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(28, 28, 30, 0.95)', // Darker tooltip
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 10,
+                    displayColors: true,
+                    titleFont: { size: 11 },
+                    bodyFont: { size: 10 },
+                    callbacks: {
+                        label: function (context) {
+                            let label = context.dataset.label || '';
+                            let value = context.parsed.y;
+                            if (label.includes('CLS')) {
+                                return `CLS: ${value.toFixed(3)}`;
+                            }
+                            return `${label}: ${Math.round(value)}`;
                         }
                     }
                 }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 9 },
+                        maxTicksLimit: 4,
+                        maxRotation: 0
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Timing (ms)',
+                        font: { size: 9 },
+                        color: '#9ca3af'
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    },
+                    ticks: {
+                        font: { size: 9 },
+                        color: '#9ca3af'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    beginAtZero: true,
+                    suggestedMax: 0.25,
+                    title: {
+                        display: true,
+                        text: 'CLS Score',
+                        font: { size: 9 },
+                        color: '#9ca3af'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                    ticks: {
+                        font: { size: 9 },
+                        color: '#9ca3af'
+                    }
+                }
             }
-        });
-    }
+        }
+    });
 }
 
 /**
