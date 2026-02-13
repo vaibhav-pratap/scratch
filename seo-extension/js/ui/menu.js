@@ -35,6 +35,17 @@ export function initMenu() {
         });
     }
 
+    // New Menu Item Listeners
+    ['support', 'contact', 'terms'].forEach(id => {
+        const item = document.getElementById(`menu-${id}`);
+        if (item) {
+            item.addEventListener('click', () => {
+                closeMenu();
+                switchToTab(id);
+            });
+        }
+    });
+
     function closeMenu() {
         modal.classList.remove('open');
         // Wait for transition to finish before hiding

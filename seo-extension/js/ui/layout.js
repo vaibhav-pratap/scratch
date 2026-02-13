@@ -129,12 +129,15 @@ export function renderStaticLayout() {
                     <i class="fa-solid fa-user"></i>
                     <span>Profile</span>
                 </button>
+                <button class="tab-btn" data-tab="terms" style="display: none;"></button>
+                <button class="tab-btn" data-tab="contact" style="display: none;"></button>
+                <button class="tab-btn" data-tab="support" style="display: none;"></button>
             </div>
         </header>
 
         <!-- Main Content -->
         <main class="content-area">
-            ${renderNotesTab()}            ${renderOverviewTab()}
+            ${renderOverviewTab()}
             ${renderMetaTab()}
             ${renderHeadingsTab()}
             ${renderImagesTab()}
@@ -150,6 +153,9 @@ export function renderStaticLayout() {
             ${renderSettingsTab()}
             ${renderNotesTab()}
             ${renderProfileTab()}
+            ${renderTermsTab()}
+            ${renderContactTab()}
+            ${renderSupportTab()}
         </main>
 
         <!-- MD3 Bottom Navigation Footer -->
@@ -189,18 +195,18 @@ export function renderStaticLayout() {
                         <i class="fa-solid fa-gear"></i>
                         <span>Settings</span>
                     </button>
-                    <a href="https://example.com/help" target="_blank" class="menu-item">
+                    <button class="menu-item" id="menu-support">
                         <i class="fa-solid fa-circle-question"></i>
                         <span>Help & Support</span>
-                    </a>
-                    <a href="https://example.com/contact" target="_blank" class="menu-item">
+                    </button>
+                    <button class="menu-item" id="menu-contact">
                         <i class="fa-solid fa-envelope"></i>
                         <span>Contact Us</span>
-                    </a>
-                    <a href="https://example.com/terms" target="_blank" class="menu-item">
+                    </button>
+                    <button class="menu-item" id="menu-terms">
                         <i class="fa-solid fa-file-shield"></i>
                         <span>Terms & Privacy</span>
-                    </a>
+                    </button>
                     <div class="menu-divider"></div>
                     <div class="menu-version">
                         <span>SEO Analyzer Pro</span>
@@ -883,4 +889,123 @@ export function renderProfileTab() {
 
 export function renderNotesTab() {
     return `<div id="notes" class="tab-content"><div id="notes-container"></div></div>`;
+}
+
+/**
+ * Render Terms & Privacy Tab
+ */
+function renderTermsTab() {
+    return `
+    <div id="terms" class="tab-content">
+        <div class="card" style="padding: 24px;">
+            <h2 style="margin-bottom: 20px; font-size: 20px; color: var(--md-sys-color-primary);">Terms of Use & Privacy Policy</h2>
+            
+            <div class="data-group">
+                <label style="font-size: 14px; color: var(--md-sys-color-primary); margin-bottom: 8px; display: block;">Privacy Commitment</label>
+                <p style="font-size: 13px; line-height: 1.6; color: var(--md-sys-color-on-surface-variant);">
+                    Your privacy is our priority. SEO Analyzer Pro operates entirely locally on your device. We do not collect, store, or transmit any of your browsing data, analyzed URLs, or credentials to any external servers. All data remains in your browser's local storage and PouchDB database.
+                </p>
+            </div>
+
+            <div class="data-group" style="margin-top: 24px;">
+                <label style="font-size: 14px; color: var(--md-sys-color-primary); margin-bottom: 8px; display: block;">Usage Terms</label>
+                <p style="font-size: 13px; line-height: 1.6; color: var(--md-sys-color-on-surface-variant);">
+                    This extension is provided "as is" without warranty of any kind. While we strive for accuracy in SEO analysis, users should verify critical information independently. The extension is designed for professional SEO research and audit purposes.
+                </p>
+            </div>
+
+            <div class="data-group" style="margin-top: 24px;">
+                <label style="font-size: 14px; color: var(--md-sys-color-primary); margin-bottom: 8px; display: block;">AI Features</label>
+                <p style="font-size: 13px; line-height: 1.6; color: var(--md-sys-color-on-surface-variant);">
+                    If you enable AI features by providing a Gemini API key, please note that your page content will be sent directly to Google's Gemini API for analysis. This interaction is direct between your browser and Google; SEO Analyzer Pro does not proxy or store these requests.
+                </p>
+            </div>
+            
+            <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--md-sys-color-surface-variant); text-align: center;">
+                <p style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);">© 2026 SEO Analyzer Pro. All rights reserved.</p>
+            </div>
+        </div>
+    </div>`;
+}
+
+/**
+ * Render Contact Us Tab
+ */
+function renderContactTab() {
+    return `
+    <div id="contact" class="tab-content">
+        <div class="card" style="padding: 24px; text-align: center;">
+            <div style="width: 64px; height: 64px; background: var(--md-sys-color-primary-container); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class="fa-solid fa-envelope" style="font-size: 28px; color: var(--md-sys-color-on-primary-container);"></i>
+            </div>
+            <h2 style="margin-bottom: 8px; font-size: 20px;">Get in Touch</h2>
+            <p style="color: var(--md-sys-color-on-surface-variant); font-size: 14px; margin-bottom: 24px;">
+                Have a question, feedback, or need help? We'd love to hear from you.
+            </p>
+            
+            <div style="background: var(--md-sys-color-surface-variant); padding: 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+                <div style="text-align: left;">
+                    <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); text-transform: uppercase; font-weight: 500; margin-bottom: 4px;">Email Support</div>
+                    <div style="font-size: 15px; font-weight: 700;">isitstrange@outlook.com</div>
+                </div>
+                <button class="action-btn secondary small" onclick="copyToClipboard('isitstrange@outlook.com', this)" style="padding: 10px 16px;">
+                    <i class="fa-solid fa-copy" style="margin-right: 6px;"></i> Copy
+                </button>
+            </div>
+            
+            <p style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); line-height: 1.5;">
+                We typically respond to all inquiries within 24-48 hours. Thank you for your patience!
+            </p>
+        </div>
+    </div>`;
+}
+
+/**
+ * Render Help & Support Tab
+ */
+function renderSupportTab() {
+    return `
+    <div id="support" class="tab-content">
+        <div class="card" style="padding: 24px;">
+            <h2 style="margin-bottom: 16px; font-size: 20px;">Help & Support</h2>
+            <p style="color: var(--md-sys-color-on-surface-variant); font-size: 14px; margin-bottom: 24px; line-height: 1.6;">
+                Need help getting started or found a bug? Check out our GitHub repository for documentation and issue reporting.
+            </p>
+            
+            <div class="data-group">
+                <a href="https://github.com/vaibhav-pratap/" target="_blank" class="card" style="display: flex; align-items: center; gap: 16px; padding: 16px; text-decoration: none; background: var(--md-sys-color-surface); border: 1px solid var(--md-sys-color-surface-variant); transition: background 0.2s;">
+                    <div style="width: 48px; height: 48px; background: #24292e; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-brands fa-github" style="font-size: 24px; color: white;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 15px; font-weight: 700; color: var(--md-sys-color-on-surface);">GitHub Profile</div>
+                        <div style="font-size: 13px; color: var(--md-sys-color-on-surface-variant);">github.com/vaibhav-pratap/</div>
+                    </div>
+                    <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 14px; color: var(--md-sys-color-on-surface-variant);"></i>
+                </a>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <h3 style="font-size: 15px; margin-bottom: 12px;">Quick Guides</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div class="data-value" style="padding: 12px; font-size: 13px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-circle-info" style="color: var(--md-sys-color-primary);"></i>
+                        Using CWV Core Web Vitals Chart
+                    </div>
+                    <div class="data-value" style="padding: 12px; font-size: 13px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-circle-info" style="color: var(--md-sys-color-primary);"></i>
+                        Generating AI SEO Insights
+                    </div>
+                    <div class="data-value" style="padding: 12px; font-size: 13px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-circle-info" style="color: var(--md-sys-color-primary);"></i>
+                        Exporting SEO Reports (PDF/Excel)
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 24px; text-align: center;">
+                <p style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);">Version 1.6.0 (Latest)</p>
+            </div>
+        </div>
+    </div>`;
 }

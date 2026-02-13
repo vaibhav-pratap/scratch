@@ -34,6 +34,9 @@ import { downloadPDF, downloadExcel, downloadJSON, downloadCSV } from './data/ex
 // Utils
 import { setupStaticCopyButtons, copyToClipboard } from './utils/clipboard.js';
 
+// Expose to global for HTML onclick handlers
+window.copyToClipboard = copyToClipboard;
+
 // Global variable to store the current data for export/copy functionality
 window.currentSEOData = null;
 
