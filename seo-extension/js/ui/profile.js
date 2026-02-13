@@ -19,7 +19,7 @@ export async function renderProfile(container) {
                     <p style="margin: 4px 0 0 0; color: var(--md-sys-color-secondary);">${user.email}</p>
                 ` : `
                     <div style="width: 80px; height: 80px; border-radius: 50%; background: #FFFFFF; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--md-sys-color-outline-variant); box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden;">
-                        <img src="assets/logo/logo.svg" alt="Guest User" style="width: 50px; height: 50px; object-fit: contain;">
+                        <img src="assets/logo/logo.png" alt="Guest User" style="width: 50px; height: 50px; object-fit: contain;">
                     </div>
                     <h2 style="margin: 0; font-size: 24px;">Guest User</h2>
                     <p style="margin: 4px 0 0 0; color: var(--md-sys-color-secondary);">Sign in to access advanced features</p>

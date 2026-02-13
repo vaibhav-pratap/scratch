@@ -48,7 +48,7 @@ export function renderStaticLayout() {
             <div class="header-top">
                 <div class="logo-area">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <img src="assets/logo/logo.svg" width="24" height="24" alt="SEO Analyzer Pro Logo">
+                        <img src="assets/logo/logo.png" width="24" height="24" alt="SEO Analyzer Pro Logo">
                         <h1 style="margin: 0;">SEO Analyzer Pro <span class="beta-tag">BETA</span></h1>
                     </div>
                 </div>
