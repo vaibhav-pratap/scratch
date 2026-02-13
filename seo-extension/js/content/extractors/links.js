@@ -14,10 +14,18 @@ export function getLinks() {
     links.forEach(link => {
         const href = link.href;
         if (!href.startsWith('javascript:') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
+            const linkData = {
+                text: link.innerText.trim() || link.textContent.trim(),
+                href: href,
+                rel: link.getAttribute('rel') || '',
+                target: link.getAttribute('target') || '',
+                hostname: link.hostname
+            };
+
             if (link.hostname === window.location.hostname) {
-                internal.push({ text: link.innerText.trim(), href: href });
+                internal.push(linkData);
             } else {
-                external.push({ text: link.innerText.trim(), href: href });
+                external.push(linkData);
             }
         }
     });
