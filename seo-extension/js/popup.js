@@ -13,7 +13,7 @@ import { initTabSwitching, switchToTab } from './ui/tabs.js';
 import { initThemeToggle } from './ui/theme.js';
 import { setupHighlightToggles, setupSidePanelToggle } from './ui/toggles.js';
 import { renderCWVChart } from './ui/charts.js';
-import { initGeminiSettings } from './ui/gemini-settings.js';
+import { initAISettings } from './ui/ai-settings.js'; // Unified AI settings (Gemini + OpenAI + Grok)
 import { initAISummary } from './ui/ai-summary.js';
 import { initAIInsights } from './ui/ai-insights.js';
 import { initAIAnalysisTab } from './data/renderers/ai-analysis.js';
@@ -54,7 +54,8 @@ function init() {
     setupSidePanelToggle();
 
     // 6. Setup Gemini Settings
-    initGeminiSettings();
+    initAISettings(); // Initialize all AI provider settings
+    initAISummary();
 
     // 7. Setup Keywords Settings
     try {
@@ -143,7 +144,7 @@ function updateKeywordsPerformance() {
 function setupExportButtons() {
     const btnExport = document.getElementById('btn-export');
     const exportModal = document.getElementById('export-modal');
-    
+
     // Toggle Export Modal
     if (btnExport && exportModal) {
         btnExport.addEventListener('click', () => {

@@ -1,33 +1,13 @@
 import { saveToCache, loadFromCache, saveToSession, loadFromSession, getSettings, saveSettings } from './storage.js';
 import { requestSEOData } from './messaging.js';
-import { migrateAllToDB } from './migration.js';
 import { initDatabase } from './db.js';
-
-/**
- * Perform one-time migration if needed
- */
-async function checkMigration() {
-    const { rxdb_migrated } = await getSettings(['rxdb_migrated']);
-    if (!rxdb_migrated) {
-        console.log('[Init] First run with RxDB. Starting migration...');
-        // Initialize DB first
-        await initDatabase();
-        // Migrate global
-        await migrateAllToDB('global');
-
-        // Mark as migrated
-        await saveSettings({ rxdb_migrated: true });
-        console.log('[Init] RxDB migration complete.');
-    }
-}
 
 /**
  * Initialize the popup extension interface
  */
 export async function initPopup(renderCallback) {
     try {
-        // Run migration check
-        await checkMigration();
+        await initDatabase();
 
         // Popups reliably get the active tab using query
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -40,7 +20,6 @@ export async function initPopup(renderCallback) {
         // STEP 1: Try session storage first (shared with sidepanel, fastest)
         const sessionData = await loadFromSession();
         if (sessionData) {
-            console.log('[initPopup] Loaded from session storage');
             renderCallback(sessionData);
             // We still fetch fresh data in background, but UI is ready
         }
@@ -49,18 +28,15 @@ export async function initPopup(renderCallback) {
         if (!sessionData) {
             const cached = loadFromCache(tab.url);
             if (cached) {
-                console.log('[initPopup] Loaded from local cache');
                 renderCallback(cached);
             }
         }
 
         // STEP 3: Optimistic Data Request (Avoid injecting if script is alive)
-        console.log('[initPopup] Requesting fresh data...');
         let data = await requestSEOData(tab.id, 1); // 1 attempt only first
 
         // STEP 4: Inject content script ONLY if request failed
         if (!data) {
-            console.log('[initPopup] No response, injecting content script...');
             try {
                 await chrome.scripting.executeScript({
                     target: { tabId: tab.id },
@@ -69,7 +45,7 @@ export async function initPopup(renderCallback) {
                 // Wait a bit for script to initialize
                 await new Promise(resolve => setTimeout(resolve, 200));
             } catch (e) {
-                console.warn('[initPopup] Script injection failed (maybe already there?):', e);
+                // Script injection failed (maybe already there?)
             }
 
             // Retry request after injection
@@ -78,7 +54,6 @@ export async function initPopup(renderCallback) {
 
         // STEP 5: Handle fresh data
         if (data) {
-            console.log('[initPopup] Received fresh data');
             renderCallback(data);
             saveToCache(tab.url, data);
             await saveToSession(data);
@@ -87,7 +62,6 @@ export async function initPopup(renderCallback) {
         }
 
     } catch (error) {
-        console.error("Init Error:", error);
         showError("An unexpected error occurred: " + error.message);
     }
 }
@@ -97,10 +71,7 @@ export async function initPopup(renderCallback) {
  * Uses chrome.sidePanel.getCurrentTabId() for robust active tab detection.
  */
 export async function initSidePanel(renderCallback) {
-    console.log('[initSidePanel] Starting initialization...');
-
-    // Run migration check
-    await checkMigration().catch(e => console.error('Migration failed:', e));
+    await initDatabase();
 
     let tabId;
 
@@ -109,7 +80,6 @@ export async function initSidePanel(renderCallback) {
         tabId = await chrome.sidePanel.getCurrentTabId();
     } catch (e) {
         // Fallback if getCurrentTabId is unavailable or fails
-        // console.warn('[initSidePanel] chrome.sidePanel.getCurrentTabId failed. Falling back to chrome.tabs.query.');
         const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
         tabId = activeTab ? activeTab.id : null;
     }
@@ -117,17 +87,14 @@ export async function initSidePanel(renderCallback) {
     // Main Error Catch
     try {
         if (!tabId) {
-            // console.warn('[initSidePanel] Could not determine active tab ID.');
             showError("Could not find an active web page tab to analyze.");
             return;
         }
 
         const tab = await chrome.tabs.get(tabId);
-        console.log('[initSidePanel] Target tab:', tab);
 
         // Check if the tab is a valid web page
         if (!tab || !tab.url || !tab.url.startsWith('http')) {
-            console.warn('[initSidePanel] Invalid tab or URL');
             showError("SEO Analyzer only works on web pages (http/https).");
             return;
         }
@@ -135,24 +102,20 @@ export async function initSidePanel(renderCallback) {
         // STEP 1: Show cached data IMMEDIATELY (faster UX)
         const cached = loadFromCache(tab.url);
         if (cached) {
-            console.log('[initSidePanel] Using cached data immediately');
             renderCallback(cached);
             // Continue to fetch fresh data in background
         }
 
         // STEP 2: Request fresh data with minimal delay
-        console.log('[initSidePanel] Requesting fresh data...');
         let data = await requestSEOData(tabId, 2); // Only 2 attempts for speed
 
         // STEP 3: Inject content script ONLY if no response
         if (!data) {
-            console.log('[initSidePanel] No response, injecting content script...');
             try {
                 await chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     files: ['js/content-loader.js']
                 });
-                console.log('[initSidePanel] Content script injected');
 
                 // Shorter wait time for better performance
                 await new Promise(resolve => setTimeout(resolve, 300));
@@ -161,24 +124,18 @@ export async function initSidePanel(renderCallback) {
                 data = await requestSEOData(tab.id, 2);
             } catch (e) {
                 // Silently fail or log debug only if needed
-                // console.warn('[initSidePanel] Script injection failed:', e.message);
             }
         }
 
-        console.log('[initSidePanel] Final data:', data ? 'received' : 'none');
-
         if (data) {
-            console.log('[initSidePanel] Calling renderCallback with fresh data');
             renderCallback(data);
             saveToCache(tab.url, data);
             await saveToSession(data);
         } else if (!cached) {
-            console.error('[initSidePanel] No data received and no cache');
             showError("Couldn't load SEO data. Please try refreshing the page.");
         }
 
     } catch (error) {
-        console.error("[initSidePanel] Error:", error);
         showError("An unexpected error occurred: " + error.message);
     }
 }
@@ -187,8 +144,6 @@ export async function initSidePanel(renderCallback) {
  * Display an error message to the user
  */
 export function showError(msg) {
-    console.log('[showError]', msg);
-
     // Try to switch to overview tab
     const overviewTab = document.querySelector('[data-tab="overview"]');
     const overviewContent = document.getElementById('overview');

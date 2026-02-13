@@ -104,6 +104,22 @@
     color: var(--md-sys-color-on-surface);
 }
 
+.suggestion-item.success {
+    background-color: var(--md-sys-color-success-container);
+    color: var(--md-sys-color-on-success-container);
+    border: 1px solid var(--md-sys-color-success);
+}
+
+.suggestion-icon {
+    font-size: 16px;
+    line-height: 1;
+    min-width: 20px;
+}
+
+.suggestion-msg {
+    line-height: 1.4;
+}
+
 /* Scrollable Lists */
 .scrollable-list {
     max-height: 200px;

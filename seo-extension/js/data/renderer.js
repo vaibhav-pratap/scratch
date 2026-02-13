@@ -12,80 +12,161 @@ import { renderTrackingBuilder } from './renderers/tracking-builder.js';
 import { renderImagesTab as renderImagesTabNew } from './renderers/images.js';
 import { renderContentQualityTab } from './renderers/content-quality.js';
 import { renderCWVSection } from '../ui/cwv-display.js';
-import { calculateSEOScore } from './calculators.js';
+import { calculateAllScores } from './calculators.js';
 import { copyToClipboard } from '../utils/clipboard.js';
 import { renderKeywordsTab } from './renderers/keywords.js';
 
+/**
+ * Render a circular gauge (PageSpeed style) using SVG
+ */
+function renderGauge(score, label) {
+    const isNumeric = typeof score === 'number';
+    const displayScore = isNumeric ? Math.round(score) : '?';
+    const fillPercentage = isNumeric ? Math.max(0, Math.min(100, score)) : 0;
+    
+    // Determine color
+    let color = 'var(--md-sys-color-surface-variant)';
+    let colorClass = 'unknown';
+    
+    if (isNumeric) {
+        if (score >= 90) { color = 'var(--md-sys-color-success)'; colorClass = 'pass'; }
+        else if (score >= 50) { color = 'var(--md-sys-color-warning)'; colorClass = 'average'; }
+        else { color = 'var(--md-sys-color-error)'; colorClass = 'fail'; }
+    }
+
+    return `
+        <div class="gauge-wrapper">
+            <div class="gauge-svg-container ${colorClass}">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                    <path class="circle-bg"
+                        d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path class="circle"
+                        stroke-dasharray="${fillPercentage}, 100"
+                        d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"
+                        style="stroke: ${color};"
+                    />
+                    <text x="18" y="20.35" class="percentage">${displayScore}</text>
+                </svg>
+            </div>
+            <div class="gauge-label">${label}</div>
+        </div>
+    `;
+}
+
+
+
+// Helper to render standard data group with copy button
 /**
  * Main function to render all SEO data
  */
 export function renderData(data) {
     if (!data) return;
 
-    // Calculate score
-    const { score, suggestions } = calculateSEOScore(data);
+    // Calculate all scores
+    const scores = calculateAllScores(data);
 
-    // Store for exports
-    data.score = score;
-    data.suggestions = suggestions;
+    // Store for exports/reference
+    data.scores = scores;
+    data.suggestions = scores.suggestions;
 
     // --- Overview Tab ---
-    renderOverviewTab(data, score, suggestions);
+    renderOverviewTab(data, scores);
 
     // --- Meta Tab ---
     renderMetaTab(data);
 
-    // --- Headings Tab ---
+    // ... (rest of the functions remain the same)
     renderHeadingsTab(data);
-
-    // --- Images Tab ---
     renderImagesTab(data);
-
-    // --- Links Tab ---
     renderLinksTab(data);
-
-    // --- Accessibility Tab ---
     if (data.accessibility) {
         renderAccessibilityTab(data.accessibility);
     }
-
-    // --- Content Quality Tab ---
     renderContentQualityTab(data);
-
-    // --- Schema Tab ---
     renderSchemaTab(data);
-
-    // --- Tag Detector Tab ---
     if (data.tags) {
         renderTagsTab(data.tags);
     }
-
-    // --- Tracking Builder Tab ---
     renderTrackingBuilder(data);
-
-    // --- Keywords Tab ---
     renderKeywordsTab(data);
-
-    // --- AI Analysis Tab ---
-    // Note: AI Analysis tab is initialized separately and checks for API key
 }
 
 /**
  * Render Overview Tab
  */
-function renderOverviewTab(data, score, suggestions) {
-    // Title & Description lengths
-    const titleLen = data.title ? data.title.length : 0;
-    const descLen = data.description ? data.description.length : 0;
-    setText('title-length', `${titleLen} chars`);
-    setText('desc-length', `${descLen} chars`);
+function renderOverviewTab(data, scores) {
+    // 1. Gauges Section
+    const overviewContainer = document.getElementById('overview');
+    if (overviewContainer) {
+        // Find or create the gauges container
+        let gaugesContainer = document.getElementById('gauges-container');
+        if (!gaugesContainer) {
+            gaugesContainer = document.createElement('div');
+            gaugesContainer.id = 'gauges-container';
+            gaugesContainer.className = 'gauges-grid';
+            // Insert at the top of content
+            overviewContainer.insertBefore(gaugesContainer, overviewContainer.firstChild);
+        }
 
-    // Tech Stack - comprehensive categorized display
+        gaugesContainer.innerHTML = `
+            ${renderGauge(scores.performance, 'Performance')}
+            ${renderGauge(scores.accessibility, 'Accessibility')}
+            ${renderGauge(scores.bestPractices, 'Best Practices')}
+            ${renderGauge(scores.seo, 'SEO')}
+        `;
+        
+        // Remove old score card if it exists (it was class "score-card")
+        const oldScoreCard = overviewContainer.querySelector('.score-card');
+        if (oldScoreCard) {
+            oldScoreCard.remove();
+        }
+    }
+
+    // Meta Data Health Section (Detailed)
+    let metaContainer = document.getElementById('at-a-glance');
+    
+    // Create if missing
+    if (!metaContainer && overviewContainer) {
+        metaContainer = document.createElement('div');
+        metaContainer.id = 'at-a-glance';
+        metaContainer.className = 'data-group';
+        
+        // Insert after gauges or at beginning if gauges missing
+        const gauges = document.getElementById('gauges-container');
+        if (gauges) {
+            overviewContainer.insertBefore(metaContainer, gauges.nextSibling);
+        } else {
+            overviewContainer.appendChild(metaContainer);
+        }
+    }
+
+    if (metaContainer) {
+        metaContainer.innerHTML = renderMetaHealthCard(data);
+    }
+
+    // Image Optimization Section
+    let imgContainer = document.getElementById('image-health');
+    if (!imgContainer && overviewContainer && metaContainer) {
+        imgContainer = document.createElement('div');
+        imgContainer.id = 'image-health';
+        imgContainer.className = 'data-group';
+        overviewContainer.insertBefore(imgContainer, metaContainer.nextSibling);
+    }
+    if (imgContainer) {
+        imgContainer.innerHTML = renderImageHealthCard(data);
+    }
+
+
+
+    // Tech Stack
     const techStackEl = document.getElementById('tech-stack');
     if (techStackEl) {
-        // Clear previous data to prevent stale results
         techStackEl.innerHTML = '';
-
         if (data.techStack && Object.keys(data.techStack).length > 0) {
             renderTechStack(data.techStack, techStackEl);
         } else {
@@ -93,21 +174,29 @@ function renderOverviewTab(data, score, suggestions) {
         }
     }
 
-    // SEO Score
-    const scoreEl = document.getElementById('seo-score');
-    if (scoreEl) {
-        scoreEl.textContent = score;
-        scoreEl.style.color = score >= 90 ? 'var(--success-color)' : (score >= 70 ? 'var(--warning-color)' : 'var(--error-color)');
+    // Suggestions using new scores suggestions
+    const suggContainer = document.getElementById('suggestions-list') || document.getElementById('suggestions-container');
+    if (suggContainer && scores.suggestions) {
+        suggContainer.innerHTML = '';
+        if (scores.suggestions.length === 0) {
+            suggContainer.innerHTML = '<div class="suggestion-item success">🎉 No major issues found! Great job!</div>';
+        } else {
+            scores.suggestions.forEach(s => {
+                let icon = '•';
+                if (s.type === 'error') icon = '❌';
+                else if (s.type === 'warning') icon = '⚠️';
+                else if (s.type === 'info') icon = 'ℹ️';
+                else if (s.type === 'success') icon = '✅';
+
+                suggContainer.innerHTML += `
+                    <div class="suggestion-item ${s.type}">
+                        <span class="suggestion-icon">${icon}</span>
+                        <span class="suggestion-msg">${s.msg}</span>
+                    </div>`;
+            });
+        }
     }
 
-    // Suggestions - try both possible IDs
-    const suggContainer = document.getElementById('suggestions-list') || document.getElementById('suggestions-container');
-    if (suggContainer) {
-        suggContainer.innerHTML = '';
-        suggestions.forEach(s => {
-            suggContainer.innerHTML += `<div class="suggestion-item ${s.type}">${s.msg}</div>`;
-        });
-    }
 
     // CWV
     if (data.cwv) {
@@ -125,6 +214,175 @@ function renderOverviewTab(data, score, suggestions) {
     if (data.readability) {
         renderReadabilitySection(data.readability);
     }
+}
+
+/**
+ * Render Meta Health Card
+ */
+function renderMetaHealthCard(data) {
+    const titleLen = data.title ? data.title.length : 0;
+    const descLen = data.description ? data.description.length : 0;
+    
+    // Status Checks
+    const titleStatus = (titleLen >= 30 && titleLen <= 60) ? 'good' : (titleLen === 0 ? 'error' : 'warning');
+    const descStatus = (descLen >= 120 && descLen <= 160) ? 'good' : (descLen === 0 ? 'error' : 'warning');
+    const indexStatus = (data.robots && data.robots.toLowerCase().includes('noindex')) ? 'warning' : 'good';
+    const canonicalStatus = data.canonical ? 'good' : 'error'; 
+    const viewportStatus = data.viewport ? 'good' : 'error';
+    const charsetStatus = data.charset ? 'good' : 'warning';
+    
+    // Icons
+    const icons = { good: '✅', warning: '⚠️', error: '❌' };
+
+    return `
+        <label>Meta Data Health</label>
+        <div class="meta-health-grid">
+            <!-- Title -->
+            <div class="meta-item full-width">
+                <div class="meta-label-row">
+                    <span class="meta-label">Title Tag (${titleLen} chars)</span>
+                    <span class="status-icon">${icons[titleStatus]}</span>
+                </div>
+                <div class="meta-value">${data.title || '<span class="text-error">Missing</span>'}</div>
+            </div>
+
+            <!-- Description -->
+            <div class="meta-item full-width">
+                <div class="meta-label-row">
+                    <span class="meta-label">Meta Description (${descLen} chars)</span>
+                    <span class="status-icon">${icons[descStatus]}</span>
+                </div>
+                <div class="meta-value">${data.description || '<span class="text-error">Missing</span>'}</div>
+            </div>
+
+            <!-- Canonical -->
+            <div class="meta-item">
+                <div class="meta-label-row">
+                    <span class="meta-label">Canonical</span>
+                    <span class="status-icon">${icons[canonicalStatus]}</span>
+                </div>
+                <div class="meta-value small">${data.canonical ? 'Present' : 'Missing'}</div>
+            </div>
+
+             <!-- Robots -->
+            <div class="meta-item">
+                <div class="meta-label-row">
+                    <span class="meta-label">Robots</span>
+                    <span class="status-icon">${icons[indexStatus]}</span>
+                </div>
+                <div class="meta-value small">${data.robots || 'index, follow'}</div>
+            </div>
+
+            <!-- Viewport -->
+            <div class="meta-item">
+                <div class="meta-label-row">
+                    <span class="meta-label">Viewport</span>
+                    <span class="status-icon">${icons[viewportStatus]}</span>
+                </div>
+                <div class="meta-value small">${data.viewport ? 'Mobile Friendly' : 'Missing'}</div>
+            </div>
+
+            <!-- Charset -->
+            <div class="meta-item">
+                <div class="meta-label-row">
+                    <span class="meta-label">Charset</span>
+                    <span class="status-icon">${icons[charsetStatus]}</span>
+                </div>
+                <div class="meta-value small">${data.charset || 'Unknown'}</div>
+            </div>
+
+            <!-- Lang -->
+            <div class="meta-item">
+                 <div class="meta-label-row">
+                    <span class="meta-label">Language</span>
+                    <span class="status-icon">${data.lang ? '✅' : '⚠️'}</span>
+                </div>
+                <div class="meta-value small">${data.lang || 'Not set'}</div>
+            </div>
+            
+             <!-- Author -->
+            <div class="meta-item">
+                 <div class="meta-label-row">
+                    <span class="meta-label">Author</span>
+                    <span class="status-icon">ℹ️</span>
+                </div>
+                <div class="meta-value small">${data.author || 'N/A'}</div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Render Image Health Card
+ */
+function renderImageHealthCard(data) {
+    const images = data.images || [];
+    const total = images.length;
+    const missingAlt = images.filter(img => !img.alt).length;
+    
+    // Modern formats (WebP, AVIF, SVG)
+    const modernFormats = images.filter(img => 
+        /\.(webp|avif|svg)$/i.test(img.src) || img.src.startsWith('data:image/svg')
+    ).length;
+
+    // Large images (Natural width > 1200 or display width > 800)
+    const largeImages = images.filter(img => 
+        (img.naturalWidth > 1200) || (img.width > 800)
+    ).length;
+
+    // Status
+    const altStatus = missingAlt === 0 ? 'good' : (missingAlt < 3 ? 'warning' : 'error');
+    const modernStatus = modernFormats > 0 ? 'good' : 'warning';
+    
+    const icons = { good: '✅', warning: '⚠️', error: '❌' };
+
+    if (total === 0) {
+        return `
+            <label>Image Optimization</label>
+            <div class="data-value" style="color: var(--text-secondary);">No images found on this page.</div>
+        `;
+    }
+
+    return `
+        <label>Image Optimization</label>
+        <div class="meta-health-grid">
+            <!-- Total Images -->
+            <div class="meta-item">
+                <div class="meta-label-row">
+                    <span class="meta-label">Total Images</span>
+                    <span class="status-icon">🖼️</span>
+                </div>
+                <div class="meta-value">${total}</div>
+            </div>
+
+            <!-- Missing Alt -->
+            <div class="meta-item">
+                <div class="meta-label-row">
+                    <span class="meta-label">Missing Alt</span>
+                    <span class="status-icon">${icons[altStatus]}</span>
+                </div>
+                <div class="meta-value ${altStatus === 'error' ? 'text-error' : ''}">${missingAlt}</div>
+            </div>
+
+            <!-- Modern Formats -->
+            <div class="meta-item">
+                <div class="meta-label-row">
+                    <span class="meta-label">Modern Formats</span>
+                    <span class="status-icon">${icons[modernStatus]}</span>
+                </div>
+                <div class="meta-value small">${modernFormats} use WebP/AVIF/SVG</div>
+            </div>
+
+             <!-- Large Images -->
+            <div class="meta-item">
+                <div class="meta-label-row">
+                    <span class="meta-label">Large Images</span>
+                    <span class="status-icon">📏</span>
+                </div>
+                <div class="meta-value small">${largeImages} > 1200px wide</div>
+            </div>
+        </div>
+    `;
 }
 
 /**

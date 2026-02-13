@@ -3,6 +3,8 @@
  * Multiple rich text note cards with formatting
  */
 
+import { getCurrentDomain } from '../../core/extension-bridge.js';
+import { ConfirmModal } from '../components/confirm-modal.js';
 import { NoteModel } from '../../data/models/note.js';
 import { CategoryModel } from '../../data/models/category.js';
 import { processHashtags } from '../../utils/hashtags.js';
@@ -174,7 +176,7 @@ export async function triggerNoteCreation(container, domain) {
         // After re-render, find the new card to scroll to it
         const newGrid = container.querySelector('#notes-grid');
         if (newGrid) {
-            const newCard = newGrid.querySelector(`[data - note - id="${newNote.id}"]`);
+            const newCard = newGrid.querySelector(`[data-note-id="${newNote.id}"]`);
             if (newCard) {
                 const contentArea = newCard.querySelector('.note-content');
                 contentArea.focus();
@@ -440,7 +442,12 @@ function attachCardEventListeners(card, domain) {
     if (deleteBtn) {
         deleteBtn.addEventListener('click', async (e) => {
             e.stopPropagation(); // Prevent bubbling
-            if (confirm('Delete this note?')) {
+            if (await ConfirmModal.show({
+                title: 'Delete Note',
+                message: 'Are you sure you want to delete this note? This action cannot be undone.',
+                confirmText: 'Delete',
+                variant: 'destructive'
+            })) {
                 console.log('[Scratchpad] Deleting note:', noteId);
                 await NoteModel.delete(noteId, domain);
                 card.remove();
@@ -560,7 +567,7 @@ async function downloadSelectedNotesAsZip(container) {
         await new Promise(r => setTimeout(r, 150));
 
         for (const noteId of selectedNotes) {
-            const card = grid.querySelector(`.note - card[data - note - id="${noteId}"]`);
+            const card = grid.querySelector(`.note-card[data-note-id="${noteId}"]`);
             if (card) {
                 // Ensure no toolbars or overlays are visible on this specific card
                 const overlays = card.querySelectorAll('.selection-overlay');
@@ -630,7 +637,12 @@ async function downloadSelectedNotesAsZip(container) {
 }
 
 async function deleteSelectedNotes(container, domain) {
-    if (confirm(`Delete ${selectedNotes.size} selected note(s) ? `)) {
+    if (await ConfirmModal.show({
+        title: 'Delete Selected Notes',
+        message: `Are you sure you want to delete ${selectedNotes.size} note${selectedNotes.size > 1 ? 's' : ''}? These items will be permanently removed.`,
+        confirmText: `Delete ${selectedNotes.size} Item${selectedNotes.size > 1 ? 's' : ''}`,
+        variant: 'destructive'
+    })) {
         for (const noteId of selectedNotes) {
             await NoteModel.delete(noteId, domain);
         }

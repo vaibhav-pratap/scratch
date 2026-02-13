@@ -140,6 +140,19 @@
     display: block !important;
 }
 
+/* Remove padding for chat tab specifically */
+#chat.tab-content,
+#chat.tab-content.active,
+#chat.content-area,
+.tab-content#chat,
+.content-area#chat {
+    padding: 0 !important;
+    padding-top: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

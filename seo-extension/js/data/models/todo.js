@@ -50,7 +50,6 @@ export class TodoModel {
                 .filter(doc => doc.domain === domain)
                 .sort((a, b) => b.createdAt - a.createdAt);
         } catch (err) {
-            console.error('[TodoModel] Failed to getAll:', err);
             return [];
         }
     }
@@ -59,7 +58,6 @@ export class TodoModel {
      * Add a new todo
      */
     static async add(todo, domain = 'global') {
-        console.log('[TodoModel.add] Adding todo:', todo);
         const db = await getDatabase();
         const todoData = {
             ...todo,
@@ -96,7 +94,7 @@ export class TodoModel {
             };
             await db.put(updatedDoc);
         } catch (err) {
-            console.error(`[TodoModel] Failed to update todo ${docId}:`, err);
+            // silent fail
         }
     }
 
@@ -113,7 +111,7 @@ export class TodoModel {
             doc.updatedAt = Date.now();
             await db.put(doc);
         } catch (err) {
-            console.error(`[TodoModel] Failed to toggle complete ${docId}:`, err);
+            // silent fail
         }
     }
 
@@ -128,7 +126,7 @@ export class TodoModel {
             const doc = await db.get(docId);
             await db.remove(doc);
         } catch (err) {
-            if (err.status !== 404) console.error(`[TodoModel] Failed to delete todo ${docId}:`, err);
+            // silent fail
         }
     }
 

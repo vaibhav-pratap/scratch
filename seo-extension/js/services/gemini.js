@@ -104,7 +104,7 @@ export async function generateAISummary(seoData) {
         console.log('[Gemini] Request body:', JSON.stringify(requestBody, null, 2));
 
         const response = await fetch(
-            `${API_BASE_URL}/models/${model}:generateContent`,
+            `${API_BASE_URL}/models/${model}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: {
@@ -209,7 +209,7 @@ export async function generateTrackingParams(inputs) {
         };
 
         const response = await fetch(
-            `${API_BASE_URL}/models/${model}:generateContent`,
+            `${API_BASE_URL}/models/${model}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: {
@@ -369,7 +369,7 @@ export async function testApiKey(apiKey, model = DEFAULT_MODEL) {
         console.log('[Gemini] Testing API key with model:', model);
 
         const response = await fetch(
-            `${API_BASE_URL}/models/${model}:generateContent`,
+            `${API_BASE_URL}/models/${model}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: {
@@ -453,7 +453,7 @@ export async function generateSubtasks(taskText) {
         };
 
         const response = await fetch(
-            `${API_BASE_URL}/models/${model}:generateContent`,
+            `${API_BASE_URL}/models/${model}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: {
@@ -477,6 +477,66 @@ export async function generateSubtasks(taskText) {
 
     } catch (error) {
         console.error('[Gemini] Error generating subtasks:', error);
+        throw error;
+    }
+}
+
+/**
+ * Send a chat message with history
+ * @param {Array} history - Array of {role: 'user'|'model', parts: [{text: string}]}
+ * @param {string} model - Optional model override
+ * @returns {Promise<string>} - The model's response text
+ */
+export async function sendChatMessage(history, model = null) {
+    try {
+        const apiKey = await getGeminiApiKey();
+        if (!apiKey) {
+            throw new Error('Gemini API key not configured.');
+        }
+
+        const currentModel = model || await getGeminiModel();
+
+        const requestBody = {
+            contents: history,
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 2048,
+            },
+            safetySettings: [
+                { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+                { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+                { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+                { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
+            ]
+        };
+
+        const response = await fetch(
+            `${API_BASE_URL}/models/${currentModel}:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-goog-api-key': apiKey
+                },
+                body: JSON.stringify(requestBody)
+            }
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Gemini API Error: ${errorText}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+            throw new Error('Invalid response from Gemini API');
+        }
+
+        return data.candidates[0].content.parts[0].text;
+
+    } catch (error) {
+        console.error('[Gemini] Error sending chat message:', error);
         throw error;
     }
 }

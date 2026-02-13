@@ -1,10 +1,13 @@
 /**
  * AI Summary UI Module
  * Handles AI summary generation and display
+ * Supports AI summary generation using Gemini
  */
 
-import { generateOverviewSummary } from '../services/gemini-tab-specific.js';
-import { getGeminiApiKey } from '../services/gemini.js';
+import { generateOverviewSummary } from '../services/ai-prompts.js';
+import { hasApiKey } from '../services/ai-router.js';
+import { getSettings } from '../core/storage.js';
+import { AI_MODELS, DEFAULT_MODEL, getModelById } from '../services/ai-models.js';
 
 /**
  * Initialize AI Summary UI
@@ -26,9 +29,19 @@ async function handleGenerateSummary() {
         return;
     }
 
-    // Check if API key is configured
-    const apiKey = await getGeminiApiKey();
-    if (!apiKey) {
+    // Get selected model or use default
+    const settings = await getSettings(['selectedModel']);
+    const modelId = settings.selectedModel || DEFAULT_MODEL;
+    const model = getModelById(modelId);
+
+    if (!model) {
+        showError('Invalid model selected. Please check settings.');
+        return;
+    }
+
+    // Check if API key is configured for the selected provider
+    const hasKey = await hasApiKey(model.provider);
+    if (!hasKey) {
         showError('Please configure your Gemini API key in Settings first.');
         // Switch to settings tab
         const settingsTab = document.querySelector('[data-tab="settings"]');
@@ -44,7 +57,7 @@ async function handleGenerateSummary() {
     try {
         // Generate concise overview summary
         const summary = await generateOverviewSummary(data);
-        
+
         // Display summary
         showSummary(summary);
     } catch (error) {

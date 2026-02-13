@@ -1,0 +1,74 @@
+/* PageSpeed Style Information Gauges (SVG Version) */
+
+.gauges-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+    justify-items: center;
+}
+
+@media (max-width: 600px) {
+    .gauges-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.gauge-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.gauge-svg-container {
+    width: 60px;
+    height: 60px;
+    position: relative;
+}
+
+.circular-chart {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.circle-bg {
+    fill: none;
+    stroke: var(--md-sys-color-surface-variant);
+    stroke-width: 3.8;
+}
+
+.circle {
+    fill: none;
+    stroke-width: 3.8;
+    stroke-linecap: round;
+    /* Animation */
+    animation: progress 1s ease-out forwards;
+}
+
+@keyframes progress {
+    0% { stroke-dasharray: 0 100; }
+}
+
+.percentage {
+    fill: var(--md-sys-color-on-surface);
+    font-family: 'Google Sans', sans-serif;
+    font-weight: 700;
+    font-size: 0.5em; /* Scaled relative to viewBox */
+    text-anchor: middle;
+}
+
+.gauge-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Color Classes - Applied via JS inline style generally, but referenced here for context */
+/* The JS sets the stroke color directly on the .circle element */
+

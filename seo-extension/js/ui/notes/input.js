@@ -4,7 +4,10 @@
  * WITH HASHTAG DETECTION
  */
 
+import { ConfirmModal } from '../components/confirm-modal.js';
 import { CategoryModel } from '../../data/models/category.js';
+import { NoteModel } from '../../data/models/note.js';
+import { TodoModel } from '../../data/models/todo.js';
 import { processHashtags } from '../../utils/hashtags.js';
 
 export function initInputHandler(elements, onSend, domain, onCategoryUpdate) {
@@ -53,8 +56,15 @@ export function initInputHandler(elements, onSend, domain, onCategoryUpdate) {
                 const deleteBtn = e.target.closest('.delete-btn-inline');
                 if (deleteBtn) {
                     const catToDelete = deleteBtn.dataset.deleteCat;
-                    if (confirm(`Delete category "${catToDelete}"?`)) {
+                    if (await ConfirmModal.show({
+                        title: 'Delete Category',
+                        message: `Are you sure you want to delete category "${catToDelete}"?`,
+                        confirmText: 'Delete',
+                        variant: 'destructive'
+                    })) {
                         await CategoryModel.delete(catToDelete, domain);
+                        await TodoModel.deleteByCategory(catToDelete, domain);
+                        await NoteModel.deleteByCategory(catToDelete, domain);
                         state.categories = state.categories.filter(c => c !== catToDelete);
                         await loadCategories();
                         if (onCategoryUpdate) onCategoryUpdate();

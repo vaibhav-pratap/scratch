@@ -1,5 +1,5 @@
 /**
- * PouchDB Database Instance (Native)
+ * PouchDB Database Instance
  * Manages the PouchDB database for the SEO extension.
  */
 
@@ -12,8 +12,6 @@ export async function initDatabase() {
 
     dbPromise = (async () => {
         try {
-            console.log('[PouchDB] Initializing database...');
-
             if (!window.PouchDB) {
                 throw new Error('PouchDB library not loaded');
             }
@@ -24,20 +22,16 @@ export async function initDatabase() {
                 auto_compaction: true
             });
 
-            console.log('[PouchDB] Database created/opened successfully');
-
             // Basic verification
             try {
-                const info = await db.info();
-                console.log('[PouchDB] DB Info:', info);
+                await db.info();
             } catch (err) {
-                console.error('[PouchDB] Failed to get DB info:', err);
+                // strict console cleanup
             }
 
             dbInstance = db;
             return db;
         } catch (error) {
-            console.error('[PouchDB] Failed to initialize:', error);
             dbPromise = null;
             throw error;
         }
@@ -55,11 +49,7 @@ export async function getDatabase() {
 
 export async function closeDatabase() {
     if (dbInstance) {
-        // PouchDB doesn't strictly need 'closing' like RxDB, but we can clear the reference
-        // or call close() if we want to stop event listeners.
-        // await dbInstance.close(); 
         dbInstance = null;
-        console.log('[PouchDB] Database reference cleared');
     }
 }
 
@@ -72,6 +62,6 @@ export async function subscribeToChanges(callback) {
     }).on('change', (change) => {
         callback(change);
     }).on('error', (err) => {
-        console.error('[PouchDB] Changes feed error:', err);
+        // strict console cleanup
     });
 }

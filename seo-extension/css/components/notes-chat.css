@@ -599,27 +599,6 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.chat-input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    padding: 8px 12px;
-    font-size: 15px;
-    color: var(--ios-text-primary);
-    outline: none;
-    min-width: 0;
-    font-family: inherit;
-    max-height: 100px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    /* Preserve whitespace and wrapping */
-}
-
-.chat-input[contenteditable]:empty::before {
-    content: attr(data-placeholder);
-    color: var(--ios-text-tertiary);
-    cursor: text;
-}
 
 .icon-btn.small {
     width: 24px;

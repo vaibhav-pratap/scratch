@@ -1,0 +1,65 @@
+/* Meta Health Card Styles */
+
+.meta-health-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    background-color: var(--md-sys-color-surface);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--radius-md);
+    padding: 12px;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.meta-item.full-width {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+}
+
+.meta-item.full-width:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 12px;
+}
+
+.meta-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.meta-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.status-icon {
+    font-size: 14px;
+}
+
+.meta-value {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--md-sys-color-on-surface);
+    word-break: break-word;
+}
+
+.meta-value.small {
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.text-error {
+    color: var(--md-sys-color-error);
+    font-style: italic;
+}

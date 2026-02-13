@@ -113,6 +113,10 @@ export async function initTabSwitching() {
             // 2. Save state
             localStorage.setItem('activeTab', targetId);
 
+            // 2b. Dispatch Event for Sidepanel to handle (render content)
+            const event = new CustomEvent('tabActivated', { detail: { tabId: targetId } });
+            document.dispatchEvent(event);
+
             // 3. Auto-scroll - use 'start' for first tab to prevent cutoff
             const isFirstTab = tab.previousElementSibling === null;
             tab.scrollIntoView({
