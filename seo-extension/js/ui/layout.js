@@ -943,13 +943,13 @@ function renderContactTab() {
                 Have a question, feedback, or need help? We'd love to hear from you.
             </p>
             
-            <div style="background: var(--md-sys-color-surface-variant); padding: 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+            <div style="background: var(--md-sys-color-surface-variant); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
                 <div style="text-align: left;">
-                    <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); text-transform: uppercase; font-weight: 500; margin-bottom: 4px;">Email Support</div>
-                    <div style="font-size: 15px; font-weight: 700;">isitstrange@outlook.com</div>
+                    <div style="font-size: 11px; color: var(--md-sys-color-on-surface-variant); text-transform: uppercase; font-weight: 600; margin-bottom: 4px; letter-spacing: 0.5px;">Email Support</div>
+                    <div style="font-size: 15px; font-weight: 700; color: var(--md-sys-color-on-surface); word-break: break-all;">isitstrange@outlook.com</div>
                 </div>
-                <button class="action-btn secondary small" onclick="copyToClipboard('isitstrange@outlook.com', this)" style="padding: 10px 16px;">
-                    <i class="fa-solid fa-copy" style="margin-right: 6px;"></i> Copy
+                <button class="action-btn secondary small" onclick="copyToClipboard('isitstrange@outlook.com', this)" style="width: 100%; justify-content: center; padding: 10px;">
+                    <i class="fa-solid fa-copy" style="margin-right: 8px;"></i> Copy Email Address
                 </button>
             </div>
             
