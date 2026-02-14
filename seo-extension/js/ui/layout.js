@@ -635,6 +635,7 @@ function renderSchemaBuilderTab() {
             <div class="schema-header">
                 <div class="mode-toggle">
                     <button class="toggle-btn active" data-view="builder">Builder</button>
+                    <button class="toggle-btn" data-view="validator">Validator</button>
                     <button class="toggle-btn" data-view="history">Saved Schema</button>
                 </div>
             </div>
@@ -642,7 +643,7 @@ function renderSchemaBuilderTab() {
             <!-- Builder View -->
             <div id="schema-builder-view" class="view-pane active">
                 <!-- Type Selection & Title Card -->
-                <div class="builder-card">
+                <div class="builder-card sb-main-card">
                     <div class="flex-column gap-3">
                         <div class="form-group">
                             <label for="schema-title-input">Schema Title</label>
@@ -650,19 +651,104 @@ function renderSchemaBuilderTab() {
                         </div>
                         <div class="builder-header">
                             <div class="form-group" style="flex: 1;">
-                                <label for="schema-type-select">Schema Type</label>
-                                <select id="schema-type-select" class="md-select">
-                                    <option value="Organization">Organization</option>
-                                    <option value="LocalBusiness">Local Business</option>
-                                    <option value="Article">Article</option>
-                                    <option value="FAQPage">FAQ Page</option>
-                                    <option value="BreadcrumbList">Breadcrumb List</option>
-                                    <option value="Product">Product</option>
-                                    <option value="Recipe">Recipe</option>
-                                    <option value="VideoObject">Video</option>
-                                    <option value="Event">Event</option>
-                                </select>
+                            <label>Schema Type</label>
+                            <div class="sb-dropdown" id="schema-type-dropdown">
+                                <div class="sb-dropdown-trigger" id="schema-type-trigger">
+                                    <div class="sb-trigger-content">
+                                        <i class="fa-solid fa-sitemap sb-type-icon"></i>
+                                        <span class="sb-selected-value">Organization</span>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-down sb-chevron"></i>
+                                </div>
+                                <div class="sb-dropdown-menu" id="schema-type-menu">
+                                    <div class="sb-dropdown-item active" data-value="Organization">
+                                        <i class="fa-solid fa-sitemap"></i>
+                                        <span>Organization</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="LocalBusiness">
+                                        <i class="fa-solid fa-shop"></i>
+                                        <span>Local Business</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="Article">
+                                        <i class="fa-solid fa-newspaper"></i>
+                                        <span>Article</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="FAQPage">
+                                        <i class="fa-solid fa-question-circle"></i>
+                                        <span>FAQ Page</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="BreadcrumbList">
+                                        <i class="fa-solid fa-folder-tree"></i>
+                                        <span>Breadcrumb List</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="Product">
+                                        <i class="fa-solid fa-box"></i>
+                                        <span>Product</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="Recipe">
+                                        <i class="fa-solid fa-utensils"></i>
+                                        <span>Recipe</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="VideoObject">
+                                        <i class="fa-solid fa-video"></i>
+                                        <span>Video</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="Event">
+                                        <i class="fa-solid fa-calendar-day"></i>
+                                        <span>Event</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="Review">
+                                        <i class="fa-solid fa-star"></i>
+                                        <span>Review</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="HowTo">
+                                        <i class="fa-solid fa-list-check"></i>
+                                        <span>How-To</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="Course">
+                                        <i class="fa-solid fa-graduation-cap"></i>
+                                        <span>Course</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="JobPosting">
+                                        <i class="fa-solid fa-briefcase"></i>
+                                        <span>Job Posting</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="Person">
+                                        <i class="fa-solid fa-user"></i>
+                                        <span>Person</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="WebSite">
+                                        <i class="fa-solid fa-globe"></i>
+                                        <span>WebSite</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="SoftwareApplication">
+                                        <i class="fa-solid fa-laptop-code"></i>
+                                        <span>Software App</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="Movie">
+                                        <i class="fa-solid fa-film"></i>
+                                        <span>Movie</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="Book">
+                                        <i class="fa-solid fa-book"></i>
+                                        <span>Book</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="MedicalCondition">
+                                        <i class="fa-solid fa-heartbeat"></i>
+                                        <span>Medical Condition</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="Restaurant">
+                                        <i class="fa-solid fa-store"></i>
+                                        <span>Restaurant</span>
+                                    </div>
+                                    <div class="sb-dropdown-item" data-value="Service">
+                                        <i class="fa-solid fa-concierge-bell"></i>
+                                        <span>Service</span>
+                                    </div>
+                                </div>
                             </div>
+                            <input type="hidden" id="schema-type-select" value="Organization">
+                        </div>
                             <div class="builder-actions" style="display: flex; gap: 8px; align-self: flex-end; margin-bottom: 2px;">
                                 <button id="btn-save-schema" class="action-btn primary small" title="Save to Site Memory">
                                     <i class="fa-solid fa-floppy-disk"></i>
@@ -695,6 +781,34 @@ function renderSchemaBuilderTab() {
                         </div>
                         <pre id="schema-json-preview" class="code-block">{}</pre>
                     </div>
+                </div>
+            </div>
+
+            <!-- Validator View -->
+            <div id="schema-validator-view" class="view-pane">
+                <div class="builder-card">
+                    <h3><i class="fa-solid fa-shield-check"></i> Schema Validator</h3>
+                    <p class="text-xs text-secondary mb-3">Paste your JSON-LD schema below to validate it against Schema.org standards.</p>
+                    <textarea id="validator-input" class="md-input validator-textarea" rows="12" placeholder='Paste your JSON-LD schema here...
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Example",
+  "url": "https://example.com"
+}'></textarea>
+                    <div style="display: flex; gap: 8px; margin-top: 12px;">
+                        <button id="btn-validate-schema" class="action-btn primary">
+                            <i class="fa-solid fa-check-circle"></i> Validate
+                        </button>
+                        <button id="btn-clear-validator" class="action-btn secondary">
+                            <i class="fa-solid fa-eraser"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                <div id="validator-results" class="builder-card" style="display: none;">
+                    <h3><i class="fa-solid fa-clipboard-list"></i> Validation Results</h3>
+                    <div id="validator-summary" class="validator-summary"></div>
+                    <div id="validator-details" class="validator-details"></div>
                 </div>
             </div>
 

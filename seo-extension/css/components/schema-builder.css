@@ -75,7 +75,9 @@
     box-shadow: var(--md-sys-shadow-1);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     width: 100%;
+    position: relative;
 }
+
 
 .schema-builder-container .builder-card h3 {
     margin: 0 0 12px 0;
@@ -97,6 +99,7 @@
     margin-bottom: 16px !important;
     width: 100% !important;
     align-items: flex-start !important;
+    overflow: visible !important; /* Prevent clipping of absolute menus */
 }
 
 .schema-builder-container .form-group:last-child {
@@ -265,3 +268,323 @@
 .schema-builder-container .mb-3 { margin-bottom: 12px; }
 .schema-builder-container .mb-2 { margin-bottom: 8px; }
 .schema-builder-container .px-1 { padding-left: 4px; padding-right: 4px; }
+
+/* Custom Dropdown UI - Aligned with Notes Tab Contrast */
+.sb-dropdown {
+    position: relative;
+    width: 100%;
+    z-index: 100;
+}
+
+
+.sb-dropdown-trigger {
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.sb-dropdown-trigger:hover {
+    background: var(--md-sys-color-surface-container-high);
+    border-color: var(--md-sys-color-primary);
+}
+
+.sb-dropdown.open .sb-dropdown-trigger {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-surface-container-highest);
+}
+
+.sb-trigger-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sb-type-icon {
+    font-size: 16px;
+    color: var(--md-sys-color-primary);
+    width: 20px;
+    text-align: center;
+}
+
+.sb-selected-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+}
+
+.sb-chevron {
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+    transition: transform 0.3s ease;
+}
+
+.sb-dropdown.open .sb-chevron {
+    transform: rotate(180deg);
+}
+
+.sb-dropdown-menu {
+    position: fixed;
+    /* top/left/width set dynamically via JS */
+    background: var(--md-sys-color-surface);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 16px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.12);
+    z-index: 10000;
+    display: none;
+    flex-direction: column;
+    padding: 4px 8px 4px 4px;
+    max-height: 280px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+
+/* Sleek Scrollbar for Dropdown Menu */
+.sb-dropdown-menu::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sb-dropdown-menu::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 8px 0; /* Keeps scrollbar away from rounded edges */
+}
+
+.sb-dropdown-menu::-webkit-scrollbar-thumb {
+    background: var(--md-sys-color-outline-variant);
+    border-radius: 10px;
+}
+
+.sb-dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: var(--md-sys-color-outline);
+}
+
+/* Glassmorphism for dark mode or premium feel if preferred */
+[data-theme="dark"] .sb-dropdown-menu {
+    background: rgba(var(--md-sys-color-surface-rgb), 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.sb-dropdown.open .sb-dropdown-menu {
+    display: flex;
+}
+
+.sb-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-height: 40px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.sb-dropdown-item:hover {
+    background: var(--md-sys-color-surface-variant);
+}
+
+.sb-dropdown-item.active {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.sb-dropdown-item i {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+    color: var(--md-sys-color-primary);
+}
+
+.sb-dropdown-item.active i {
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.sb-dropdown-item span {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Ensure topmost item rounding matches container */
+.sb-dropdown-item:first-child {
+    border-top-left-radius: 13px;
+    border-top-right-radius: 13px;
+}
+
+.sb-dropdown-item:last-child {
+    border-bottom-left-radius: 13px;
+    border-bottom-right-radius: 13px;
+}
+
+/* =====================================================
+   Required Field Indicators & Validation Errors
+   ===================================================== */
+
+.required-star {
+    color: var(--md-sys-color-error, #ef4444);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.md-input.input-error {
+    border-color: var(--md-sys-color-error, #ef4444) !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15) !important;
+    animation: shake 0.35s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+}
+
+/* Clear error state on focus */
+.md-input.input-error:focus {
+    border-color: var(--md-sys-color-primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--md-sys-color-primary-rgb, 103, 80, 164), 0.15) !important;
+}
+
+/* =====================================================
+   Validator View Styles
+   ===================================================== */
+
+.validator-textarea {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    min-height: 180px;
+    resize: vertical;
+    white-space: pre;
+    tab-size: 2;
+}
+
+.validator-summary {
+    margin-bottom: 16px;
+}
+
+.validator-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid;
+}
+
+.validator-badge i {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.validator-badge div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.validator-badge strong {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.validator-badge span {
+    font-size: 12px;
+    opacity: 0.75;
+}
+
+/* Badge color variants */
+.validator-badge--success {
+    background: rgba(34, 197, 94, 0.08);
+    border-color: rgba(34, 197, 94, 0.25);
+    color: #22c55e;
+}
+
+.validator-badge--error {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: #ef4444;
+}
+
+.validator-badge--warning {
+    background: rgba(234, 179, 8, 0.08);
+    border-color: rgba(234, 179, 8, 0.25);
+    color: #eab308;
+}
+
+.validator-badge--info {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.25);
+    color: #3b82f6;
+}
+
+/* Issue Groups */
+.validator-issue-group {
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid;
+}
+
+.validator-issue-group h4 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.validator-issue-group ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.validator-issue-group li {
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.validator-issue-group li code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+}
+
+.validator-issue-group--error {
+    background: rgba(239, 68, 68, 0.04);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+.validator-issue-group--error h4 { color: #ef4444; }
+
+.validator-issue-group--warning {
+    background: rgba(234, 179, 8, 0.04);
+    border-color: rgba(234, 179, 8, 0.2);
+}
+.validator-issue-group--warning h4 { color: #eab308; }
+
+.validator-issue-group--info {
+    background: rgba(59, 130, 246, 0.04);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+.validator-issue-group--info h4 { color: #3b82f6; }
