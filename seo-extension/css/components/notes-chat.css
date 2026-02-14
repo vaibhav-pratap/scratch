@@ -600,6 +600,30 @@
 }
 
 
+.chat-input {
+    flex: 1;
+    min-height: 20px;
+    max-height: 120px;
+    padding: 6px 8px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--ios-text-primary);
+    background: transparent;
+    border: none;
+    outline: none;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    cursor: text;
+}
+
+/* Custom Placeholder for ContentEditable */
+.chat-input:empty:before {
+    content: attr(data-placeholder);
+    color: var(--ios-text-tertiary);
+    cursor: text;
+}
+
 .icon-btn.small {
     width: 24px;
     height: 24px;

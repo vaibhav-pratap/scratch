@@ -71,6 +71,12 @@
     color: var(--md-sys-color-on-surface);
 }
 
+.icon-btn.active,
+.icon-btn.highlight-trigger.active {
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
 /* Copy Icon Button */
 .copy-icon-btn {
     background: transparent;

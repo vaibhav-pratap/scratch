@@ -7,6 +7,7 @@ import { toggleLinkHighlight } from '../highlighting/links.js';
 import { highlightAccessibilityIssue, clearAccessibilityHighlights, toggleAccessibilityHighlights } from '../highlighting/accessibility.js';
 import { highlightImage } from '../highlighting/images.js';
 import { highlightPassiveVoice, highlightLongSentences, highlightSentencesWithoutTransitions, highlightLongParagraphs, highlightAllIssues, toggleContentHighlights, clearContentHighlights, scrollToText } from '../highlighting/content-quality.js';
+import { highlightBySelector, clearHighlightsBySelector, clearAllHighlights } from '../highlighting/utils.js';
 
 /**
  * Setup message listener
@@ -26,7 +27,9 @@ export function setupMessageListener(extractDataFn) {
         } else if (request.action === "toggleAccessibilityHighlights") {
             toggleAccessibilityHighlights(request.enabled, request.issues);
         } else if (request.action === "highlightImage") {
-            highlightImage(request.src);
+            const result = highlightImage(request.src);
+            sendResponse({ active: result });
+            return true;
         } else if (request.action === "highlightPassiveVoice") {
             highlightPassiveVoice(request.sentences);
         } else if (request.action === "highlightLongSentences") {
@@ -43,6 +46,14 @@ export function setupMessageListener(extractDataFn) {
             clearContentHighlights();
         } else if (request.action === "scrollToText") {
             scrollToText(request.text);
+        } else if (request.action === "highlightElement") {
+            const result = highlightBySelector(request.selector, request.label, request.type);
+            sendResponse({ active: result });
+            return true; // Keep channel open for async response
+        } else if (request.action === "clearHighlights") {
+            clearHighlightsBySelector(request.selector);
+        } else if (request.action === "clearAllHighlights") {
+            clearAllHighlights();
         }
     });
 }

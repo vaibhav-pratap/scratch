@@ -136,6 +136,46 @@ export function injectHighlightStyles() {
         .seo-ext-highlight-content:hover::before {
             opacity: 1;
         }
+
+        /* Generic Element Highlighting (Overlays) */
+        .seo-ext-highlight-overlay {
+            position: absolute !important;
+            pointer-events: none !important;
+            z-index: 2147483647 !important; /* Max z-index */
+            background-color: rgba(26, 115, 232, 0.25) !important;
+            border: 2px solid #1a73e8 !important;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 15px rgba(26, 115, 232, 0.6) !important;
+            border-radius: 4px !important;
+            animation: seo-pulse-overlay 2s infinite !important;
+            transition: opacity 0.3s ease !important;
+        }
+
+        .seo-ext-highlight-label {
+            position: absolute !important;
+            bottom: 100% !important;
+            left: 0 !important;
+            background-color: #1a73e8 !important;
+            color: white !important;
+            padding: 4px 12px !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            border-radius: 4px 4px 0 0 !important;
+            white-space: nowrap !important;
+            margin-bottom: 2px !important;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2) !important;
+            z-index: 2147483647 !important;
+        }
+
+        @keyframes seo-pulse-overlay {
+            0%, 100% {
+                background-color: rgba(26, 115, 232, 0.25);
+                box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 15px rgba(26, 115, 232, 0.6);
+            }
+            50% {
+                background-color: rgba(26, 115, 232, 0.4);
+                box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9), 0 0 25px rgba(26, 115, 232, 0.8);
+            }
+        }
     `;
     document.head.appendChild(style);
 }

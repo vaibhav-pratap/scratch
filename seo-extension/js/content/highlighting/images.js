@@ -75,17 +75,20 @@ export function highlightImage(imgSrc) {
     }
 
     if (foundImage) {
+        // Toggle behavior: if already highlighted, remove it
+        if (foundImage.classList.contains('seo-ext-highlight-image')) {
+            foundImage.classList.remove('seo-ext-highlight-image');
+            return false; // Toggled OFF
+        }
+
         // Add highlight class
         foundImage.classList.add('seo-ext-highlight-image');
 
         // Scroll into view
         foundImage.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // Auto-remove highlight after 5 seconds
-        setTimeout(() => {
-            clearImageHighlights();
-        }, 5000);
+        return true; // Toggled ON
     }
+    return false;
 }
 
 /**

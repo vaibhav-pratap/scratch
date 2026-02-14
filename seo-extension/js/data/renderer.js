@@ -216,6 +216,77 @@ function renderOverviewTab(data, scores) {
     if (data.readability) {
         renderReadabilitySection(data.readability);
     }
+
+    // Attach Highlight Listeners
+    attachOverviewHighlightListeners(data);
+}
+
+/**
+ * Attach listeners for overview highlights
+ */
+function attachOverviewHighlightListeners(data) {
+    // CWV Highlights
+    ['lcp', 'cls', 'inp'].forEach(metric => {
+        const btn = document.getElementById(`btn-highlight-${metric}`);
+        if (btn) {
+            btn.onclick = () => {
+                const selector = document.getElementById(`${metric}-element`)?.textContent;
+                if (selector && selector !== '--' && selector !== 'N/A') {
+                    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                        chrome.tabs.sendMessage(tabs[0].id, {
+                            action: "highlightElement",
+                            selector: selector,
+                            label: `${metric.toUpperCase()} Element`,
+                            type: metric === 'lcp' ? 'error' : 'warning'
+                        }, (response) => {
+                            // Update button state based on whether highlight is active
+                            if (response && response.active !== undefined) {
+                                btn.classList.toggle('active', response.active);
+                            }
+                        });
+                    });
+                }
+            };
+        }
+    });
+
+    // Readability Highlight
+    const readBtn = document.getElementById('btn-highlight-readability');
+    if (readBtn) {
+        let highlightsEnabled = false;
+        readBtn.onclick = () => {
+            highlightsEnabled = !highlightsEnabled;
+            readBtn.classList.toggle('active', highlightsEnabled);
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: "toggleContentHighlights",
+                    enabled: highlightsEnabled,
+                    issues: data.readability.issues || {}
+                });
+            });
+        };
+    }
+
+    // Images Highlight
+    const imgBtn = document.getElementById('btn-highlight-images');
+    if (imgBtn) {
+        let highlightsEnabled = false;
+        imgBtn.onclick = () => {
+            highlightsEnabled = !highlightsEnabled;
+            imgBtn.classList.toggle('active', highlightsEnabled);
+            
+            const imagesWithIssues = data.images.filter(img => !img.alt || (img.naturalWidth && img.naturalWidth > 2000));
+            
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                imagesWithIssues.forEach(img => {
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        action: "highlightImage",
+                        src: img.src
+                    });
+                });
+            });
+        };
+    }
 }
 
 /**
@@ -432,6 +503,12 @@ function updateCWVCard(metric, value, element, goodThreshold, poorThreshold) {
     if (elementEl) {
         elementEl.textContent = element || 'N/A';
         elementEl.title = element || ''; // Tooltip for long selectors
+        
+        // Show/hide highlight button
+        const highlightBtn = document.getElementById(`btn-highlight-${metric}`);
+        if (highlightBtn) {
+            highlightBtn.style.display = element ? 'block' : 'none';
+        }
     }
 }
 

@@ -338,7 +338,12 @@ function renderOverviewTab() {
                     </div>
                     <div id="lcp-rating" class="metric-rating">--</div>
                     <div class="metric-element">
-                        <small>Element:</small>
+                        <div class="flex-between">
+                            <small>Element:</small>
+                            <button id="btn-highlight-lcp" class="icon-btn small highlight-trigger" title="Highlight on page" style="display: none;">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
                         <code id="lcp-element">--</code>
                     </div>
                 </div>
@@ -351,7 +356,12 @@ function renderOverviewTab() {
                     </div>
                     <div id="cls-rating" class="metric-rating">--</div>
                     <div class="metric-element">
-                        <small>Element:</small>
+                        <div class="flex-between">
+                            <small>Element:</small>
+                            <button id="btn-highlight-cls" class="icon-btn small highlight-trigger" title="Highlight on page" style="display: none;">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
                         <code id="cls-element">--</code>
                     </div>
                 </div>
@@ -364,7 +374,12 @@ function renderOverviewTab() {
                     </div>
                     <div id="inp-rating" class="metric-rating">--</div>
                     <div class="metric-element">
-                        <small>Element:</small>
+                        <div class="flex-between">
+                            <small>Element:</small>
+                            <button id="btn-highlight-inp" class="icon-btn small highlight-trigger" title="Highlight on page" style="display: none;">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
                         <code id="inp-element">--</code>
                     </div>
                 </div>
@@ -390,7 +405,12 @@ function renderOverviewTab() {
         </div>
 
         <div class="data-group">
-            <label>Readability</label>
+            <div class="flex-between">
+                <label>Readability</label>
+                <button id="btn-highlight-readability" class="icon-btn small highlight-trigger" title="Highlight issues on page">
+                    <i class="fa-solid fa-highlighter"></i>
+                </button>
+            </div>
             <div id="readability-score" class="data-value highlight">--</div>
             <div id="readability-details" style="margin-top: 12px; display: none;"></div>
         </div>
