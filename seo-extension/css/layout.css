@@ -24,7 +24,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-sm);
 }
 
 /* Frequency Toggle Buttons */
@@ -116,7 +116,7 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-lg) var(--spacing-sm);
     scroll-behavior: smooth;
     position: relative;
     padding-bottom: 160px; /* Space for floating footer + Donation Bar */

@@ -43,7 +43,7 @@
 
 /* --- Header & Toggle --- */
 .notes-header {
-    padding: 12px 16px;
+    padding: 12px 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -94,7 +94,7 @@
 .category-tabs {
     display: flex;
     gap: 8px;
-    padding: 8px 16px;
+    padding: 8px 8px;
     overflow-x: auto;
     /* Keep scrolling for categories */
     background: transparent !important;
@@ -105,7 +105,7 @@
 .date-filter-bar {
     display: flex;
     gap: 8px;
-    padding: 8px 16px;
+    padding: 8px 8px;
     overflow-x: auto;
     /* Restore scrolling */
     flex-wrap: nowrap;
@@ -246,7 +246,7 @@
     flex: 1;
     overflow-y: auto;
     position: relative;
-    padding: 16px;
+    padding: 16px 8px;
     padding-bottom: 120px;
     height: 100%;
     box-sizing: border-box;
