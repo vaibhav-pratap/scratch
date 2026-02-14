@@ -14,29 +14,156 @@ function sendTabMessage(action, data = {}) {
     });
 }
 
+/**
+ * Check if image is decorative or an icon
+ */
+function isDecorative(img) {
+    // 1. Explicit decorative attributes
+    if (img.role === 'presentation' || img.role === 'none') return true;
+    if (img.ariaHidden === 'true') return true;
+
+    // 2. Inline SVGs or SVG files are often icons
+    const isSvg = img.type.includes('svg') || img.src.includes('.svg') || img.src.startsWith('data:image/svg');
+    
+    // 3. Small dimensions (likely icons/bullets)
+    // Relaxed check: < 50x50 is almost certainly an icon
+    const isSmall = (img.width > 0 && img.width <= 50) && (img.height > 0 && img.height <= 50);
+
+    // If it's an SVG or Small, treat as decorative/icon UNLESS it has a title or meaningful alt
+    // But for the purpose of "Missing Alt Error", we want to exclude these if they lack alt.
+    if (isSvg || isSmall) return true;
+
+    // 4. Class checks (common icon classes)
+    if (img.classes && (img.classes.includes('icon') || img.classes.includes('logo'))) return true;
+
+    return false;
+}
+
 export function renderImagesTab(data) {
     const container = document.getElementById('images-grouped-content');
     if (!container) {
-        // Fallback to old structure
         return renderImagesTabLegacy(data);
     }
 
     const images = data.images || [];
-    const missingAlt = images.filter(i => !i.alt).length;
+    
+    // --- Advanced Analysis ---
+    let total = images.length;
+    let missingAltCritical = 0;
+    let decorativeCount = 0;
+    let lazyLoadedCount = 0;
+    const formats = { webp: 0, jpg: 0, png: 0, svg: 0, gif: 0, other: 0 };
+    const sizes = { small: 0, medium: 0, large: 0 }; // Small < 100px, Medium < 800px, Large > 800px
+
+    images.forEach(img => {
+        // 1. Decorative Check
+        const decorative = isDecorative(img);
+        if (decorative) {
+            decorativeCount++;
+        } else if (!img.alt || img.alt.trim() === '') {
+            missingAltCritical++;
+        }
+
+        // 2. Lazy Loading
+        if (img.loading === 'lazy' || img.type.includes('lazy')) lazyLoadedCount++;
+
+        // 3. Format Detection
+        const lowerSrc = img.src.toLowerCase();
+        if (lowerSrc.includes('.webp') || img.src.startsWith('data:image/webp')) formats.webp++;
+        else if (lowerSrc.includes('.jpg') || lowerSrc.includes('.jpeg')) formats.jpg++;
+        else if (lowerSrc.includes('.png')) formats.png++;
+        else if (lowerSrc.includes('.svg') || img.type.includes('svg')) formats.svg++;
+        else if (lowerSrc.includes('.gif')) formats.gif++;
+        else formats.other++;
+
+        // 4. Size Categorization
+        const maxDim = Math.max(img.width || 0, img.height || 0);
+        if (maxDim > 0) {
+            if (maxDim < 100) sizes.small++;
+            else if (maxDim < 800) sizes.medium++;
+            else sizes.large++;
+        }
+    });
 
     let html = '';
 
-    // Header with stats
+    // --- Stats Dashboard ---
     html += `
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--md-sys-color-surface-variant); border-radius: var(--radius-sm); margin-bottom: 20px;">
-            <div style="display: flex; gap: 32px;">
-                <div>
-                    <span style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); font-weight: 500; text-transform: uppercase;">Total Images</span>
-                    <div style="font-size: 24px; font-weight: 600; color: var(--md-sys-color-on-surface);">${images.length}</div>
+        <div class="stats-dashboard" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px;">
+            <!-- Total -->
+            <div style="background: var(--md-sys-color-surface-variant); padding: 16px; border-radius: 12px;">
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; margin-bottom: 4px;">Total Images</div>
+                <div style="font-size: 24px; font-weight: 700;">${total}</div>
+            </div>
+            
+            <!-- Issues (Critical) -->
+            <div style="background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); padding: 16px; border-radius: 12px;">
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; margin-bottom: 4px;">Missing Alt</div>
+                <div style="font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                    ${missingAltCritical}
+                    ${missingAltCritical > 0 ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>' : ''}
                 </div>
-                <div>
-                    <span style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); font-weight: 500; text-transform: uppercase;">Missing Alt Text</span>
-                    <div style="font-size: 24px; font-weight: 600; color: ${missingAlt > 0 ? 'var(--md-sys-color-error)' : 'var(--md-sys-color-primary)'};">${missingAlt}</div>
+                <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">Excludes decorative icons</div>
+            </div>
+
+            <!-- Decorative/Icons -->
+            <div style="background: var(--md-sys-color-surface-variant); padding: 16px; border-radius: 12px;">
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; margin-bottom: 4px;">Icons / SVG</div>
+                <div style="font-size: 24px; font-weight: 700;">${decorativeCount}</div>
+            </div>
+
+            <!-- Lazy Loaded -->
+            <div style="background: var(--md-sys-color-surface-variant); padding: 16px; border-radius: 12px; border: 1px solid var(--md-sys-color-outline-variant);">
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; margin-bottom: 4px;">Lazy Loaded</div>
+                <div style="font-size: 24px; font-weight: 700;">${lazyLoadedCount}</div>
+            </div>
+        </div>
+
+        <!-- Detailed Breakdown -->
+        <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px;">
+            <!-- Format Distribution -->
+            <div style="background: var(--md-sys-color-surface); border: 1px solid var(--md-sys-color-outline-variant); padding: 16px; border-radius: 12px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 13px;">Format Distribution</h4>
+                <div style="display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 12px;">
+                    ${Object.entries(formats).map(([fmt, count]) => {
+                        if (count === 0) return '';
+                        const colors = { webp: '#4CAF50', jpg: '#2196F3', png: '#FF9800', svg: '#9C27B0', gif: '#E91E63', other: '#9E9E9E' };
+                        const width = (count / total) * 100;
+                        return `<div style="width: ${width}%; background: ${colors[fmt]};" title="${fmt.toUpperCase()}: ${count}"></div>`;
+                    }).join('')}
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                    ${Object.entries(formats).map(([fmt, count]) => {
+                        if (count === 0) return '';
+                        const colors = { webp: '#4CAF50', jpg: '#2196F3', png: '#FF9800', svg: '#9C27B0', gif: '#E91E63', other: '#9E9E9E' };
+                        return `
+                            <div style="display: flex; align-items: center; gap: 4px; font-size: 11px;">
+                                <div style="width: 8px; height: 8px; border-radius: 50%; background: ${colors[fmt]};"></div>
+                                <span style="text-transform: uppercase;">${fmt}</span>
+                                <span style="font-weight: 600;">${count}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+
+            <!-- Size Breakdown -->
+            <div style="background: var(--md-sys-color-surface); border: 1px solid var(--md-sys-color-outline-variant); padding: 16px; border-radius: 12px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 13px;">Size Breakdown</h4>
+                <div style="display: flex; gap: 8px; align-items: flex-end; height: 40px; margin-bottom: 8px;">
+                    <div style="flex: 1; background: var(--md-sys-color-primary-container); height: ${(sizes.small / total) * 100}%; border-radius: 4px 4px 0 0; min-height: 4px;"></div>
+                    <div style="flex: 1; background: var(--md-sys-color-primary); height: ${(sizes.medium / total) * 100}%; border-radius: 4px 4px 0 0; min-height: 4px;"></div>
+                    <div style="flex: 1; background: var(--md-sys-color-inverse-primary); height: ${(sizes.large / total) * 100}%; border-radius: 4px 4px 0 0; min-height: 4px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--md-sys-color-on-surface-variant);">
+                    <span>Small (<100px)</span>
+                    <span>Medium</span>
+                    <span>Large (>800px)</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-top: 4px;">
+                    <span>${sizes.small}</span>
+                    <span>${sizes.medium}</span>
+                    <span>${sizes.large}</span>
                 </div>
             </div>
         </div>
@@ -121,19 +248,25 @@ function handleImageError(img) {
  * Create an image card with copy and download functionality
  */
 function createImageCard(img, index) {
-    const hasAlt = !!img.alt;
+    const hasAlt = !!img.alt && img.alt.trim() !== '';
+
+    const isDeco = isDecorative(img);
     const hasTitle = !!img.title;
     const filename = extractFilename(img.src);
     const truncatedSrc = img.src.length > 50 ? img.src.substring(0, 50) + '...' : img.src;
 
+    // Border Color Logic
+    let borderColor = 'var(--md-sys-color-outline-variant)';
+    if (!hasAlt && !isDeco) borderColor = 'var(--md-sys-color-error)';
+
     return `
         <div class="image-card" data-card-index="${index}" style="
             background: var(--md-sys-color-surface);
-            border: 1px solid ${hasAlt ? 'var(--md-sys-color-outline-variant)' : 'var(--md-sys-color-error)'};
+            border: 1px solid ${borderColor};
             border-radius: var(--radius-sm);
             overflow: hidden;
             transition: all 0.2s;
-            ${!hasAlt ? 'border-left: 4px solid var(--md-sys-color-error);' : ''}
+            ${!hasAlt && !isDeco ? 'border-left: 4px solid var(--md-sys-color-error);' : ''}
         ">
             <!-- Image Preview -->
             <div style="
@@ -153,19 +286,34 @@ function createImageCard(img, index) {
                     class="seo-image-preview"
                     style="max-width: 100%; max-height: 100%; object-fit: contain;"
                 >
-                ${!hasAlt ? `
+                ${!hasAlt && !isDeco ? `
                     <div style="
                         position: absolute;
                         top: 8px;
                         right: 8px;
-                        background: #FF6B00;
-                        color: #FFFFFF;
+                        background: var(--md-sys-color-error);
+                        color: var(--md-sys-color-on-error);
                         padding: 6px 12px;
                         border-radius: 6px;
                         font-size: 11px;
                         font-weight: 700;
                         letter-spacing: 0.5px;
+                        box-shadow: 0 1px 4px rgba(0,0,0,0.2);
                     ">NO ALT</div>
+                ` : ''}
+                ${isDeco ? `
+                    <div style="
+                        position: absolute;
+                        top: 8px;
+                        right: 8px;
+                        background: var(--md-sys-color-secondary-container);
+                        color: var(--md-sys-color-on-secondary-container);
+                        padding: 6px 10px;
+                        border-radius: 6px;
+                        font-size: 10px;
+                        font-weight: 600;
+                        letter-spacing: 0.5px;
+                    ">DECORATIVE</div>
                 ` : ''}
             </div>
 
@@ -227,7 +375,7 @@ function createImageCard(img, index) {
                     </div>
                     <div style="
                         font-size: 13px;
-                        color: ${hasAlt ? 'var(--md-sys-color-on-surface)' : 'var(--md-sys-color-error)'};
+                        color: ${hasAlt ? 'var(--md-sys-color-on-surface)' : (isDeco ? 'var(--md-sys-color-on-surface-variant)' : 'var(--md-sys-color-error)')};
                         padding: 6px 10px;
                         background: var(--md-sys-color-surface-variant);
                         border-radius: 4px;
@@ -237,7 +385,7 @@ function createImageCard(img, index) {
                         align-items: center;
                         ${!hasAlt ? 'font-style: italic;' : ''}
                     ">
-                        ${hasAlt ? escapeHtml(img.alt) : 'Missing alt text'}
+                        ${hasAlt ? escapeHtml(img.alt) : (isDeco ? 'Decorative (No Alt needed)' : 'Missing alt text')}
                     </div>
                 </div>
 

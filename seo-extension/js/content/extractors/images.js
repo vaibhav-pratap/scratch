@@ -44,7 +44,7 @@ export function getImages() {
     const seenSrcs = new Set();
 
     // Helper: Add image to list
-    const addImage = (src, alt, title, type, element) => {
+    const addImage = (src, alt, title, type, element, extraEntries = {}) => {
         const absUrl = getAbsoluteUrl(src);
         if (!absUrl || seenSrcs.has(absUrl)) return;
 
@@ -56,6 +56,10 @@ export function getImages() {
         if (isStandardImg && isTiny && !absUrl.startsWith('data:')) return;
 
         seenSrcs.add(absUrl);
+        
+        // Extract loading attribute
+        const loading = element.getAttribute('loading') || 'eager';
+
         images.push({
             src: absUrl,
             alt: alt || '',
@@ -65,7 +69,12 @@ export function getImages() {
             height: element.height || 0,
             naturalWidth: element.naturalWidth || 0,
             naturalHeight: element.naturalHeight || 0,
-            loading: element.getAttribute('loading') || 'eager'
+            loading: loading,
+            // New attributes for detailed analysis
+            role: extraEntries.role || null,
+            ariaHidden: extraEntries.ariaHidden || null,
+            ariaLabel: extraEntries.ariaLabel || null,
+            classes: extraEntries.classes || ''
         });
     };
 
@@ -145,9 +154,16 @@ export function getImages() {
         }
 
         if (src) {
-            addImage(src, alt, title, type, el);
+            // Enhanced attribute extraction
+            const role = el.getAttribute('role');
+            const ariaHidden = el.getAttribute('aria-hidden');
+            const ariaLabel = el.getAttribute('aria-label');
+            const classes = el.className || '';
+
+            addImage(src, alt, title, type, el, { role, ariaHidden, ariaLabel, classes });
         }
     });
 
     return images;
 }
+
