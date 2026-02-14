@@ -23,6 +23,8 @@ import { renderKeywordsSettings } from './ui/keywords-settings.js';
 import { renderKeywordsPerformance } from './data/renderers/keywords-performance.js';
 import { renderProfile } from './ui/profile.js';
 import { renderNotes } from './ui/notes/index.js';
+import { initSchemaBuilder } from './data/renderers/schema-builder.js';
+import { getSettings } from './core/storage.js';
 import { initMenu } from './ui/menu.js';
 
 // Data modules
@@ -82,6 +84,12 @@ function init() {
         console.error('[Sidepanel] Error initializing Keywords Settings:', error);
     }
 
+    // 11b. Setup Schema Builder
+    try {
+        initSchemaBuilder();
+    } catch (error) {
+        console.error('[SidePanel] Error initializing Schema Builder:', error);
+    }
     // 8. Initialize Keywords Performance
     updateKeywordsPerformance();
 
@@ -199,6 +207,8 @@ function init() {
         } else if (tabId === 'profile') {
             const container = document.getElementById('profile-container');
             if (container) renderProfile(container);
+        } else if (tabId === 'schema-builder') {
+            initSchemaBuilder();
         }
     });
 

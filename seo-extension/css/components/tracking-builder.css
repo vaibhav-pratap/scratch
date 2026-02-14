@@ -1,7 +1,7 @@
 /* Tracking Builder - Enhanced Google-inspired UI */
 
 .tracking-builder-container {
-    padding: 0 4px;
+    padding: 0; /* Matches schema builder */
     max-width: 100%;
 }
 

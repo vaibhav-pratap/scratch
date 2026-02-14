@@ -100,8 +100,12 @@ export function renderStaticLayout() {
                     <span>Content</span>
                 </button>
                 <button class="tab-btn" data-tab="schema">
+                    <i class="fa-solid fa-file-signature"></i>
+                    <span>Schema Explorer</span>
+                </button>
+                <button class="tab-btn" data-tab="schema-builder">
                     <i class="fa-solid fa-project-diagram"></i>
-                    <span>Schema</span>
+                    <span>Schema Builder</span>
                 </button>
                 <button class="tab-btn" data-tab="ai-analysis">
                     <i class="fa-solid fa-robot"></i>
@@ -147,6 +151,7 @@ export function renderStaticLayout() {
             ${renderAccessibilityTab()}
             ${renderContentQualityTab()}
             ${renderSchemaTab()}
+            ${renderSchemaBuilderTab()}
             ${renderAIAnalysisTab()}
             ${renderKeywordsInsightsTab()}
             ${renderAdTransparencyTab()}
@@ -301,10 +306,23 @@ export function renderStaticLayout() {
     `;
 }
 
+function renderNotesTab() {
+    return `
+    <div id="notes" class="tab-content active">
+        <div id="notes-container"></div>
+    </div>`;
+}
+
+function renderProfileTab() {
+    return `
+    <div id="profile" class="tab-content">
+        <div id="profile-container"></div>
+    </div>`;
+}
 
 function renderOverviewTab() {
     return `
-    <div id="overview" class="tab-content active">
+    <div id="overview" class="tab-content">
         <div class="score-card">
             <div class="score-circle">
                 <span id="seo-score">--</span>
@@ -606,6 +624,101 @@ function renderSchemaTab() {
             </div>
         </div>
         ${createAIInsightsCard('schema')}
+    </div>`;
+}
+
+function renderSchemaBuilderTab() {
+    return `
+    <div id="schema-builder" class="tab-content">
+        <div class="schema-builder-container">
+            <!-- Glassmorphic Sticky Header with Toggles -->
+            <div class="schema-header">
+                <div class="mode-toggle">
+                    <button class="toggle-btn active" data-view="builder">Builder</button>
+                    <button class="toggle-btn" data-view="history">Saved Schema</button>
+                </div>
+            </div>
+
+            <!-- Builder View -->
+            <div id="schema-builder-view" class="view-pane active">
+                <!-- Type Selection & Title Card -->
+                <div class="builder-card">
+                    <div class="flex-column gap-3">
+                        <div class="form-group">
+                            <label for="schema-title-input">Schema Title</label>
+                            <input type="text" id="schema-title-input" class="md-input" placeholder="e.g. Homepage Organization">
+                        </div>
+                        <div class="builder-header">
+                            <div class="form-group" style="flex: 1;">
+                                <label for="schema-type-select">Schema Type</label>
+                                <select id="schema-type-select" class="md-select">
+                                    <option value="Organization">Organization</option>
+                                    <option value="LocalBusiness">Local Business</option>
+                                    <option value="Article">Article</option>
+                                    <option value="FAQPage">FAQ Page</option>
+                                    <option value="BreadcrumbList">Breadcrumb List</option>
+                                    <option value="Product">Product</option>
+                                    <option value="Recipe">Recipe</option>
+                                    <option value="VideoObject">Video</option>
+                                    <option value="Event">Event</option>
+                                </select>
+                            </div>
+                            <div class="builder-actions" style="display: flex; gap: 8px; align-self: flex-end; margin-bottom: 2px;">
+                                <button id="btn-save-schema" class="action-btn primary small" title="Save to Site Memory">
+                                    <i class="fa-solid fa-floppy-disk"></i>
+                                </button>
+                                <button id="btn-download-schema" class="action-btn secondary small" title="Download JSON-LD">
+                                    <i class="fa-solid fa-download"></i>
+                                </button>
+                                <button id="btn-copy-schema" class="action-btn secondary small" title="Copy to Clipboard">
+                                    <i class="fa-solid fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Area -->
+                <div class="builder-card">
+                    <h3><i class="fa-solid fa-pen-to-square"></i> Properties</h3>
+                    <div id="schema-form-container" class="schema-form">
+                        <p class="text-xs text-secondary">Loading properties...</p>
+                    </div>
+                </div>
+
+                <!-- Preview Area -->
+                <div class="builder-card">
+                    <div class="schema-preview">
+                        <div class="preview-header">
+                            <h3><i class="fa-solid fa-code"></i> JSON-LD Preview</h3>
+                            <span id="schema-validation-badge" class="badge valid">Valid</span>
+                        </div>
+                        <pre id="schema-json-preview" class="code-block">{}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History View -->
+            <div id="schema-history-view" class="view-pane">
+                <div class="builder-card">
+                    <div class="flex-between mb-3">
+                        <h3><i class="fa-solid fa-history"></i> Site History</h3>
+                        <div id="history-bulk-actions" class="flex-row gap-2" style="display: none;">
+                            <button id="btn-bulk-delete-schema" class="action-btn error small">
+                                <i class="fa-solid fa-trash"></i> Delete Selected
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex-row gap-2 mb-2 px-1">
+                        <input type="checkbox" id="select-all-schemas" class="md-checkbox">
+                        <label for="select-all-schemas" class="text-xs font-semibold">Select All</label>
+                    </div>
+                    <div id="saved-schemas-list" class="saved-list">
+                        <p class="text-xs text-secondary">No saved schemas for this site.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>`;
 }
 
@@ -968,14 +1081,6 @@ function renderToggle(label, id) {
             </label>
         </div>
     </div>`;
-}
-
-export function renderProfileTab() {
-    return `<div id="profile" class="tab-content"><div id="profile-container"></div></div>`;
-}
-
-export function renderNotesTab() {
-    return `<div id="notes" class="tab-content"><div id="notes-container"></div></div>`;
 }
 
 /**

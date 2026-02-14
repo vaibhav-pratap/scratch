@@ -23,6 +23,7 @@ import { renderKeywordsPerformance } from './data/renderers/keywords-performance
 import { renderProfile } from './ui/profile.js';
 import { renderNotes } from './ui/notes/index.js';
 import { initMenu } from './ui/menu.js';
+import { initSchemaBuilder } from './data/renderers/schema-builder.js';
 import { subscribeToChanges } from './core/db.js';
 
 // Data modules
@@ -107,6 +108,13 @@ function init() {
         console.error('[Popup] Error calling initAIAnalysisTab:', error);
     }
 
+    // 13b. Setup Schema Builder
+    try {
+        initSchemaBuilder();
+    } catch (error) {
+        console.error('[Popup] Error initializing Schema Builder:', error);
+    }
+
     // 14. Real-time Updates Listener
     listenForUpdates(renderData, renderCWVChart);
 
@@ -146,6 +154,8 @@ function init() {
         } else if (tabId === 'profile') {
             const container = document.getElementById('profile-container');
             if (container) renderProfile(container);
+        } else if (tabId === 'schema-builder') {
+            initSchemaBuilder();
         }
     });
 

@@ -1,0 +1,267 @@
+/* Schema Builder - Premium UI */
+
+.schema-builder-container {
+    padding: 0; /* Minimized padding */
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.schema-builder-container * {
+    box-sizing: border-box;
+}
+
+/* Header / Toggle Styling (Matching Notes) */
+.schema-header {
+    padding: 12px var(--spacing-sm) 8px var(--spacing-sm);
+    display: flex;
+    justify-content: flex-start; /* Left aligned as requested */
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: transparent;
+}
+
+.schema-header .mode-toggle {
+    display: flex;
+    background: var(--md-sys-color-surface-variant);
+    padding: 4px;
+    border-radius: 24px;
+    gap: 4px;
+}
+
+.schema-header .toggle-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.schema-header .toggle-btn.active {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* View Pane Management */
+.view-pane {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 24px;
+}
+
+.view-pane.active {
+    display: flex;
+}
+
+/* Card-based layout */
+.schema-builder-container .builder-card {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+    backdrop-filter: var(--glass-blur, blur(10px));
+    -webkit-backdrop-filter: var(--glass-blur, blur(10px));
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: var(--md-sys-shadow-1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+}
+
+.schema-builder-container .builder-card h3 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--md-sys-color-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+/* Form Layout - Stacked Labels and Inputs */
+.schema-builder-container .form-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    margin-bottom: 16px !important;
+    width: 100% !important;
+    align-items: flex-start !important;
+}
+
+.schema-builder-container .form-group:last-child {
+    margin-bottom: 0 !important;
+}
+
+.schema-builder-container .form-group label {
+    display: block !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--md-sys-color-on-surface-variant) !important;
+    margin-bottom: 4px !important;
+    text-align: left !important;
+    width: 100% !important;
+}
+
+.schema-builder-container .md-input, 
+.schema-builder-container .md-select,
+.schema-builder-container textarea.md-input {
+    width: 100% !important;
+    padding: 10px 12px !important;
+    border: 1px solid var(--md-sys-color-outline-variant) !important;
+    border-radius: 8px !important;
+    background: var(--md-sys-color-surface) !important;
+    color: var(--md-sys-color-on-surface) !important;
+    font-size: 13px !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+    outline: none !important;
+    display: block !important;
+}
+
+.schema-builder-container .md-input:focus, 
+.schema-builder-container .md-select:focus {
+    border-color: var(--md-sys-color-primary) !important;
+    box-shadow: 0 0 0 2px var(--md-sys-color-primary-container) !important;
+}
+
+/* List Items (Dynamic) */
+.schema-builder-container .list-items-wrapper {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    width: 100%;
+}
+
+.schema-builder-container .list-item-container {
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.schema-builder-container .btn-remove-item {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.schema-builder-container .btn-add-item {
+    width: 100%;
+    padding: 8px;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border: 1px dashed var(--md-sys-color-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+/* Preview Section */
+.schema-builder-container #schema-json-preview {
+    background: #1e1e1e !important;
+    color: #ce9178 !important;
+    padding: 12px !important;
+    border-radius: 12px !important;
+    font-family: 'Fira Code', 'Courier New', monospace !important;
+    font-size: 11px !important;
+    overflow-x: auto !important;
+    max-height: 300px !important;
+    border: 1px solid transparent !important;
+    width: 100% !important;
+    display: block !important;
+    margin: 0 !important;
+}
+
+/* Saved Schemas List - Matching Notes Style */
+/* Metadata Chips */
+.schema-builder-container .meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.schema-builder-container .type-chip {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.schema-builder-container .uid-chip {
+    font-family: monospace;
+    opacity: 0.8;
+}
+
+/* Checkbox Styling */
+.schema-builder-container .md-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid var(--md-sys-color-outline);
+    appearance: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    background: transparent;
+    flex-shrink: 0;
+}
+
+.schema-builder-container .md-checkbox:checked {
+    background: var(--md-sys-color-primary);
+    border-color: var(--md-sys-color-primary);
+}
+
+.schema-builder-container .md-checkbox:checked::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 10px;
+    color: var(--md-sys-color-on-primary);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.schema-builder-container .mb-3 { margin-bottom: 12px; }
+.schema-builder-container .mb-2 { margin-bottom: 8px; }
+.schema-builder-container .px-1 { padding-left: 4px; padding-right: 4px; }
