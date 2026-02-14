@@ -2,22 +2,31 @@
  * Advanced Readability Calculator Module
  * Yoast-style comprehensive content analysis including:
  * - Flesch Reading Ease Score
+ * - Flesch-Kincaid Grade Level
+ * - Coleman-Liau Index
+ * - LIX Readability Formula
  * - Active vs Passive Voice
  * - Transitional words/sentences
  * - Sentence and paragraph analysis
- * - Subheading distribution
- * - Content structure analysis
+ * - LEXICAL SIMPLIFICATION (Complex word suggestions)
+ * - NEW: Paragraph Heatmap & Readability Flow
  */
+
+// Utility Modules
+import { segmentText, countSyllables, calculateFleschScore, isPassiveVoice } from './readability-utils.js';
+import { generateHeatmapData } from './readability-heatmap.js';
+import { generateFlowData } from './readability-flow.js';
+import { getThresholds, getScoreStatus } from './readability-context.js';
+
+// v4 Expansion Modules
+import { analyzeSentiment } from './sentiment.js';
+import { checkInclusivity } from './inclusive.js';
+import { generateKeywordHeatmap } from './keyword-density.js';
 
 /**
  * Common passive voice indicators
  */
-const PASSIVE_INDICATORS = [
-    /\b(am|is|are|was|were|be|been|being)\s+\w+ed\b/gi,
-    /\b(am|is|are|was|were|be|been|being)\s+\w+en\b/gi,
-    /\b(get|gets|got|gotten)\s+\w+ed\b/gi,
-    /\b(get|gets|got|gotten)\s+\w+en\b/gi
-];
+
 
 /**
  * Common transitional words and phrases
@@ -51,6 +60,7 @@ const TRANSITIONAL_WORDS = [
     'subsequently', 'then', 'thereafter', 'until', 'when', 'whenever',
     'at last', 'in the meantime', 'in the interim', 'at first', 'at once',
     'in the end', 'at length', 'at this point', 'prior to', 'straight away',
+    'starting with',
 
     // Example/Illustration
     'as an illustration', 'as shown by', 'by way of illustration', 'for example',
@@ -75,6 +85,7 @@ const TRANSITIONAL_WORDS = [
     'on balance', 'on the whole', 'overall', 'so', 'summing up',
     'therefore', 'thus', 'to conclude', 'to summarize', 'ultimately',
     'as can be seen', 'for the most part', 'as stated', 'given all this',
+    'to sum up', 'wrapping up',
 
     // Comparison/Similarity  
     'compared to', 'likewise', 'same as', 'similar to', 'similarly',
@@ -92,30 +103,116 @@ const TRANSITIONAL_WORDS = [
 ];
 
 /**
- * Count syllables in a word (improved algorithm)
+ * Map of complex words to simpler alternatives
+ * "Plain English" suggestions
  */
-function countSyllables(word) {
-    word = word.toLowerCase().replace(/[^a-z]/g, '');
-    if (word.length <= 3) return 1;
-
-    // Handle silent 'e' at the end
-    if (word.endsWith('e')) {
-        word = word.slice(0, -1);
-    }
-
-    // Count vowel groups
-    const vowels = word.match(/[aeiouy]+/g);
-    if (!vowels) return 1;
-
-    let count = vowels.length;
-
-    // Adjust for common patterns
-    if (word.endsWith('le') && word.length > 2) {
-        count++;
-    }
-
-    return Math.max(1, count);
-}
+const COMPLEX_WORDS_MAP = {
+    'accordingly': 'so',
+    'additional': 'extra',
+    'additionally': 'also',
+    'advantageous': 'helpful',
+    'ameliorate': 'improve / help',
+    'approximately': 'about',
+    'attempt': 'try',
+    'assistance': 'help',
+    'beneficial': 'helpful / good',
+    'capability': 'ability',
+    'cognizant': 'aware',
+    'commence': 'start',
+    'component': 'part',
+    'concerning': 'about',
+    'consequently': 'so',
+    'consolidate': 'join / merge',
+    'constitutes': 'is / forms',
+    'demonstrate': 'show',
+    'depart': 'leave',
+    'designate': 'choose / name',
+    'discontinue': 'stop',
+    'due to the fact that': 'because',
+    'eliminate': 'remove',
+    'elucidate': 'explain',
+    'employ': 'use',
+    'endeavor': 'try',
+    'equivalent': 'equal',
+    'establish': 'set up / prove',
+    'evident': 'clear',
+    'exclusively': 'only',
+    'expedite': 'hurry',
+    'facilitate': 'help / make easy',
+    'feasible': 'possible',
+    'frequently': 'often',
+    'fundamental': 'basic',
+    'generate': 'make / create',
+    'henceforth': 'from now on',
+    'identical': 'same',
+    'illustrate': 'show',
+    'immediately': 'at once',
+    'implement': 'do / set up',
+    'in accordance with': 'by / under',
+    'in addition': 'also',
+    'in close proximity': 'near',
+    'inadvertently': 'by mistake',
+    'inception': 'start',
+    'incumbent upon': 'up to',
+    'indicate': 'show',
+    'indication': 'sign',
+    'initial': 'first',
+    'initiate': 'start',
+    'inquire': 'ask',
+    'leverage': 'use',
+    'location': 'place',
+    'magnitude': 'size',
+    'maintain': 'keep',
+    'maximum': 'most',
+    'methodology': 'method',
+    'modify': 'change',
+    'monitor': 'check / watch',
+    'multiple': 'many',
+    'necessitate': 'need',
+    'nevertheless': 'but / however',
+    'notify': 'tell',
+    'numerous': 'many',
+    'objective': 'goal / aim',
+    'obligate': 'bind / force',
+    'obtain': 'get',
+    'participate': 'take part',
+    'pertain': 'relate',
+    'portion': 'part',
+    'possess': 'have',
+    'preclude': 'prevent',
+    'primary': 'main',
+    'prior to': 'before',
+    'proficiency': 'skill',
+    'provide': 'give',
+    'purchase': 'buy',
+    'regarding': 'about',
+    'relinquish': 'give up',
+    'remainder': 'rest',
+    'remuneration': 'pay',
+    'request': 'ask',
+    'require': 'need',
+    'reside': 'live',
+    'retain': 'keep',
+    'selection': 'choice',
+    'subsequently': 'later',
+    'substantial': 'large / big',
+    'sufficient': 'enough',
+    'terminate': 'end / stop',
+    'therefore': 'so',
+    'transmit': 'send',
+    'transpire': 'happen',
+    'ultimate': 'final',
+    'unavailability': 'lack',
+    'utilize': 'use',
+    'validation': 'proof',
+    'verify': 'check',
+    'viability': 'chance',
+    'virtually': 'almost',
+    'visualize': 'see / imagine',
+    'warrant': 'justify',
+    'whereas': 'but',
+    'witnessed': 'saw'
+};
 
 /**
  * Extract main content from page (exclude nav, footer, etc.)
@@ -155,32 +252,6 @@ function extractMainContent() {
 }
 
 /**
- * Detect passive voice in a sentence
- */
-function isPassiveVoice(sentence) {
-    const lowerSentence = sentence.toLowerCase();
-
-    // Check for passive voice patterns
-    for (const pattern of PASSIVE_INDICATORS) {
-        if (pattern.test(sentence)) {
-            return true;
-        }
-    }
-
-    // Check for "by [noun]" pattern which often indicates passive
-    if (/\bby\s+[a-z]+\b/i.test(sentence)) {
-        // But exclude common phrases like "by the way", "by now", etc.
-        const excludePhrases = ['by the way', 'by now', 'by far', 'by and large', 'by all means'];
-        const hasExclude = excludePhrases.some(phrase => lowerSentence.includes(phrase));
-        if (!hasExclude && /\b(was|were|is|are|been)\s+\w+ed\s+by\b/i.test(sentence)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-/**
  * Count transitional words in text
  */
 function countTransitionalWords(text) {
@@ -199,6 +270,26 @@ function countTransitionalWords(text) {
     });
 
     return { count, found: [...new Set(found)] };
+}
+
+/**
+ * Identify complex words and their replacements
+ */
+function identifyComplexWords(words) {
+    const findings = [];
+    const complexWordSet = new Set(Object.keys(COMPLEX_WORDS_MAP));
+
+    words.forEach(word => {
+        const lowerWord = word.toLowerCase();
+        if (complexWordSet.has(lowerWord)) {
+            findings.push({
+                word: word,
+                suggestion: COMPLEX_WORDS_MAP[lowerWord]
+            });
+        }
+    });
+
+    return [...new Set(findings.map(JSON.stringify))].map(JSON.parse); // Unique findings
 }
 
 /**
@@ -221,8 +312,11 @@ function analyzeSentences(sentences) {
     let previousStart = '';
     let consecutiveCount = 0;
 
+    const wordSegmenter = new Intl.Segmenter('en', { granularity: 'word' });
+
     sentences.forEach((sentence, index) => {
-        const words = sentence.trim().split(/\s+/).filter(w => w.length > 0);
+        // Use Intl.Segmenter for accurate word count in sentences
+        const words = [...wordSegmenter.segment(sentence)].filter(s => s.isWordLike).map(s => s.segment);
         const wordCount = words.length;
         totalWords += wordCount;
 
@@ -233,7 +327,7 @@ function analyzeSentences(sentences) {
 
         // Check for consecutive sentences starting with same word
         if (words.length > 0) {
-            const firstWord = words[0].toLowerCase().replace(/[^a-z]/g, '');
+            const firstWord = words[0].toLowerCase();
             if (firstWord && firstWord === previousStart && firstWord.length > 2) {
                 consecutiveCount++;
             } else {
@@ -277,9 +371,10 @@ function analyzeParagraphs(text) {
     if (paragraphs.length === 0) return analysis;
 
     let totalWords = 0;
+    const wordSegmenter = new Intl.Segmenter('en', { granularity: 'word' });
 
     paragraphs.forEach(para => {
-        const words = para.trim().split(/\s+/).filter(w => w.length > 0);
+        const words = [...wordSegmenter.segment(para)].filter(s => s.isWordLike);
         const wordCount = words.length;
         totalWords += wordCount;
 
@@ -293,9 +388,10 @@ function analyzeParagraphs(text) {
 }
 
 /**
- * Calculate comprehensive readability score
+ * Advanced Readability Calculator
+ * Now includes Sentiment, Inclusivity, and Keyword Density (v4)
  */
-export function calculateReadability() {
+export function calculateReadability(audience = 'general', keywords = []) {
     try {
         const content = extractMainContent();
 
@@ -307,9 +403,8 @@ export function calculateReadability() {
             };
         }
 
-        // Basic text analysis
-        const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 10);
-        const words = content.split(/\s+/).filter(w => w.trim().length > 0);
+        // --- Use Shared Utils ---
+        const { sentences, words } = segmentText(content);
         const paragraphs = content.split(/\n\s*\n|<\/p>\s*<p>/).filter(p => p.trim().length > 0);
 
         if (sentences.length === 0 || words.length === 0) {
@@ -320,33 +415,66 @@ export function calculateReadability() {
             };
         }
 
-        // Calculate Flesch Reading Ease
+        // --- Calculate Core Metrics ---
         let syllables = 0;
+        let charCount = 0;
+        let longWordsLIX = 0; // Words > 6 letters
+
         words.forEach(word => {
             syllables += countSyllables(word);
+            charCount += word.length;
+            if (word.length > 6) longWordsLIX++;
         });
 
         const fleschScore = Math.round(
             206.835 - 1.015 * (words.length / sentences.length) - 84.6 * (syllables / words.length)
         );
 
-        let level = 'Very Difficult';
-        if (fleschScore >= 90) level = 'Very Easy';
-        else if (fleschScore >= 80) level = 'Easy';
-        else if (fleschScore >= 70) level = 'Fairly Easy';
-        else if (fleschScore >= 60) level = 'Standard';
-        else if (fleschScore >= 50) level = 'Fairly Difficult';
-        else if (fleschScore >= 30) level = 'Difficult';
+        // Flesch-Kincaid Grade
+        const fleschResultResult = (0.39 * (words.length / sentences.length)) + (11.8 * (syllables / words.length)) - 15.59;
+        const fleschKincaidGrade = Math.max(0, Math.round(fleschResultResult * 10) / 10);
 
-        // Analyze passive voice
+        // Coleman-Liau
+        const L = (charCount / words.length) * 100;
+        const S = (sentences.length / words.length) * 100;
+        const colemanLiauIndex = Math.round((0.0588 * L - 0.296 * S - 15.8) * 10) / 10;
+
+        // LIX
+        const lixScore = Math.round((words.length / sentences.length) + ((longWordsLIX / words.length) * 100));
+
+        // --- Advanced Analysis ---
+        const difficultWords = words.filter(w => countSyllables(w) >= 3);
+        const difficultWordsPercentage = Math.round((difficultWords.length / words.length) * 100);
+        const simplificationSuggestions = identifyComplexWords(words);
+        
+        // --- NEW: Context-Aware Scores via Heatmap & Flow ---
+        const heatmap = generateHeatmapData(content, audience);
+        const flowData = generateFlowData(content);
+
+        // --- NEW (v4): Content Analysis Expansion ---
+        const sentiment = analyzeSentiment(content);
+        const inclusivity = checkInclusivity(content);
+        const keywordData = generateKeywordHeatmap(content, keywords);
+
+        const wordCount = words.length;
+        const sentenceCount = sentences.length;
+        // Determine Grade Level Description
+        let level = 'Very Difficult';
+        if (fleschScore >= 90) level = 'Very Easy (5th grade)';
+        else if (fleschScore >= 80) level = 'Easy (6th grade)';
+        else if (fleschScore >= 70) level = 'Fairly Easy (7th grade)';
+        else if (fleschScore >= 60) level = 'Standard (8th-9th grade)';
+        else if (fleschScore >= 50) level = 'Fairly Difficult (10th-12th grade)';
+        else if (fleschScore >= 30) level = 'Difficult (College)';
+        else level = 'Very Difficult (Professional)';
+
+        // Analyze specific patterns
         const passiveSentences = sentences.filter(s => isPassiveVoice(s));
         const passivePercentage = Math.round((passiveSentences.length / sentences.length) * 100);
 
-        // Analyze transitional words and find sentences without them
         const transitional = countTransitionalWords(content);
         const transitionalPercentage = Math.round((transitional.count / sentences.length) * 100);
 
-        // Find sentences without transitional words
         const sentencesWithoutTransitions = sentences.filter(sentence => {
             const lowerSentence = sentence.toLowerCase();
             return !TRANSITIONAL_WORDS.some(word => {
@@ -355,69 +483,50 @@ export function calculateReadability() {
             });
         });
 
-        // Sentence analysis - track actual long sentences
+        // Sentence & Paragraph Analysis
         const sentenceAnalysis = analyzeSentences(sentences);
+        const wordSegmenter = new Intl.Segmenter('en', { granularity: 'word' });
+        
         const longSentencesList = sentences.filter(sentence => {
-            const wordCount = sentence.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const wordCount = [...wordSegmenter.segment(sentence)].filter(s => s.isWordLike).length;
             return wordCount > 20;
         });
         const veryLongSentencesList = sentences.filter(sentence => {
-            const wordCount = sentence.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const wordCount = [...wordSegmenter.segment(sentence)].filter(s => s.isWordLike).length;
             return wordCount > 25;
         });
 
-        // Paragraph analysis - track actual long paragraphs
         const paragraphAnalysis = analyzeParagraphs(content);
         const longParagraphsList = paragraphs.filter(para => {
-            const wordCount = para.trim().split(/\s+/).filter(w => w.length > 0).length;
+             const wordCount = [...wordSegmenter.segment(para)].filter(s => s.isWordLike).length;
             return wordCount > 150;
         });
 
-        // Calculate overall readability score (0-100)
-        // Based on multiple factors similar to Yoast
+        // Calculate Overall Score (with basic heuristics)
         let overallScore = fleschScore;
+        if (passivePercentage > 25) overallScore -= 10;
+        else if (passivePercentage > 15) overallScore -= 5;
 
-        // Adjust for passive voice (penalty if > 25%)
-        if (passivePercentage > 25) {
-            overallScore -= 10;
-        } else if (passivePercentage > 15) {
-            overallScore -= 5;
-        }
-
-        // Adjust for sentence length (penalty for too many long sentences)
         const longSentencePercentage = (sentenceAnalysis.longSentences / sentences.length) * 100;
-        if (longSentencePercentage > 25) {
-            overallScore -= 10;
-        } else if (longSentencePercentage > 15) {
-            overallScore -= 5;
-        }
+        if (longSentencePercentage > 25) overallScore -= 10;
+        else if (longSentencePercentage > 15) overallScore -= 5;
 
-        // Bonus for transitional words (good for readability)
-        if (transitionalPercentage >= 30) {
-            overallScore += 5;
-        } else if (transitionalPercentage >= 20) {
-            overallScore += 3;
-        }
+        if (difficultWordsPercentage > 15) overallScore -= 5;
+        if (transitionalPercentage >= 30) overallScore += 5;
+        else if (transitionalPercentage >= 20) overallScore += 3;
+        if (sentenceAnalysis.consecutiveSameStart > 3) overallScore -= 5;
 
-        // Penalty for consecutive same starts
-        if (sentenceAnalysis.consecutiveSameStart > 3) {
-            overallScore -= 5;
-        }
-
-        // Ensure score is within bounds
         overallScore = Math.max(0, Math.min(100, overallScore));
-
-        // Determine status for each metric
-        const getStatus = (value, goodThreshold, warningThreshold) => {
-            if (value <= goodThreshold) return 'good';
-            if (value <= warningThreshold) return 'warning';
-            return 'poor';
-        };
+        
+        const thresholds = getThresholds(audience);
 
         return {
             // Overall scores
             score: overallScore,
             fleschScore: fleschScore,
+            fleschKincaidGrade: fleschKincaidGrade, 
+            colemanLiauIndex: colemanLiauIndex,
+            lixScore: lixScore,
             level: level,
 
             // Basic metrics
@@ -426,52 +535,73 @@ export function calculateReadability() {
             paragraphCount: paragraphAnalysis.total,
             averageWordsPerSentence: Math.round(words.length / sentences.length),
             averageSentencesPerParagraph: Math.round(sentences.length / paragraphAnalysis.total),
+            readingTimeMinutes: Math.ceil(words.length / 200),
+
+            // Advanced Text Stats
+            difficultWords: difficultWords.length,
+            difficultWordsPercentage: difficultWordsPercentage,
+            simplificationSuggestions: simplificationSuggestions,
+            
+            // NEW: Heatmap & Flow
+            heatmap: heatmap,
+            flow: flowData,
+            
+            // v4 Data
+            sentiment: sentiment,
+            inclusivity: inclusivity,
+            keywordDensity: keywordData,
 
             // Voice analysis
             passiveVoice: {
                 count: passiveSentences.length,
                 percentage: passivePercentage,
-                status: getStatus(passivePercentage, 10, 25),
-                sentences: passiveSentences.map(s => s.trim().substring(0, 200))
+                status: getScoreStatus(passivePercentage, 'passive', audience),
+                sentences: passiveSentences.map(s => s.trim())
             },
 
             // Transitional words
             transitionalWords: {
                 count: transitional.count,
                 percentage: transitionalPercentage,
-                status: getStatus(30 - transitionalPercentage, 20, 30), // Inverted: more is better
+                status: transitionalPercentage > 30 ? 'good' : (transitionalPercentage > 20 ? 'warning' : 'poor'), // Custom logic
                 found: transitional.found.slice(0, 10),
-                sentencesWithout: sentencesWithoutTransitions.slice(0, 10).map(s => s.trim().substring(0, 200))
+                sentencesWithout: sentencesWithoutTransitions.map(s => s.trim())
             },
 
             // Sentence analysis
             sentences: {
                 averageLength: sentenceAnalysis.averageLength,
                 longSentences: sentenceAnalysis.longSentences,
-                longSentencesList: longSentencesList.map(s => s.trim().substring(0, 200)),
+                longSentencesList: longSentencesList.map(s => s.trim()),
                 veryLongSentences: sentenceAnalysis.veryLongSentences,
-                veryLongSentencesList: veryLongSentencesList.map(s => s.trim().substring(0, 200)),
+                veryLongSentencesList: veryLongSentencesList.map(s => s.trim()),
                 shortSentences: sentenceAnalysis.shortSentences,
                 consecutiveSameStart: sentenceAnalysis.consecutiveSameStart,
-                status: getStatus(sentenceAnalysis.averageLength, 15, 20)
+                status: getScoreStatus(sentenceAnalysis.averageLength, 'sentenceLength', audience)
             },
 
             // Paragraph analysis
             paragraphs: {
                 averageLength: paragraphAnalysis.averageLength,
                 longParagraphs: paragraphAnalysis.longParagraphs,
-                longParagraphsList: longParagraphsList.map(p => p.trim().substring(0, 300)),
+                longParagraphsList: longParagraphsList.map(p => p.trim()),
                 shortParagraphs: paragraphAnalysis.shortParagraphs,
-                status: getStatus(paragraphAnalysis.averageLength, 100, 150)
+                status: getScoreStatus(paragraphAnalysis.averageLength, 'paragraphLength', audience)
             },
 
             // Recommendations
             recommendations: generateRecommendations({
                 fleschScore,
+                fleschKincaidGrade,
+                colemanLiauIndex,
+                lixScore,
                 passivePercentage,
                 transitionalPercentage,
                 sentenceAnalysis,
-                paragraphAnalysis
+                paragraphAnalysis,
+                difficultWordsPercentage,
+                simplificationCount: simplificationSuggestions.length,
+                thresholds
             })
         };
     } catch (error) {
@@ -485,56 +615,78 @@ export function calculateReadability() {
 }
 
 /**
- * Generate recommendations based on analysis
+ * Generate recommendations based on analysis & audience thresholds
  */
 function generateRecommendations(analysis) {
     const recommendations = [];
 
-    const { fleschScore, passivePercentage, transitionalPercentage, sentenceAnalysis, paragraphAnalysis } = analysis;
+    const { 
+        fleschScore, 
+        fleschKincaidGrade, 
+        colemanLiauIndex,
+        lixScore,
+        passivePercentage, 
+        transitionalPercentage, 
+        sentenceAnalysis, 
+        paragraphAnalysis, 
+        difficultWordsPercentage,
+        simplificationCount,
+        thresholds
+    } = analysis;
 
-    // Flesch score recommendations
-    if (fleschScore < 60) {
+    // Flesch Score
+    if (fleschScore < thresholds.fleschMin) {
         recommendations.push({
             type: 'error',
-            message: `Flesch Reading Ease score is ${fleschScore} (${fleschScore < 30 ? 'Very Difficult' : 'Difficult'}). Aim for 60+ for better readability.`
+            message: `Flesch Reading Ease is ${fleschScore}. Aim for at least ${thresholds.fleschMin} for your audience.`
         });
-    } else if (fleschScore < 70) {
+    }
+
+    // Flesch-Kincaid Grade recommendations
+    if (fleschKincaidGrade > 12) {
         recommendations.push({
             type: 'warning',
-            message: `Flesch Reading Ease score is ${fleschScore} (Standard). Consider simplifying language for better readability.`
+            message: `Reading grade level is ${fleschKincaidGrade} (College level).`
+        });
+    }
+
+    // Coleman-Liau Check
+    if (colemanLiauIndex > 14) {
+         recommendations.push({
+            type: 'warning',
+            message: `Coleman-Liau Index is ${colemanLiauIndex}, indicating complex character usage.`
+        });
+    }
+
+    // LIX Check
+    if (lixScore > 50) {
+         recommendations.push({
+            type: 'warning',
+            message: `LIX score is ${lixScore}. Sentences may be too long or use too many long words.`
+        });
+    }
+
+    // Word Complexity
+    if (simplificationCount > 0) {
+        recommendations.push({
+            type: 'warning',
+            message: `Found ${simplificationCount} complex words to simplify.`
         });
     }
 
     // Passive voice recommendations
-    if (passivePercentage > 25) {
+    if (passivePercentage > thresholds.passiveMax) {
         recommendations.push({
             type: 'error',
-            message: `${passivePercentage}% of sentences use passive voice. Try to use active voice more often (aim for < 10%).`
+            message: `${passivePercentage}% passive voice. Aim for < ${thresholds.passiveMax}%.`
         });
-    } else if (passivePercentage > 15) {
-        recommendations.push({
-            type: 'warning',
-            message: `${passivePercentage}% of sentences use passive voice. Consider using more active voice.`
-        });
-    }
+    } 
 
     // Sentence length recommendations
-    if (sentenceAnalysis.averageLength > 20) {
+    if (sentenceAnalysis.averageLength > thresholds.sentenceLengthMax) {
         recommendations.push({
             type: 'error',
-            message: `Average sentence length is ${sentenceAnalysis.averageLength} words. Aim for 15 words or less.`
-        });
-    } else if (sentenceAnalysis.averageLength > 15) {
-        recommendations.push({
-            type: 'warning',
-            message: `Average sentence length is ${sentenceAnalysis.averageLength} words. Consider shorter sentences.`
-        });
-    }
-
-    if (sentenceAnalysis.veryLongSentences > 0) {
-        recommendations.push({
-            type: 'warning',
-            message: `${sentenceAnalysis.veryLongSentences} sentence(s) exceed 25 words. Consider breaking them into shorter sentences.`
+            message: `Average sentence length is ${sentenceAnalysis.averageLength} words. Aim for < ${thresholds.sentenceLengthMax}.`
         });
     }
 
@@ -542,7 +694,7 @@ function generateRecommendations(analysis) {
     if (sentenceAnalysis.consecutiveSameStart > 3) {
         recommendations.push({
             type: 'warning',
-            message: `${sentenceAnalysis.consecutiveSameStart} consecutive sentences start with the same word. Vary your sentence beginnings.`
+            message: `${sentenceAnalysis.consecutiveSameStart} consecutive sentences start with the same word.`
         });
     }
 
@@ -550,18 +702,9 @@ function generateRecommendations(analysis) {
     if (transitionalPercentage < 20) {
         recommendations.push({
             type: 'warning',
-            message: `Only ${transitionalPercentage}% of sentences contain transitional words. Add more to improve flow (aim for 30%+).`
-        });
-    }
-
-    // Paragraph length
-    if (paragraphAnalysis.averageLength > 150) {
-        recommendations.push({
-            type: 'warning',
-            message: `Average paragraph length is ${paragraphAnalysis.averageLength} words. Consider shorter paragraphs (aim for 100 words or less).`
+            message: `Only ${transitionalPercentage}% transition words. Aim for 20-30%.`
         });
     }
 
     return recommendations;
 }
-

@@ -34,13 +34,19 @@ import { safeExtract, debounce } from './content/utils/helpers.js';
 /**
  * Extract all SEO data from the page
  */
-function extractSEOData() {
+function extractSEOData(options = {}) {
+    const audience = options.audience || 'general';
+
+    // Extract keywords first for use in readability analysis
+    const metaKeywords = safeExtract(() => getMetaContent('keywords'));
+    const keywordList = metaKeywords ? metaKeywords.split(',').map(k => k.trim()) : [];
+
     return {
         url: window.location.href,
         doctype: document.doctype ? `<!DOCTYPE ${document.doctype.name}>` : null,
         title: document.title,
         description: safeExtract(() => getMetaContent('description')),
-        keywords: safeExtract(() => getMetaContent('keywords')),
+        keywords: metaKeywords,
         canonical: safeExtract(() => document.querySelector('link[rel="canonical"]')?.href),
         robots: safeExtract(() => getMetaContent('robots')),
         viewport: safeExtract(() => getMetaContent('viewport')),
@@ -60,7 +66,7 @@ function extractSEOData() {
         schema: safeExtract(() => getSchema(), []),
         techStack: safeExtract(() => detectTechStack(), {}),
         paa: safeExtract(() => getPAA(), []),
-        readability: safeExtract(() => calculateReadability(), { score: 0, level: 'N/A' }),
+        readability: safeExtract(() => calculateReadability(audience, keywordList), { score: 0, level: 'N/A' }),
         eeat: safeExtract(() => analyzeEEAT(), { score: 0, experience: {}, expertise: {}, authoritativeness: {}, trustworthiness: {} }),
         cwv: getCWV(),
         accessibility: safeExtract(() => getAccessibilityData(), { score: 0, issues: { critical: [], warnings: [], notices: [] }, checks: {} }),

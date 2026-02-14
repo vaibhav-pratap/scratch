@@ -228,3 +228,51 @@ export function toggleContentHighlights(enabled, issues) {
         clearContentHighlights();
     }
 }
+
+
+/**
+ * Scroll to text snippet and highlight
+ */
+export function scrollToText(text) {
+    if (!text) return;
+
+    // Clean text (remove ellipsis if present from truncation)
+    const cleanText = text.replace(/\.{3}$/, '').trim();
+    if (cleanText.length < 10) return; // Too short to be unique
+
+    // Find paragraph containing text
+    const paragraphs = document.querySelectorAll('p, li, div');
+    let target = null;
+
+    for (const p of paragraphs) {
+        // Skip hidden or empty elements
+        if (p.offsetParent === null || !p.textContent) continue;
+        
+        // precise match check
+        if (p.textContent.includes(cleanText)) {
+            target = p;
+            break;
+        }
+    }
+
+    if (target) {
+        // Scroll
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Highlight effect
+        const originalTransition = target.style.transition;
+        const originalBg = target.style.backgroundColor;
+
+        target.style.transition = 'background-color 0.5s ease';
+        target.style.backgroundColor = 'rgba(255, 235, 59, 0.5)'; // Yellow highlight
+
+        setTimeout(() => {
+            target.style.backgroundColor = originalBg;
+            setTimeout(() => {
+                target.style.transition = originalTransition;
+            }, 500);
+        }, 2000);
+    } else {
+        console.warn('[SEO Extension] Could not find text to scroll to:', cleanText);
+    }
+}

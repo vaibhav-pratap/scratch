@@ -6,7 +6,7 @@
 import { toggleLinkHighlight } from '../highlighting/links.js';
 import { highlightAccessibilityIssue, clearAccessibilityHighlights, toggleAccessibilityHighlights } from '../highlighting/accessibility.js';
 import { highlightImage } from '../highlighting/images.js';
-import { highlightPassiveVoice, highlightLongSentences, highlightSentencesWithoutTransitions, highlightLongParagraphs, highlightAllIssues, toggleContentHighlights, clearContentHighlights } from '../highlighting/content-quality.js';
+import { highlightPassiveVoice, highlightLongSentences, highlightSentencesWithoutTransitions, highlightLongParagraphs, highlightAllIssues, toggleContentHighlights, clearContentHighlights, scrollToText } from '../highlighting/content-quality.js';
 
 /**
  * Setup message listener
@@ -14,7 +14,7 @@ import { highlightPassiveVoice, highlightLongSentences, highlightSentencesWithou
 export function setupMessageListener(extractDataFn) {
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === "getSEOData") {
-            sendResponse(extractDataFn());
+            sendResponse(extractDataFn(request));
         } else if (request.action === "toggleNofollow") {
             toggleLinkHighlight('nofollow', request.enabled !== false);
         } else if (request.action === "toggleHighlight") {
@@ -41,6 +41,8 @@ export function setupMessageListener(extractDataFn) {
             toggleContentHighlights(request.enabled, request.issues);
         } else if (request.action === "clearContentHighlights") {
             clearContentHighlights();
+        } else if (request.action === "scrollToText") {
+            scrollToText(request.text);
         }
     });
 }

@@ -41,7 +41,7 @@ export function renderContentQualityTab(data) {
         <div style="margin-bottom: 20px;">
             <h2 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 600;">Content Quality & E-E-A-T Analysis</h2>
             <p style="margin: 0; color: var(--md-sys-color-on-surface-variant); font-size: 14px;">
-                For: <strong>${escapeHtml(window.location.hostname)}</strong>
+                For: <strong>${escapeHtml(data.url ? new URL(data.url).hostname : 'Current Page')}</strong>
             </p>
         </div>
     `;
@@ -58,6 +58,21 @@ export function renderContentQualityTab(data) {
     // Recommendations Section
     if (readability.recommendations && readability.recommendations.length > 0) {
         html += createRecommendationsSection(readability.recommendations);
+    }
+
+    // Heatmap Section [Modified]
+    if (readability.heatmap) {
+        html += createHeatmapSection(readability);
+    }
+
+    // Flow Section [NEW]
+    if (readability.flow && readability.flow.length > 0) {
+        html += createFlowSection(readability.flow);
+    }
+
+    // Inclusivity Section [NEW]
+    if (readability.inclusivity && readability.inclusivity.issues.length > 0) {
+        html += createInclusivitySection(readability.inclusivity);
     }
 
     container.innerHTML = html;
@@ -79,9 +94,56 @@ function createReadabilitySection(readability) {
 
     return `
         <div class="card" style="margin-bottom: 20px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+            <!-- Header Row -->
+            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px;">
                 <h3 style="margin: 0; font-size: 18px; font-weight: 600;">📖 Readability Score</h3>
-                <button id="btn-highlight-all" class="action-btn primary" style="display: flex; align-items: center; gap: 6px;">
+                
+                <!-- Audience Selector -->
+                <div class="audience-selector" style="display: flex; background: var(--md-sys-color-surface-variant); border-radius: 6px; padding: 2px;">
+                    <button class="audience-btn active" data-audience="general" style="padding: 4px 12px; border: none; background: var(--md-sys-color-surface); border-radius: 4px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--md-sys-color-on-surface);">General</button>
+                    <button class="audience-btn" data-audience="professional" style="padding: 4px 12px; border: none; background: transparent; border-radius: 4px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--md-sys-color-on-surface-variant);">Pro</button>
+                    <button class="audience-btn" data-audience="academic" style="padding: 4px 12px; border: none; background: transparent; border-radius: 4px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--md-sys-color-on-surface-variant);">Academic</button>
+                </div>
+            </div>
+
+            <!-- Score Section -->
+            <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px;">
+                <!-- Circle Gauge -->
+                <div style="position: relative; width: 100px; height: 100px; flex-shrink: 0;">
+                    <svg width="100" height="100" style="transform: rotate(-90deg);">
+                        <circle cx="50" cy="50" r="44" fill="none" stroke="var(--md-sys-color-surface-variant)" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="44" fill="none" stroke="${scoreColor}" stroke-width="8"
+                                stroke-dasharray="${(score / 100) * 276.46} 276.46" 
+                                stroke-linecap="round"
+                                style="transition: stroke-dasharray 1s ease-in-out;"/>
+                    </svg>
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div style="font-size: 28px; font-weight: 700; color: ${scoreColor};">${score}</div>
+                        <div style="font-size: 11px; color: var(--md-sys-color-on-surface-variant);">/ 100</div>
+                    </div>
+                </div>
+
+                <!-- Score Details -->
+                <div style="flex: 1;">
+                    <div style="margin-bottom: 8px;">
+                        <span style="font-size: 13px; color: var(--md-sys-color-on-surface-variant); font-weight: 500;">Flesch Reading Ease</span>
+                        <div style="font-size: 20px; font-weight: 600; color: var(--md-sys-color-on-surface); display: flex; flex-direction: column; align-items: start; gap: 2px;">
+                            ${fleschScore} <span style="font-size: 13px; font-weight: 400; color: var(--md-sys-color-on-surface-variant);">(${level})</span>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <span style="font-size: 13px; color: var(--md-sys-color-on-surface-variant); font-weight: 500;">Grade Level</span>
+                        <div style="font-size: 20px; font-weight: 600; color: var(--md-sys-color-on-surface);">${readability.fleschKincaidGrade || 'N/A'}</div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); line-height: 1.4;">
+                        ${getFleschDescription(fleschScore)}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Footer -->
+            <div style="border-top: 1px solid var(--md-sys-color-outline-variant); padding-top: 16px;">
+                <button id="btn-highlight-all" class="action-btn primary" style="width: 100%; justify-content: center; height: 36px;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                     </svg>
@@ -89,36 +151,11 @@ function createReadabilitySection(readability) {
                 </button>
             </div>
 
-            <!-- Score Circle -->
-            <div style="display: flex; align-items: center; gap: 32px; margin-bottom: 24px;">
-                <div style="position: relative; width: 120px; height: 120px;">
-                    <svg width="120" height="120" style="transform: rotate(-90deg);">
-                        <circle cx="60" cy="60" r="54" fill="none" stroke="var(--md-sys-color-surface-variant)" stroke-width="8"/>
-                        <circle cx="60" cy="60" r="54" fill="none" stroke="${scoreColor}" stroke-width="8"
-                                stroke-dasharray="${(score / 100) * 339.29} 339.29" 
-                                stroke-linecap="round"
-                                style="transition: stroke-dasharray 1s ease-in-out;"/>
-                    </svg>
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <div style="font-size: 32px; font-weight: 700; color: ${scoreColor};">${score}</div>
-                        <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);">/ 100</div>
-                    </div>
-                </div>
-
-                <div style="flex: 1;">
-                    <div style="margin-bottom: 12px;">
-                        <span style="font-size: 14px; color: var(--md-sys-color-on-surface-variant); font-weight: 500;">Flesch Reading Ease</span>
-                        <div style="font-size: 24px; font-weight: 600; color: var(--md-sys-color-on-surface);">${fleschScore} <span style="font-size: 16px; font-weight: 400; color: var(--md-sys-color-on-surface-variant);">(${level})</span></div>
-                    </div>
-                    <div style="font-size: 13px; color: var(--md-sys-color-on-surface-variant);">
-                        ${getFleschDescription(fleschScore)}
-                    </div>
-                </div>
-            </div>
-
             <!-- Metrics Grid -->
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
                 ${createMetricCard('Words per Sentence', readability.averageWordsPerSentence, 'words', 15, 20)}
+                ${createMetricCard('Coleman-Liau Index', readability.colemanLiauIndex, null, 10, 14, true)}
+                ${createMetricCard('LIX Score', readability.lixScore, null, 40, 50, true)}
                 ${createMetricCard('Passive Voice', readability.passiveVoice?.percentage + '%', null, 10, 25, true)}
                 ${createMetricCard('Transitional Words', readability.transitionalWords?.percentage + '%', null, 20, 30)}
                 ${createMetricCard('Paragraph Length', readability.paragraphs?.averageLength, 'words', 100, 150)}
@@ -186,60 +223,60 @@ function createEEATComponent(name, component, icon) {
         detailsHtml = `
             <div class="eeat-detail">
                 <span>First-Person Content:</span>
-                <strong>${details.firstPerson || 0} instances ${getStatusIcon(details.firstPerson > 0)}</strong>
+                <strong>${details.firstPersonMatches || 0} instances ${getStatusIcon(details.firstPersonMatches > 0)}</strong>
             </div>
             <div class="eeat-detail">
-                <span>Case Studies:</span>
-                <strong>${details.caseStudies || 0} found ${getStatusIcon(details.caseStudies > 0)}</strong>
+                <span>Reviews/Comments:</span>
+                <strong>${details.hasReviews ? 'Found' : 'Not Found'} ${getStatusIcon(details.hasReviews)}</strong>
             </div>
             <div class="eeat-detail">
-                <span>Examples:</span>
-                <strong>${details.examples || 0} found ${getStatusIcon(details.examples > 0)}</strong>
+                <span>Multimedia:</span>
+                <strong>${details.hasMedia ? 'Found' : 'Not Found'} ${getStatusIcon(details.hasMedia)}</strong>
             </div>
         `;
     } else if (name === 'Expertise') {
         detailsHtml = `
             <div class="eeat-detail">
                 <span>Author Bio:</span>
-                <strong>${details.authorBio ? 'Found' : 'Not Found'} ${getStatusIcon(details.authorBio)}</strong>
+                <strong>${details.hasBio ? 'Found' : 'Not Found'} ${getStatusIcon(details.hasBio)}</strong>
             </div>
             <div class="eeat-detail">
                 <span>Credentials:</span>
-                <strong>${details.credentials || 0} found ${getStatusIcon(details.credentials > 0)}</strong>
+                <strong>${details.hasCredentials ? 'Found' : 'Not Found'} ${getStatusIcon(details.hasCredentials)}</strong>
             </div>
             <div class="eeat-detail">
-                <span>Citations:</span>
-                <strong>${details.citations || 0} references ${getStatusIcon(details.citations > 5)}</strong>
+                <span>Social Profiles:</span>
+                <strong>${details.hasSocial ? 'Found' : 'Not Found'} ${getStatusIcon(details.hasSocial)}</strong>
             </div>
         `;
     } else if (name === 'Authoritativeness') {
         detailsHtml = `
             <div class="eeat-detail">
-                <span>Author Attribution:</span>
-                <strong>${details.hasAuthor ? 'Yes' : 'No'} ${getStatusIcon(details.hasAuthor)}</strong>
+                <span>Author Metadata:</span>
+                <strong>${details.hasAuthor ? 'Yes' : (component.found.includes('Author metadata found') ? 'Yes' : 'No')} ${getStatusIcon(component.found.includes('Author metadata found'))}</strong>
             </div>
             <div class="eeat-detail">
                 <span>Published Date:</span>
-                <strong>${details.hasPublishedDate ? 'Found' : 'Not Found'} ${getStatusIcon(details.hasPublishedDate)}</strong>
-            </div>
-            <div class="eeat-detail">
-                <span>Author Bio:</span>
-                <strong>${details.hasAuthorBio ? 'Found' : 'Not Found'} ${getStatusIcon(details.hasAuthorBio)}</strong>
+                <strong>${component.found.includes('Published date found') ? 'Found' : 'Not Found'} ${getStatusIcon(component.found.includes('Published date found'))}</strong>
             </div>
         `;
     } else if (name === 'Trustworthiness') {
         detailsHtml = `
             <div class="eeat-detail">
                 <span>HTTPS:</span>
-                <strong>${details.https ? 'Enabled' : 'Disabled'} ${getStatusIcon(details.https)}</strong>
+                <strong>${window.location.protocol === 'https:' ? 'Yes' : 'No'} ${getStatusIcon(window.location.protocol === 'https:')}</strong>
+            </div>
+            <div class="eeat-detail">
+                <span>Policies:</span>
+                <strong>${component.found.includes('Legal pages (Privacy/Terms) found') ? 'Found' : 'Not Found'} ${getStatusIcon(component.found.includes('Legal pages (Privacy/Terms) found'))}</strong>
             </div>
             <div class="eeat-detail">
                 <span>Contact Info:</span>
-                <strong>${details.hasContact ? 'Found' : 'Not Found'} ${getStatusIcon(details.hasContact)}</strong>
+                <strong>${component.found.includes('Contact information found') ? 'Found' : 'Not Found'} ${getStatusIcon(component.found.includes('Contact information found'))}</strong>
             </div>
-            <div class="eeat-detail">
-                <span>External Sources:</span>
-                <strong>${details.externalSources || 0} links ${getStatusIcon(details.externalSources > 3)}</strong>
+             <div class="eeat-detail">
+                <span>About Page:</span>
+                <strong>${component.found.includes('"About Us" page found') ? 'Found' : 'Not Found'} ${getStatusIcon(component.found.includes('"About Us" page found'))}</strong>
             </div>
         `;
     }
@@ -260,7 +297,10 @@ function createEEATComponent(name, component, icon) {
 
             ${found.length > 0 ? `
                 <div style="margin-top: 12px; padding: 8px 12px; background: var(--md-sys-color-surface-variant); border-radius: 6px; font-size: 12px;">
-                    <strong>Found:</strong> ${found.slice(0, 3).map(f => escapeHtml(f)).join(', ')}${found.length > 3 ? '...' : ''}
+                    <strong>Signals Detected:</strong>
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
+                        ${found.map(f => `<span style="background: var(--md-sys-color-surface); padding: 2px 6px; border-radius: 4px;">${escapeHtml(f)}</span>`).join('')}
+                    </div>
                 </div>
             ` : ''}  
         </div>
@@ -278,10 +318,11 @@ function createIssuesSection(readability) {
     const veryLongSentences = readability.sentences?.veryLongSentencesList || [];
     const sentencesWithoutTransitions = readability.transitionalWords?.sentencesWithout || [];
     const longParagraphs = readability.paragraphs?.longParagraphsList || [];
+    const complexWords = readability.simplificationSuggestions || [];
 
     // Check if there are any issues
     const hasIssues = passiveSentences.length > 0 || longSentences.length > 0 ||
-        sentencesWithoutTransitions.length > 0 || longParagraphs.length > 0;
+        sentencesWithoutTransitions.length > 0 || longParagraphs.length > 0 || complexWords.length > 0;
 
     if (!hasIssues) {
         return `
@@ -306,72 +347,57 @@ function createIssuesSection(readability) {
 
             ${passiveSentences.length > 0 ? `
                 <div style="margin-bottom: 24px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px;">
                         <h4 style="margin: 0; font-size: 15px; font-weight: 600; color: #9775fa;">
                             <span style="display: inline-block; width: 12px; height: 12px; background: #9775fa; border-radius: 50%; margin-right: 8px;"></span>
                             Passive Voice (${passiveSentences.length} sentences)
                         </h4>
                         <button class="highlight-passive-btn action-btn secondary small">Highlight All</button>
                     </div>
-                    <div style="display: grid; gap: 8px;">
-                        ${passiveSentences.slice(0, 5).map(sentence => `
+                    <div style="display: grid; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 4px;">
+                        ${passiveSentences.map(sentence => `
                             <div style="padding: 10px 12px; background: var(--md-sys-color-surface-variant); border-radius: 6px; font-size: 13px; border-left: 3px solid #9775fa;">
                                 "${escapeHtml(sentence)}"
                             </div>
                         `).join('')}
-                        ${passiveSentences.length > 5 ? `
-                            <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); font-style: italic;">
-                                And ${passiveSentences.length - 5} more...
-                            </div>
-                        ` : ''}
                     </div>
                 </div>
             ` : ''}
             
             ${veryLongSentences.length > 0 ? `
                 <div style="margin-bottom: 24px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px;">
                         <h4 style="margin: 0; font-size: 15px; font-weight: 600; color: #ff6b00;">
                             <span style="display: inline-block; width: 12px; height: 12px; background: #ff6b00; border-radius: 50%; margin-right: 8px;"></span>
                             Very Long Sentences (${veryLongSentences.length} sentences >25 words)
                         </h4>
                         <button class="highlight-long-sentences-btn action-btn secondary small">Highlight All</button>
                     </div>
-                    <div style="display: grid; gap: 8px;">
-                        ${veryLongSentences.slice(0, 5).map(sentence => `
+                    <div style="display: grid; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 4px;">
+                        ${veryLongSentences.map(sentence => `
                             <div style="padding: 10px 12px; background: var(--md-sys-color-surface-variant); border-radius: 6px; font-size: 13px; border-left: 3px solid #ff6b00;">
                                 "${escapeHtml(sentence)}"
                             </div>
                         `).join('')}
-                        ${veryLongSentences.length > 5 ? `
-                            <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); font-style: italic;">
-                                And ${veryLongSentences.length - 5} more...
-                            </div>
-                        ` : ''}
                     </div>
                 </div>
             ` : ''}
             
             ${sentencesWithoutTransitions.length > 5 ? `
                 <div style="margin-bottom: 24px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px;">
                         <h4 style="margin: 0; font-size: 15px; font-weight: 600; color: #339af0;">
                             <span style="display: inline-block; width: 12px; height: 12px; background: #339af0; border-radius: 50%; margin-right: 8px;"></span>
                             Missing Transitional Words (${sentencesWithoutTransitions.length} sentences)
                         </h4>
                         <button class="highlight-no-transitions-btn action-btn secondary small">Highlight All</button>
                     </div>
-                    <div style="display: grid; gap: 8px;">
-                        ${sentencesWithoutTransitions.slice(0, 5).map(sentence => `
+                    <div style="display: grid; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 4px;">
+                        ${sentencesWithoutTransitions.map(sentence => `
                             <div style="padding: 10px 12px; background: var(--md-sys-color-surface-variant); border-radius: 6px; font-size: 13px; border-left: 3px solid #339af0;">
                                 "${escapeHtml(sentence)}"
                             </div>
                         `).join('')}
-                        ${sentencesWithoutTransitions.length > 5 ? `
-                            <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); font-style: italic;">
-                                And ${sentencesWithoutTransitions.length - 5} more...
-                            </div>
-                        ` : ''}
                     </div>
                 </div>
             ` : ''}
@@ -385,17 +411,32 @@ function createIssuesSection(readability) {
                         </h4>
                         <button class="highlight-long-paragraphs-btn action-btn secondary small">Highlight All</button>
                     </div>
-                    <div style="display: grid; gap: 8px;">
-                        ${longParagraphs.slice(0, 3).map(paragraph => `
+                    <div style="display: grid; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 4px;">
+                        ${longParagraphs.map(paragraph => `
                             <div style="padding: 10px 12px; background: var(--md-sys-color-surface-variant); border-radius: 6px; font-size: 13px; border-left: 3px solid #ffd43b;">
                                 "${escapeHtml(paragraph.substring(0, 150))}..."
                             </div>
                         `).join('')}
-                        ${longParagraphs.length > 3 ? `
-                            <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); font-style: italic;">
-                                And ${longParagraphs.length - 3} more...
+                    </div>
+                </div>
+            ` : ''}
+
+            ${complexWords.length > 0 ? `
+                <div style="margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <h4 style="margin: 0; font-size: 15px; font-weight: 600; color: #868e96;">
+                            <span style="display: inline-block; width: 12px; height: 12px; background: #868e96; border-radius: 50%; margin-right: 8px;"></span>
+                            Complex Words (${complexWords.length} suggestions)
+                        </h4>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 4px;">
+                        ${complexWords.map(item => `
+                            <div style="padding: 8px 12px; background: var(--md-sys-color-surface-variant); border-radius: 6px; font-size: 13px; border-left: 3px solid #868e96;">
+                                <span style="font-weight: 600; color: var(--md-sys-color-error);">${escapeHtml(item.word)}</span>
+                                <span style="margin: 0 6px;">→</span>
+                                <span style="color: var(--md-sys-color-primary);">${escapeHtml(item.suggestion)}</span>
                             </div>
-                        ` : ''}
+                        `).join('')}
                     </div>
                 </div>
             ` : ''}
@@ -428,13 +469,219 @@ function createRecommendationsSection(recommendations) {
 }
 
 /**
+ * Create Heatmap Section (Supports Readability and Keywords)
+ */
+function createHeatmapSection(readability) {
+    const rHeatmap = readability.heatmap || [];
+    const kData = readability.keywordDensity || { heatmap: [], keywords: [] };
+    const kHeatmap = kData.heatmap || [];
+    
+    // Serialized data for toggling
+    const rDataJson = encodeURIComponent(JSON.stringify(rHeatmap));
+    const kDataJson = encodeURIComponent(JSON.stringify(kHeatmap));
+    const keywordsJson = encodeURIComponent(JSON.stringify(kData.keywords || []));
+
+    return `
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display:flex; flex-wrap: wrap; justify-content:space-between; align-items:center; gap: 12px; margin-bottom: 16px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 600;">🔥 Content Heatmap</h3>
+                    <p id="heatmap-desc" style="margin: 4px 0 0 0; font-size: 13px; color: var(--md-sys-color-on-surface-variant);">
+                        Visual overview of reading difficulty by paragraph.
+                    </p>
+                </div>
+                <!-- Heatmap Toggle -->
+                <div class="audience-selector" style="display: flex; background: var(--md-sys-color-surface-variant); border-radius: 6px; padding: 2px;">
+                    <button class="heatmap-toggle-btn active" data-type="readability" style="padding: 4px 8px; border: none; background: var(--md-sys-color-surface); border-radius: 4px; font-size: 11px; font-weight: 500; cursor: pointer; color: var(--md-sys-color-on-surface);">Readability</button>
+                    <button class="heatmap-toggle-btn" data-type="keywords" style="padding: 4px 8px; border: none; background: transparent; border-radius: 4px; font-size: 11px; font-weight: 500; cursor: pointer; color: var(--md-sys-color-on-surface-variant);">Keywords</button>
+                </div>
+            </div>
+            
+            <!-- Hidden Data Storage -->
+            <input type="hidden" id="heatmap-data-readability" value="${rDataJson}">
+            <input type="hidden" id="heatmap-data-keywords" value="${kDataJson}">
+            <input type="hidden" id="heatmap-keywords-list" value="${keywordsJson}">
+
+            <div style="position: relative;">
+                <div id="heatmap-container" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 16px; background: var(--md-sys-color-surface-variant); border-radius: 8px;">
+                    ${renderHeatmapGrid(rHeatmap, 'readability')}
+                </div>
+                <!-- Custom Tooltip -->
+                <div id="heatmap-tooltip" style="display: none; position: absolute; top: 0; left: 0; background: var(--md-sys-color-surface-container-highest, #E6E1E5); border: 1px solid var(--md-sys-color-outline-variant); color: var(--md-sys-color-on-surface); padding: 12px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-size: 12px; z-index: 100; width: 220px; pointer-events: none;"></div>
+            </div>
+
+            <div id="heatmap-legend" style="display: flex; gap: 16px; margin-top: 12px; font-size: 11px; color: var(--md-sys-color-on-surface-variant);">
+                ${renderHeatmapLegend('readability')}
+            </div>
+        </div>
+    `;
+}
+
+function renderHeatmapGrid(data, type) {
+    if (!data || data.length === 0) return '<div style="padding:10px; opacity:0.6; font-size:12px;">No data available</div>';
+
+    return data.map((p, index) => {
+        let color, opacity, label, valueLabel;
+
+        if (type === 'readability') {
+            color = p.status === 'good' ? 'var(--md-sys-color-primary)' : 
+                    p.status === 'warning' ? '#FF9800' : 'var(--md-sys-color-error)';
+            opacity = Math.min(1, Math.max(0.3, p.score / 100));
+            label = `Paragraph ${index + 1}`;
+            valueLabel = `Score: ${p.score} (${p.status})`;
+        } else {
+            // Keyword Density
+            const density = p.density || 0;
+            const intensity = Math.min(1, density / 3);
+            color = 'var(--md-sys-color-primary)';
+            opacity = Math.max(0.1, intensity);
+            label = `Paragraph ${index + 1}`;
+            valueLabel = `Density: ${density}% (${p.matches} matches)`;
+        }
+        
+        return `
+            <div class="heatmap-cell"
+                 data-label="${label}"
+                 data-value="${valueLabel}"
+                 data-snippet="${escapeHtml(p.snippet)}"
+                 data-text="${escapeHtml(p.snippet)}" 
+                 style="width: 16px; height: 16px; background: ${color}; border-radius: 3px; cursor: pointer; opacity: ${opacity}; transition: transform 0.1s;">
+            </div>
+        `;
+    }).join('');
+}
+
+function renderHeatmapLegend(type) {
+    // ... existing legend code ...
+    if (type === 'readability') {
+        return `
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; background: var(--md-sys-color-primary); border-radius: 50%;"></span> Easy</span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; background: #FF9800; border-radius: 50%;"></span> Moderate</span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; background: var(--md-sys-color-error); border-radius: 50%;"></span> Hard</span>
+        `;
+    } else {
+        return `
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; background: var(--md-sys-color-primary); opacity: 0.2; border-radius: 50%;"></span> Low Density</span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; background: var(--md-sys-color-primary); opacity: 1.0; border-radius: 50%;"></span> High Density</span>
+        `;
+    }
+}
+
+/**
+ * Create Flow Graph Section
+ */
+function createFlowSection(flowData) {
+    if (!flowData || flowData.length < 2) return '';
+
+    // Dimensions
+    const height = 140;
+    const width = 400; // viewBox width
+    
+    // 1. Score Line (0-100)
+    const pointsScore = flowData.map(p => `${(p.x / 100) * width},${height - (p.y / 100 * height)}`).join(' ');
+    
+    // 2. Error Density Line (Normalized: 5 errors = 100%)
+    // Scale: y = height - (errors * 20 / 100 * height) -> height - (errors * 0.2 * height) -- Wait 5 errors = 100% means factor 20.
+    // Actually let's cap at height.
+    const pointsErrors = flowData.map(p => {
+        const normalizedErrors = Math.min(100, (p.errors || 0) * 20); 
+        return `${(p.x / 100) * width},${height - (normalizedErrors / 100 * height)}`;
+    }).join(' ');
+
+    return `
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                 <div>
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 600;">📈 Readability Flow</h3>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--md-sys-color-on-surface-variant);">
+                        Metrics across content progression.
+                    </p>
+                </div>
+                <!-- Legend -->
+                <div style="display: flex; gap: 12px; font-size: 11px;">
+                    <span style="display: flex; align-items: center; gap: 4px; color: var(--md-sys-color-on-surface);">
+                        <span style="width: 12px; height: 2px; background: var(--md-sys-color-primary);"></span> Score
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 4px; color: var(--md-sys-color-on-surface);">
+                        <span style="width: 12px; height: 2px; background: var(--md-sys-color-error); border-bottom: 1px dashed var(--md-sys-color-error);"></span> Issues
+                    </span>
+                </div>
+            </div>
+
+            <div style="background: var(--md-sys-color-surface-variant); border-radius: 8px; padding: 20px 10px; height: 160px; position: relative;">
+                <svg viewBox="0 0 ${width} ${height}" style="width: 100%; height: 100%; overflow: visible;">
+                    <!-- Grid -->
+                    <line x1="0" y1="0" x2="${width}" y2="0" stroke="rgba(0,0,0,0.05)" stroke-width="1" />
+                    <line x1="0" y1="${height/2}" x2="${width}" y2="${height/2}" stroke="rgba(0,0,0,0.05)" stroke-width="1" />
+                    <line x1="0" y1="${height}" x2="${width}" y2="${height}" stroke="rgba(0,0,0,0.05)" stroke-width="1" />
+
+                    <!-- Area Fill (Score) -->
+                    <path d="M0,${height} ${pointsScore} L${width},${height} Z" fill="var(--md-sys-color-primary)" fill-opacity="0.1" />
+
+                    <!-- Score Line -->
+                    <polyline points="${pointsScore}" fill="none" stroke="var(--md-sys-color-primary)" stroke-width="2" stroke-linejoin="round" />
+
+                    <!-- Error Line (Dashed) -->
+                    <polyline points="${pointsErrors}" fill="none" stroke="var(--md-sys-color-error)" stroke-width="1.5" stroke-dasharray="4,2" />
+                    
+                    <!-- Interactive Overlay Points (Hidden but hoverable) -->
+                     ${flowData.map((p, i) => `
+                        <circle cx="${(p.x / 100) * width}" cy="${height - (p.y / 100 * height)}" r="3" fill="transparent"
+                                class="flow-point"
+                                data-score="${p.y}"
+                                data-errors="${p.errors || 0}"
+                                data-time="${p.time || 0}"
+                                data-snippet="${escapeHtml(p.snippet || '')}"
+                                style="cursor: pointer; pointer-events: all;" />
+                     `).join('')}
+                </svg>
+                
+                <!-- Flow Tooltip -->
+                 <div id="flow-tooltip" style="display: none; position: absolute; background: var(--md-sys-color-surface-container-highest, #E6E1E5); border: 1px solid var(--md-sys-color-outline-variant); color: var(--md-sys-color-on-surface); padding: 8px; border-radius: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-size: 11px; z-index: 20; pointer-events: none; white-space: nowrap;">
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Create Inclusivity Section
+ */
+function createInclusivitySection(inclusivity) {
+    return `
+        <div class="card" style="margin-bottom: 20px; border-left: 4px solid var(--md-sys-color-primary);">
+            <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">🤝 Inclusive Language</h3>
+            <p style="margin: 0 0 16px 0; font-size: 13px; color: var(--md-sys-color-on-surface-variant);">
+                Found ${inclusivity.issues.length} potential improvements for more inclusive language.
+            </p>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                ${inclusivity.issues.map(issue => `
+                    <div style="padding: 12px; background: var(--md-sys-color-surface-variant); border-radius: 6px; font-size: 13px;">
+                        <div style="font-weight: 600; margin-bottom: 4px; color: var(--md-sys-color-on-surface);">
+                            "${issue.term}" → "${issue.suggestion}"
+                        </div>
+                        <div style="font-size: 11px; color: var(--md-sys-color-on-surface-variant);">
+                            Category: ${issue.category} • Found ${issue.count} time${issue.count > 1 ? 's' : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+/**
  * Create Metric Card
  */
 function createMetricCard(label, value, unit, goodThreshold, warningThreshold, inverted = false) {
+    const displayValue = (value === undefined || value === null) ? 'N/A' : value;
     const numValue = parseInt(value) || 0;
     let status = 'good';
 
-    if (inverted) {
+    if (displayValue === 'N/A') {
+        status = 'neutral';
+    } else if (inverted) {
         // For metrics where lower is better (like passive voice)
         if (numValue > warningThreshold) status = 'poor';
         else if (numValue > goodThreshold) status = 'warning';
@@ -445,7 +692,8 @@ function createMetricCard(label, value, unit, goodThreshold, warningThreshold, i
     }
 
     const statusColor = status === 'good' ? 'var(--md-sys-color-primary)' :
-        status === 'warning' ? '#FF9800' : 'var(--md-sys-color-error)';
+        status === 'warning' ? '#FF9800' : 
+        status === 'poor' ? 'var(--md-sys-color-error)' : '#757575';
 
     return `
         <div style="padding: 16px; background: var(--md-sys-color-surface-variant); border-radius: 8px; border-left: 4px solid ${statusColor};">
@@ -453,10 +701,10 @@ function createMetricCard(label, value, unit, goodThreshold, warningThreshold, i
                 ${label}
             </div>
             <div style="font-size: 24px; font-weight: 700; color: var(--md-sys-color-on-surface);">
-                ${value}${unit ? ' ' + unit : ''}
+                ${displayValue}${unit && displayValue !== 'N/A' ? ' ' + unit : ''}
             </div>
             <div style="font-size: 11px; color: ${statusColor}; margin-top: 4px; font-weight: 500;">
-                ${status === 'good' ? '✓ Good' : status === 'warning' ? '⚠ Review' : '✗ Needs Work'}
+                ${status === 'good' ? '✓ Good' : status === 'warning' ? '⚠ Review' : status === 'poor' ? '✗ Needs Work' : '• No Data'}
             </div>
         </div>
     `;
@@ -487,6 +735,178 @@ function getFleschDescription(score) {
  * Attach event listeners
  */
 function attachEventListeners(readability, eeat) {
+    // Audience Selector Listeners [NEW]
+    const audienceBtns = document.querySelectorAll('.audience-btn');
+    audienceBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+             // Visual feedback
+            audienceBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Request new data with selected audience
+            const audience = btn.dataset.audience;
+            
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0]) {
+                    chrome.tabs.sendMessage(tabs[0].id, { 
+                        action: 'getSEOData', 
+                        audience: audience 
+                    }, (response) => {
+                        if (response) {
+                            renderContentQualityTab(response);
+                            setTimeout(() => {
+                                const newBtns = document.querySelectorAll('.audience-btn');
+                                newBtns.forEach(b => {
+                                    if (b.dataset.audience === audience) b.classList.add('active');
+                                    else b.classList.remove('active');
+                                });
+                            }, 0);
+                        }
+                    });
+                }
+            });
+        });
+    });
+
+    // Heatmap Toggle Listeners [NEW]
+    // Heatmap Toggle Listeners [NEW]
+    const heatmapToggleBtns = document.querySelectorAll('.heatmap-toggle-btn');
+    const heatmapContainer = document.getElementById('heatmap-container');
+    const heatmapLegend = document.getElementById('heatmap-legend');
+    const heatmapDesc = document.getElementById('heatmap-desc');
+    
+    // Hidden inputs
+    const rDataInput = document.getElementById('heatmap-data-readability');
+    const kDataInput = document.getElementById('heatmap-data-keywords');
+
+    // Helper to attach heatmap interactions
+    const attachHeatmapInteractions = () => {
+        const cells = document.querySelectorAll('.heatmap-cell');
+        const tooltip = document.getElementById('heatmap-tooltip');
+        // Get the RELATIVE container (parent of heatmap-container)
+        const relativeContainer = heatmapContainer?.parentElement;
+
+        if (!cells.length || !tooltip || !relativeContainer) return;
+
+        cells.forEach(cell => {
+            cell.addEventListener('mouseenter', () => {
+                const label = cell.dataset.label;
+                const value = cell.dataset.value;
+                const text = cell.dataset.text;
+                
+                tooltip.innerHTML = `
+                    <div style="font-weight:600; margin-bottom:4px; color: var(--md-sys-color-on-surface);">${label}</div>
+                    <div style="margin-bottom:4px; color: var(--md-sys-color-on-surface-variant);">${value}</div>
+                    <div style="font-style:italic; opacity:0.8; font-size:11px; line-height: 1.4; color: var(--md-sys-color-secondary); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px;">"${text}"</div>
+                    <div style="font-size:10px; opacity:0.7; color: var(--md-sys-color-primary);">Click to scroll</div>
+                `;
+                tooltip.style.display = 'block';
+                
+                // Position logic (relative to the container)
+                // We use offsetLeft/Top which are relative to the nearest positioned ancestor (the wrapper)
+                let left = cell.offsetLeft - (220 / 2) + 8; // Center horizontally
+                let top = cell.offsetTop + 20; // Below the cell
+
+                // Bounds check - keep inside container
+                if (left < 0) left = 0;
+                if (left + 220 > relativeContainer.offsetWidth) left = relativeContainer.offsetWidth - 220;
+
+                tooltip.style.left = `${left}px`;
+                tooltip.style.top = `${top}px`;
+            });
+
+            cell.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+            });
+
+            cell.addEventListener('click', () => {
+                const text = cell.dataset.text;
+                sendTabMessage('scrollToText', { text: text });
+            });
+        });
+    };
+
+    // Helper to attach flow chart interactions
+    const attachFlowInteractions = () => {
+        const points = document.querySelectorAll('.flow-point');
+        const tooltip = document.getElementById('flow-tooltip');
+        // The tooltip is inside the flow chart container, which is relative positioned?
+        // Let's find the container. The tooltip is inside the same parent as SVG?
+        // In createFlowSection: <div style="... position: relative;"> <svg>...</svg> <div id="flow-tooltip"></div> </div>
+        // So offsetLeft/Top on points (SVG elements) won't work directly because they are SVG elements.
+        // We need getBoundingClientRect for them and the container.
+        
+        if (!points.length || !tooltip) return;
+        
+        const container = tooltip.parentElement; // The relative container
+
+        points.forEach(point => {
+            point.addEventListener('mouseenter', () => {
+                const score = point.dataset.score;
+                const errors = point.dataset.errors;
+                const time = point.dataset.time;
+                const snippet = point.dataset.snippet;
+
+                tooltip.innerHTML = `
+                    <div style="font-weight:600; margin-bottom:4px; color: var(--md-sys-color-on-surface);">Readability: ${score}</div>
+                    <div style="color: var(--md-sys-color-error); margin-bottom:2px;">Issues: ${errors}</div>
+                    <div style="color: var(--md-sys-color-on-surface-variant); margin-bottom:4px;">Time: ~${time}s</div>
+                    <div style="font-style:italic; opacity:0.8; font-size:10px; max-width: 180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${snippet}"</div>
+                `;
+                tooltip.style.display = 'block';
+
+                // Positioning using Bounding Rects
+                const pRect = point.getBoundingClientRect();
+                const cRect = container.getBoundingClientRect();
+
+                let left = pRect.left - cRect.left - (tooltip.offsetWidth / 2) + (pRect.width / 2);
+                let top = pRect.top - cRect.top - tooltip.offsetHeight - 8;
+
+                if (left < 0) left = 0;
+                // Check right bound
+                if (left + tooltip.offsetWidth > cRect.width) left = cRect.width - tooltip.offsetWidth;
+
+                tooltip.style.left = `${left}px`;
+                tooltip.style.top = `${top}px`;
+            });
+
+            point.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+            });
+        });
+    };
+
+    // Initial attach
+    attachHeatmapInteractions();
+    attachFlowInteractions();
+
+    heatmapToggleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!heatmapContainer) return;
+
+            // Visual feedback
+            heatmapToggleBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const type = btn.dataset.type;
+            let data = [];
+            
+            if (type === 'readability') {
+                try { data = JSON.parse(decodeURIComponent(rDataInput.value)); } catch(e) {}
+                heatmapDesc.textContent = 'Visual overview of reading difficulty by paragraph.';
+            } else {
+                try { data = JSON.parse(decodeURIComponent(kDataInput.value)); } catch(e) {}
+                heatmapDesc.textContent = 'Visual overview of keyword density by paragraph.';
+            }
+
+            heatmapContainer.innerHTML = renderHeatmapGrid(data, type);
+            heatmapLegend.innerHTML = renderHeatmapLegend(type);
+            
+            // Re-attach listeners after render
+            attachHeatmapInteractions();
+        });
+    });
+
     // Highlight all button
     const highlightAllBtn = document.getElementById('btn-highlight-all');
     if (highlightAllBtn) {
@@ -560,6 +980,12 @@ style.textContent = `
         display: flex;
         align-items: center;
         gap: 6px;
+    }
+    
+    /* Audience Button Styles */
+    .audience-btn.active, .heatmap-toggle-btn.active {
+        background: var(--md-sys-color-primary) !important;
+        color: var(--md-sys-color-on-primary) !important;
     }
 `;
 document.head.appendChild(style);
