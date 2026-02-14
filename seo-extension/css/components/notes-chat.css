@@ -34,13 +34,11 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    background-color: var(--ios-bg-secondary);
-    /* White background for the root layout */
+    background-color: transparent;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
     color: var(--ios-text-primary);
     overflow: hidden;
     position: relative;
-    /* Container for absolute elements */
 }
 
 /* --- Header & Toggle --- */
@@ -49,9 +47,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--ios-bg-secondary);
+    background: transparent;
     border-bottom: none;
-    /* User requested removal */
     z-index: 10;
 }
 
@@ -86,9 +83,8 @@
 
 /* --- Filter Bars (Category & Date) --- */
 .notes-filters {
-    background: var(--ios-bg-secondary);
+    background: transparent;
     border-bottom: none;
-    /* Removed the line at the top */
     display: flex;
     flex-direction: column;
     padding-bottom: 6px;
@@ -251,17 +247,13 @@
     overflow-y: auto;
     position: relative;
     padding: 16px;
-    /* Reduced from 32px 16px */
-    padding-bottom: 100px;
-    /* Space for the floating button */
+    padding-bottom: 120px;
     height: 100%;
     box-sizing: border-box;
-    background-color: var(--ios-bg-primary);
-    border-radius: 32px;
-    /* Rounded on all corners now */
+    background-color: transparent;
+    border-radius: 0;
     margin-top: 0;
-    margin-bottom: 12px;
-    /* Spacing at bottom to show the curve */
+    margin-bottom: 0;
     z-index: 5;
     box-shadow: none;
 }
