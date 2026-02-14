@@ -9,7 +9,7 @@ import { listenForUpdates } from './core/messaging.js';
 
 // UI modules
 import { renderStaticLayout } from './ui/layout.js';
-import { initTabSwitching, switchToTab } from './ui/tabs.js';
+import { initTabSwitching, switchToTab, initTabTooltips } from './ui/tabs.js';
 import { initThemeToggle } from './ui/theme.js';
 import { setupHighlightToggles, setupSidePanelToggle } from './ui/toggles.js';
 import { renderCWVChart } from './ui/charts.js';
@@ -45,6 +45,7 @@ function init() {
 
     // 1. Tab Switching
     initTabSwitching();
+    initTabTooltips();
 
     // 2. Theme Toggle
     initThemeToggle();
@@ -126,6 +127,11 @@ function init() {
     // 16. Profile Button Listener (Handled by footer now, but kept for safety)
     document.getElementById('btn-profile')?.addEventListener('click', () => {
         switchToTab('profile');
+    });
+
+    // Schema Builder Footer Button Listener
+    document.getElementById('btn-schema-builder')?.addEventListener('click', () => {
+        switchToTab('schema-builder');
     });
 
     // Tracking Button Listener (Handled by footer now, but kept for safety)

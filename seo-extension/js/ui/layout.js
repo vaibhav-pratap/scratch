@@ -67,71 +67,71 @@ export function renderStaticLayout() {
             
             <!-- Tabs -->
             <div class="tabs-container">
-                <button class="tab-btn active" data-tab="notes">
+                <button class="tab-btn active" data-tab="notes" data-tip-title="Notes" data-tip-desc="Quick notes and to-do items for this site">
                     <i class="fa-solid fa-clipboard-list"></i>
                     <span>Notes</span>
                 </button>
-                <button class="tab-btn" data-tab="overview">
+                <button class="tab-btn" data-tab="overview" data-tip-title="Overview" data-tip-desc="SEO health score, Core Web Vitals and key metrics">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>Overview</span>
                 </button>
-                <button class="tab-btn" data-tab="meta">
+                <button class="tab-btn" data-tab="meta" data-tip-title="Meta" data-tip-desc="Title, description, Open Graph and Twitter card tags">
                     <i class="fa-solid fa-code"></i>
                     <span>Meta</span>
                 </button>
-                <button class="tab-btn" data-tab="headings">
+                <button class="tab-btn" data-tab="headings" data-tip-title="Headings" data-tip-desc="Heading hierarchy and structure analysis">
                     <i class="fa-solid fa-heading"></i>
                     <span>Headings</span>
                 </button>
-                <button class="tab-btn" data-tab="images">
+                <button class="tab-btn" data-tab="images" data-tip-title="Images" data-tip-desc="Alt text audit, size and optimization tips">
                     <i class="fa-solid fa-images"></i>
                     <span>Images</span>
                 </button>
-                <button class="tab-btn" data-tab="links">
+                <button class="tab-btn" data-tab="links" data-tip-title="Links" data-tip-desc="Internal, external and broken link analysis">
                     <i class="fa-solid fa-link"></i>
                     <span>Links</span>
                 </button>
-                <button class="tab-btn" data-tab="accessibility">
+                <button class="tab-btn" data-tab="accessibility" data-tip-title="Accessibility" data-tip-desc="WCAG compliance checks and ARIA audit">
                     <i class="fa-solid fa-universal-access"></i>
                     <span>Accessibility</span>
                 </button>
-                <button class="tab-btn" data-tab="content-quality">
+                <button class="tab-btn" data-tab="content-quality" data-tip-title="Content" data-tip-desc="Readability score, word count and quality">
                     <i class="fa-solid fa-file-contract"></i>
                     <span>Content</span>
                 </button>
-                <button class="tab-btn" data-tab="schema">
+                <button class="tab-btn" data-tab="schema" data-tip-title="Schema Explorer" data-tip-desc="View structured data found on this page">
                     <i class="fa-solid fa-file-signature"></i>
                     <span>Schema Explorer</span>
                 </button>
-                <button class="tab-btn" data-tab="schema-builder">
+                <button class="tab-btn" data-tab="schema-builder" data-tip-title="Schema Builder" data-tip-desc="Create and validate JSON-LD structured data">
                     <i class="fa-solid fa-project-diagram"></i>
                     <span>Schema Builder</span>
                 </button>
-                <button class="tab-btn" data-tab="ai-analysis">
+                <button class="tab-btn" data-tab="ai-analysis" data-tip-title="AI Analysis" data-tip-desc="AI-powered SEO recommendations and insights">
                     <i class="fa-solid fa-robot"></i>
                     <span>AI Analysis</span>
                 </button>
-                <button class="tab-btn" data-tab="keywords-insights">
+                <button class="tab-btn" data-tab="keywords-insights" data-tip-title="Keywords" data-tip-desc="Keyword density, prominence and optimization">
                     <i class="fa-solid fa-magnifying-glass-chart"></i>
                     <span>Keywords</span>
                 </button>
-                <button class="tab-btn" data-tab="ad-transparency">
+                <button class="tab-btn" data-tab="ad-transparency" data-tip-title="Ads" data-tip-desc="Detect ad networks and advertising scripts">
                     <i class="fa-solid fa-rectangle-ad"></i>
                     <span>Ads</span>
                 </button>
-                <button class="tab-btn" data-tab="tag-detector">
+                <button class="tab-btn" data-tab="tag-detector" data-tip-title="Tags" data-tip-desc="Detect analytics, marketing and third-party tags">
                     <i class="fa-solid fa-tags"></i>
                     <span>Tags</span>
                 </button>
-                <button class="tab-btn" data-tab="tracking-builder">
+                <button class="tab-btn" data-tab="tracking-builder" data-tip-title="Tracking" data-tip-desc="Build UTM campaign tracking URLs">
                     <i class="fa-solid fa-route"></i>
                     <span>Tracking</span>
                 </button>
-                <button class="tab-btn" data-tab="settings">
+                <button class="tab-btn" data-tab="settings" data-tip-title="Settings" data-tip-desc="Configure extension preferences and API keys">
                     <i class="fa-solid fa-gear"></i>
                     <span>Settings</span>
                 </button>
-                <button class="tab-btn" data-tab="profile" style="display: none;">
+                <button class="tab-btn" data-tab="profile" style="display: none;" data-tip-title="Profile" data-tip-desc="Your account and saved data">
                     <i class="fa-solid fa-user"></i>
                     <span>Profile</span>
                 </button>
@@ -185,6 +185,11 @@ export function renderStaticLayout() {
             </button>            <button id="btn-profile" class="nav-item" title="Profile">
                 <div class="nav-icon-container">
                     <i class="fa-solid fa-user"></i>
+                </div>
+            </button>
+            <button id="btn-schema-builder" class="nav-item" title="Schema Builder">
+                <div class="nav-icon-container">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
                 </div>
             </button>
             <button id="btn-tracking" class="nav-item" title="UTM Builder">

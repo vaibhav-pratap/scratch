@@ -184,3 +184,80 @@ export function switchToTab(tabId) {
         }
     });
 }
+
+/**
+ * Initialize custom tooltips for tab buttons
+ * Shows a styled tooltip below inactive tabs on hover
+ */
+export function initTabTooltips() {
+    // Create shared tooltip element
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tab-tooltip';
+    tooltip.innerHTML = '<div class="tab-tooltip-title"></div><div class="tab-tooltip-desc"></div>';
+    document.body.appendChild(tooltip);
+
+    const titleEl = tooltip.querySelector('.tab-tooltip-title');
+    const descEl = tooltip.querySelector('.tab-tooltip-desc');
+
+    let showTimeout = null;
+
+    function showTooltip(btn) {
+        const tipTitle = btn.dataset.tipTitle;
+        const tipDesc = btn.dataset.tipDesc;
+        if (!tipTitle) return;
+
+        titleEl.textContent = tipTitle;
+        descEl.textContent = tipDesc || '';
+        descEl.style.display = tipDesc ? '' : 'none';
+
+        // Position below the button, centered
+        const rect = btn.getBoundingClientRect();
+        tooltip.style.display = 'block';
+        tooltip.classList.remove('visible');
+
+        // Need to measure tooltip size after content update
+        requestAnimationFrame(() => {
+            const tipW = tooltip.offsetWidth;
+            let left = rect.left + (rect.width / 2) - (tipW / 2);
+            const top = rect.bottom + 6;
+
+            // Clamp to viewport
+            const viewW = window.innerWidth;
+            if (left < 4) left = 4;
+            if (left + tipW > viewW - 4) left = viewW - tipW - 4;
+
+            // Update arrow position relative to button center
+            const arrowLeft = rect.left + (rect.width / 2) - left;
+            tooltip.style.setProperty('--arrow-left', `${arrowLeft}px`);
+
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+            tooltip.classList.add('visible');
+        });
+    }
+
+    function hideTooltip() {
+        clearTimeout(showTimeout);
+        tooltip.classList.remove('visible');
+        setTimeout(() => {
+            if (!tooltip.classList.contains('visible')) {
+                tooltip.style.display = 'none';
+            }
+        }, 200);
+    }
+
+    // Attach listeners to all tab buttons
+    const tabBtns = document.querySelectorAll('.tab-btn[data-tip-title]');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+            // Don't show tooltip for active tab
+            if (btn.classList.contains('active')) return;
+            clearTimeout(showTimeout);
+            showTimeout = setTimeout(() => showTooltip(btn), 300);
+        });
+
+        btn.addEventListener('mouseleave', () => {
+            hideTooltip();
+        });
+    });
+}

@@ -10,7 +10,7 @@ import { listenForUpdates } from './core/messaging.js';
 
 // UI modules
 import { renderStaticLayout } from './ui/layout.js';
-import { initTabSwitching, switchToTab } from './ui/tabs.js';
+import { initTabSwitching, switchToTab, initTabTooltips } from './ui/tabs.js';
 import { initThemeToggle } from './ui/theme.js';
 import { setupHighlightToggles, setupSidePanelToggle } from './ui/toggles.js';
 import { renderCWVChart } from './ui/charts.js';
@@ -51,6 +51,7 @@ function init() {
 
     // 1. Tab Switching
     initTabSwitching();
+    initTabTooltips();
 
     // 2. Theme Toggle
     initThemeToggle();
@@ -174,6 +175,16 @@ function init() {
         switchToTab('notes');
         const appFooter = document.querySelector('.app-footer');
         if (appFooter) appFooter.style.display = 'none';
+    });
+
+    // Schema Builder Footer Button Listener
+    document.getElementById('btn-schema-builder')?.addEventListener('click', () => {
+        switchToTab('schema-builder');
+    });
+
+    // Tracking Footer Button Listener
+    document.getElementById('btn-tracking')?.addEventListener('click', () => {
+        switchToTab('tracking-builder');
     });
 
     // 17c. Chat Button Listener
