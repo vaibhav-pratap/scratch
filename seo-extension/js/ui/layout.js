@@ -529,7 +529,17 @@ function renderAccessibilityTab() {
 
         <!-- All Issues List -->
         <div class="card">
-            <h3>All Issues</h3>
+            <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h3 style="margin: 0;">All Issues</h3>
+                </div>
+                <div id="a11y-filters" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;">
+                    <button class="filter-chip active" data-filter="all" style="white-space: nowrap; padding: 6px 12px; border-radius: 16px; border: 1px solid var(--md-sys-color-outline); background: transparent; font-size: 12px; cursor: pointer; flex-shrink: 0;">All</button>
+                    <button class="filter-chip" data-filter="critical" style="white-space: nowrap; padding: 6px 12px; border-radius: 16px; border: 1px solid var(--md-sys-color-outline); background: transparent; font-size: 12px; cursor: pointer; flex-shrink: 0;">Critical</button>
+                    <button class="filter-chip" data-filter="warning" style="white-space: nowrap; padding: 6px 12px; border-radius: 16px; border: 1px solid var(--md-sys-color-outline); background: transparent; font-size: 12px; cursor: pointer; flex-shrink: 0;">Warning</button>
+                    <button class="filter-chip" data-filter="contrast" style="white-space: nowrap; padding: 6px 12px; border-radius: 16px; border: 1px solid var(--md-sys-color-outline); background: transparent; font-size: 12px; cursor: pointer; flex-shrink: 0;">Contrast</button>
+                </div>
+            </div>
             <div id="a11y-issues-list"></div>
         </div>
         

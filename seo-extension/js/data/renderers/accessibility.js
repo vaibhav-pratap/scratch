@@ -47,6 +47,9 @@ export function renderAccessibilityTab(data) {
         // Setup highlight toggle
         setupHighlightToggle(data.issues);
 
+        // Setup filters
+        setupFilters(data.issues);
+
     } catch (error) {
         console.error('[A11Y Renderer] Error rendering:', error);
     }
@@ -94,7 +97,10 @@ function renderAccessibilityScore(score, checks) {
         { key: 'headings', label: 'Headings', color: '#FF9800' },
         { key: 'landmarks', label: 'Landmarks', color: '#9C27B0' },
         { key: 'links', label: 'Links', color: '#F44336' },
-        { key: 'language', label: 'Language', color: '#00BCD4' }
+        { key: 'language', label: 'Language', color: '#00BCD4' },
+        { key: 'contrast', label: 'Contrast', color: '#795548' },
+        { key: 'interactive', label: 'Interactive', color: '#607D8B' },
+        { key: 'media', label: 'Media', color: '#E91E63' }
     ];
 
     const chartData = categories.map(cat => ({
@@ -292,7 +298,10 @@ function renderChecks(checks) {
         { key: 'headings', label: 'Headings', icon: '📑', color: '#FF9800' },
         { key: 'landmarks', label: 'Landmarks', icon: '🏛️', color: '#9C27B0' },
         { key: 'links', label: 'Links', icon: '🔗', color: '#F44336' },
-        { key: 'language', label: 'Language', icon: '🌐', color: '#00BCD4' }
+        { key: 'language', label: 'Language', icon: '🌐', color: '#00BCD4' },
+        { key: 'contrast', label: 'Contrast', icon: '🌗', color: '#795548' },
+        { key: 'interactive', label: 'Interactive', icon: '👆', color: '#607D8B' },
+        { key: 'media', label: 'Media', icon: '🎬', color: '#E91E63' }
     ];
 
     const checksHTML = checkCategories.map(category => {
@@ -304,43 +313,118 @@ function renderChecks(checks) {
         const score = check.score || 0;
 
         return `
-            <div class="data-group" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; border-left: 4px solid ${category.color};">
-                <div style="flex: 1;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                        <span style="font-size: 20px;">${category.icon}</span>
-                        <strong style="color: ${category.color};">${category.label}</strong>
+            <div class="a11y-check-card" style="
+                background: var(--md-sys-color-surface);
+                border: 1px solid var(--md-sys-color-outline-variant);
+                border-radius: 12px;
+                padding: 16px;
+                margin-bottom: 12px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="
+                            font-size: 24px;
+                            width: 40px;
+                            height: 40px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: ${category.color}15;
+                            border-radius: 10px;
+                        ">${category.icon}</div>
+                        <div>
+                            <h4 style="margin: 0; font-size: 15px; font-weight: 600; color: var(--md-sys-color-on-surface);">${category.label}</h4>
+                            <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin-top: 2px;">
+                                ${totalIssues === 0 ? 'No issues found' : `${totalIssues} issue${totalIssues === 1 ? '' : 's'} detected`}
+                            </div>
+                        </div>
                     </div>
-                    <div style="font-size: 13px; color: var(--md-sys-color-on-surface-variant);">
-                        ${passedTests} passed • ${totalIssues} ${totalIssues === 1 ? 'issue' : 'issues'}
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 24px; font-weight: 700; color: ${score >= 90 ? 'var(--md-sys-color-success)' : score >= 70 ? 'var(--md-sys-color-warning)' : 'var(--md-sys-color-error)'};">
+                    <div class="score-badge" style="
+                        background: ${score >= 90 ? 'var(--md-sys-color-success-container)' : score >= 70 ? 'var(--md-sys-color-warning-container)' : 'var(--md-sys-color-error-container)'};
+                        color: ${score >= 90 ? 'var(--md-sys-color-on-success-container)' : score >= 70 ? 'var(--md-sys-color-on-warning-container)' : 'var(--md-sys-color-on-error-container)'};
+                        padding: 4px 10px;
+                        border-radius: 20px;
+                        font-size: 13px;
+                        font-weight: 700;
+                    ">
                         ${score}%
                     </div>
+                </div>
+
+                <div class="progress-bar-container" style="
+                    height: 6px;
+                    background: var(--md-sys-color-surface-variant);
+                    border-radius: 3px;
+                    overflow: hidden;
+                    margin-bottom: 12px;
+                ">
+                    <div class="progress-bar" style="
+                        width: ${score}%;
+                        height: 100%;
+                        background: ${category.color};
+                        border-radius: 3px;
+                        transition: width 1s ease-out;
+                    "></div>
+                </div>
+
+                <div style="display: flex; gap: 16px; font-size: 12px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--md-sys-color-success);"></span>
+                        <span style="color: var(--md-sys-color-on-surface-variant);">Passed: <strong>${passedTests}</strong></span>
+                    </div>
+                    ${totalIssues > 0 ? `
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--md-sys-color-error);"></span>
+                        <span style="color: var(--md-sys-color-on-surface-variant);">Failed: <strong>${totalIssues}</strong></span>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
         `;
     }).join('');
 
     container.innerHTML = checksHTML;
+
+    // Add hover effect
+    const cards = container.querySelectorAll('.a11y-check-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-2px)';
+            card.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+            card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+        });
+    });
 }
 
 /**
  * Render all issues with details
  */
-function renderAllIssues(issues) {
+function renderAllIssues(issues, filter = 'all') {
     const container = document.getElementById('a11y-issues-list');
     if (!container) return;
 
-    const allIssues = [
+    let allIssues = [
         ...(issues.critical || []),
         ...(issues.warnings || []),
         ...(issues.notices || [])
     ];
 
+    // Filter logic
+    if (filter === 'critical') {
+        allIssues = allIssues.filter(i => i.severity === 'critical');
+    } else if (filter === 'warning') {
+        allIssues = allIssues.filter(i => i.severity === 'warning');
+    } else if (filter === 'contrast') {
+        allIssues = allIssues.filter(i => i.type === 'color-contrast');
+    }
+
     if (allIssues.length === 0) {
-        container.innerHTML = '<p style="color: var(--md-sys-color-on-surface-variant);">No accessibility issues found! 🎉</p>';
+        container.innerHTML = '<p style="color: var(--md-sys-color-on-surface-variant); text-align: center; padding: 20px;">No issues found matching this filter. ✨</p>';
         return;
     }
 
@@ -405,8 +489,6 @@ function renderAllIssues(issues) {
 
     // Setup highlight buttons
     const buttons = container.querySelectorAll('.highlight-issue-btn');
-    console.log(`[A11Y Renderer] Setting up ${buttons.length} highlight buttons`);
-
     buttons.forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.preventDefault();
@@ -416,11 +498,46 @@ function renderAllIssues(issues) {
             const severity = this.getAttribute('data-severity');
             const message = this.getAttribute('data-message');
 
-            console.log('[A11Y Renderer] Highlight clicked:', { selector, severity, message });
-
             sendTabMessage('highlightAccessibilityIssue', { selector, severity, message });
         });
     });
+}
+
+/**
+ * Setup filter buttons
+ */
+function setupFilters(issues) {
+    const filtersContainer = document.getElementById('a11y-filters');
+    if (!filtersContainer) return;
+
+    const chips = filtersContainer.querySelectorAll('.filter-chip');
+    
+    chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            // Update active state
+            chips.forEach(c => {
+                c.classList.remove('active');
+                c.style.background = 'transparent';
+                c.style.color = 'var(--md-sys-color-on-surface)';
+                c.style.border = '1px solid var(--md-sys-color-outline)';
+            });
+            chip.classList.add('active');
+            chip.style.background = 'var(--md-sys-color-secondary-container)';
+            chip.style.color = 'var(--md-sys-color-on-secondary-container)';
+            chip.style.border = 'none';
+
+            const filter = chip.getAttribute('data-filter');
+            renderAllIssues(issues, filter);
+        });
+    });
+
+    // Initialize first button style
+    const activeChip = filtersContainer.querySelector('.filter-chip.active');
+    if (activeChip) {
+        activeChip.style.background = 'var(--md-sys-color-secondary-container)';
+        activeChip.style.color = 'var(--md-sys-color-on-secondary-container)';
+        activeChip.style.border = 'none';
+    }
 }
 
 /**

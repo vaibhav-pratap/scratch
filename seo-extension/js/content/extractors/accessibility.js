@@ -46,8 +46,217 @@ const WCAG_REFS = {
         criterion: '2.1.2 No Keyboard Trap',
         level: 'A',
         url: 'https://www.w3.org/WAI/WCAG21/Understanding/no-keyboard-trap.html'
+    },
+    'tabindex-positive': {
+        criterion: '2.4.3 Focus Order',
+        level: 'A',
+        url: 'https://www.w3.org/WAI/WCAG21/Understanding/focus-order.html'
+    },
+    'media-captions': {
+        criterion: '1.2.2 Captions (Prerecorded)',
+        level: 'A',
+        url: 'https://www.w3.org/WAI/WCAG21/Understanding/captions-prerecorded.html'
     }
 };
+
+/**
+ * Color Utilities
+ */
+function parseRgb(color) {
+    const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if (!match) return null;
+    return {
+        r: parseInt(match[1]),
+        g: parseInt(match[2]),
+        b: parseInt(match[3]),
+        a: match[4] !== undefined ? parseFloat(match[4]) : 1
+    };
+}
+
+function getLuminance(r, g, b) {
+    const a = [r, g, b].map(v => {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+}
+
+function getContrastRatio(fg, bg) {
+    const l1 = getLuminance(fg.r, fg.g, fg.b);
+    const l2 = getLuminance(bg.r, bg.g, bg.b);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+
+function blendColors(fg, bg) {
+    const alpha = fg.a;
+    return {
+        r: Math.round((1 - alpha) * bg.r + alpha * fg.r),
+        g: Math.round((1 - alpha) * bg.g + alpha * fg.g),
+        b: Math.round((1 - alpha) * bg.b + alpha * fg.b),
+        a: 1
+    };
+}
+
+function getEffectiveBackgroundColor(element) {
+    let current = element;
+    while (current) {
+        const style = window.getComputedStyle(current);
+        const color = parseRgb(style.backgroundColor);
+        if (color && color.a === 1) return color;
+        if (color && color.a > 0) {
+            // Partial transparency - simplistic handling: assume white behind
+            return blendColors(color, { r: 255, g: 255, b: 255, a: 1 });
+        }
+        current = current.parentElement;
+    }
+    return { r: 255, g: 255, b: 255, a: 1 }; // Default to white
+}
+
+/**
+ * Check Color Contrast
+ */
+function checkContrast() {
+    // Only check visible text elements to save performance
+    const walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT,
+        { acceptNode: (node) => {
+            if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+            const parent = node.parentElement;
+            if (!parent) return NodeFilter.FILTER_REJECT;
+            const style = window.getComputedStyle(parent);
+            if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+        }}
+    );
+
+    const issues = [];
+    let checkedCount = 0;
+    let failed = 0;
+    const MAX_CHECKS = 200; // Limit checks to avoid freezing large pages
+
+    while (walker.nextNode() && checkedCount < MAX_CHECKS) {
+        const node = walker.currentNode;
+        const element = node.parentElement;
+        checkedCount++;
+
+        const style = window.getComputedStyle(element);
+        const fg = parseRgb(style.color);
+        if (!fg || fg.a === 0) continue; // Invisible text
+
+        const bg = getEffectiveBackgroundColor(element);
+        
+        // Handle transparent text color blending
+        const effectiveFg = fg.a < 1 ? blendColors(fg, bg) : fg;
+
+        const ratio = getContrastRatio(effectiveFg, bg);
+        const fontSize = parseFloat(style.fontSize);
+        const isBold = style.fontWeight === 'bold' || parseInt(style.fontWeight) >= 700;
+        const isLarge = fontSize >= 24 || (fontSize >= 18.66 && isBold); // 18pt or 14pt bold
+
+        const requiredRatio = isLarge ? 3 : 4.5;
+
+        if (ratio < requiredRatio) {
+            failed++;
+            // Only report unique selectors to reduce noise
+            const selector = getElementSelector(element);
+            if (!issues.some(i => i.selector === selector)) {
+                issues.push({
+                    type: 'color-contrast',
+                    severity: 'critical', // Treat as critical for visibility
+                    message: `Low contrast ratio: ${ratio.toFixed(2)}:1 (Expected ${requiredRatio}:1)`,
+                    element: selector,
+                    selector: selector,
+                    wcagRef: WCAG_REFS['color-contrast'],
+                    suggestion: `Increase contrast between text color and background.`,
+                    fix: `Change text color to a darker shade or background to lighter.`
+                });
+            }
+        }
+    }
+
+    // Heuristic score
+    return { 
+        passed: checkedCount - failed, 
+        failed, 
+        issues, 
+        score: checkedCount > 0 ? Math.round(((checkedCount - failed) / checkedCount) * 100) : 100 
+    };
+}
+
+/**
+ * Check Interactive Elements (Tabindex & Focus)
+ */
+function checkFocusable() {
+    const elements = document.querySelectorAll('*[tabindex]');
+    const issues = [];
+    let passed = 0;
+    let failed = 0;
+
+    elements.forEach(el => {
+        const tabIndex = parseInt(el.getAttribute('tabindex'));
+        if (tabIndex > 0) {
+            failed++;
+            issues.push({
+                type: 'tabindex-positive',
+                severity: 'warning',
+                message: 'Positive tabindex found',
+                element: getElementSelector(el),
+                selector: getElementSelector(el),
+                wcagRef: WCAG_REFS['tabindex-positive'],
+                suggestion: 'Avoid positive tabindex values as they disrupt natural tab order.',
+                fix: 'Change tabindex to "0" or "-1"'
+            });
+        } else {
+            passed++;
+        }
+    });
+
+    return { 
+        passed, 
+        failed, 
+        issues, 
+        score: (passed + failed) > 0 ? Math.round((passed / (passed + failed)) * 100) : 100
+    };
+}
+
+/**
+ * Check Media Elements (Video/Audio)
+ */
+function checkMedia() {
+    const media = document.querySelectorAll('video, audio');
+    const issues = [];
+    let passed = 0;
+    let failed = 0;
+
+    media.forEach(el => {
+        const hasCaptions = el.querySelector('track[kind="captions"]');
+        const isSilent = el.muted || el.volume === 0; // Rough check, not perfect
+
+        if (!hasCaptions && !isSilent) {
+            failed++;
+            issues.push({
+                type: 'media-captions',
+                severity: 'warning',
+                message: `<${el.tagName.toLowerCase()}> missing captions`,
+                element: getElementSelector(el),
+                selector: getElementSelector(el),
+                wcagRef: WCAG_REFS['media-captions'],
+                suggestion: 'Add captions for prerecorded audio/video content.',
+                fix: 'Add <track kind="captions" src="..."> inside the media element'
+            });
+        } else {
+            passed++;
+        }
+    });
+
+    return { 
+        passed, 
+        failed, 
+        issues, 
+        score: media.length > 0 ? Math.round((passed / media.length) * 100) : 100
+    };
+}
 
 /**
  * Get unique and precise selector for an element
@@ -370,12 +579,15 @@ function checkLanguage() {
  */
 function calculateScore(checks) {
     const weights = {
-        images: 15,
-        forms: 20,
-        headings: 15,
-        landmarks: 15,
-        links: 20,
-        language: 15
+        images: 10,
+        forms: 15,
+        headings: 10,
+        landmarks: 10,
+        links: 15,
+        language: 5,
+        contrast: 20,
+        interactive: 10,
+        media: 5
     };
 
     let totalScore = 0;
@@ -440,7 +652,10 @@ export function getAccessibilityData() {
             headings: checkHeadings(),
             landmarks: checkLandmarks(),
             links: checkLinks(),
-            language: checkLanguage()
+            language: checkLanguage(),
+            contrast: checkContrast(),
+            interactive: checkFocusable(),
+            media: checkMedia()
         };
 
         const score = calculateScore(checks);
